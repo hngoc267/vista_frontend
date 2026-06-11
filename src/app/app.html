@@ -1,0 +1,29 @@
+<!-- MÀN HÌNH SPLASH SCREEN -->
+<div
+  class="splash-screen"
+  [class.fade-out]="isClosing"
+  *ngIf="showSplash"
+>
+  <div class="splash-content">
+    <img src="/logo.png" alt="VISTA" class="splash-logo">
+
+    <h2 class="splash-slogan">
+      Nền tảng tư vấn công nghệ thông minh
+    </h2>
+
+    <div class="loading-bar">
+      <div class="loading-progress"></div>
+    </div>
+  </div>
+
+  <div class="splash-footer">
+    <p>© 2026 VISTA. All rights reserved.</p>
+  </div>
+</div>
+
+<!-- GIAO DIỆN WEB CHÍNH -->
+<ng-container *ngIf="!showSplash">
+  <app-navbar></app-navbar>
+  <router-outlet></router-outlet>
+  <app-footer></app-footer>
+</ng-container>

@@ -1,0 +1,50 @@
+<div class="auth-page">
+  <div class="auth-card login-card">
+    <div class="brand-logo">
+      <img src="/logo.png" alt="VISTA" class="logo-img">
+    </div>
+    
+    <div class="auth-header">
+      <h2>Chào mừng trở lại</h2>
+      <p>Đăng nhập để tiếp tục mua sắm</p>
+    </div>
+
+    <form class="auth-form" (ngSubmit)="onSubmit()">
+      <div class="inputs-container">
+        <div class="form-group">
+          <div class="input-wrapper">
+            <i class="ph ph-envelope"></i>
+            <input type="email" name="email" [(ngModel)]="email" placeholder="example@gmail.com" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="input-wrapper" style="position: relative;">
+            <i class="ph ph-lock"></i>
+            <input [type]="showPassword ? 'text' : 'password'" name="password" [(ngModel)]="password" placeholder="Nhập mật khẩu" required style="padding-right: 40px;">
+            
+            <i class="ph toggle-eye" 
+               [ngClass]="showPassword ? 'ph-eye' : 'ph-eye-closed'" 
+               (click)="showPassword = !showPassword"
+               style="position: absolute; left: auto; right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748B; font-size: 20px;">
+            </i>
+          </div>
+          <div class="forgot-wrapper">
+            <a routerLink="/forgot-password" class="forgot-pwd">Quên mật khẩu?</a>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" 
+              [disabled]="isLocked" 
+              [style.opacity]="isLocked ? '0.5' : '1'" 
+              [style.cursor]="isLocked ? 'not-allowed' : 'pointer'">
+        {{ isLocked ? 'Thử lại sau ' + countdown + 's' : 'Đăng nhập' }}
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Chưa có tài khoản? <a routerLink="/register">Đăng ký</a></p>
+    </div>
+  </div>
+</div>

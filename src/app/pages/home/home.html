@@ -1,0 +1,159 @@
+<section class="hero">
+  <div class="hero-container">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        Tìm thiết bị công nghệ<br>
+        <span class="hero-highlight">phù hợp với bạn</span>
+      </h1>
+      <p class="hero-desc">
+        Chỉ cần mô tả nhu cầu, AI của VISTA sẽ tư vấn sản phẩm phù hợp nhất cho bạn
+      </p>
+
+      <div class="search-bar">
+        <i class="ph ph-magnifying-glass search-icon"></i>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Ví dụ: Laptop cho sinh viên dưới 20 triệu..."
+          (keyup.enter)="onSearch()"
+        />
+        <button class="search-btn" (click)="onSearch()">Tìm kiếm AI</button>
+      </div>
+
+      <div class="search-suggestions">
+        <span>Gợi ý:</span>
+        <a [routerLink]="['/products']" [queryParams]="{search: 'Laptop gaming'}">Laptop gaming</a>
+        <span>·</span>
+        <a [routerLink]="['/products']" [queryParams]="{search: 'Dien thoai chup anh dep'}">Điện thoại chụp ảnh đẹp</a>
+        <span>·</span>
+        <a [routerLink]="['/products']" [queryParams]="{search: 'Tai nghe chong on'}">Tai nghe chống ồn</a>
+      </div>
+    </div>
+
+    <div class="hero-logo">
+  <img src="/logo.png" alt="VISTA"/>
+</div>
+  </div>
+</section>
+
+<section class="categories">
+  <div class="section-container">
+    <h2 class="section-title">Danh mục sản phẩm</h2>
+    <div class="category-grid">
+      <a
+        *ngFor="let cat of categories"
+        [routerLink]="['/products']"
+        [queryParams]="{category: cat.Category_id}"
+        class="category-item"
+      >
+        <div class="category-icon">
+          <i class="ph ph-laptop" *ngIf="cat.Category_name === 'Laptop'"></i>
+          <i class="ph ph-device-mobile" *ngIf="cat.Category_name === 'Smartphone'"></i>
+          <i class="ph ph-device-tablet" *ngIf="cat.Category_name === 'Tablet'"></i>
+          <i class="ph ph-headphones" *ngIf="cat.Category_name === 'Thiết bị âm thanh'"></i>
+          <i class="ph ph-plugs" *ngIf="cat.Category_name === 'Phụ kiện công nghệ'"></i>
+          <i class="ph ph-game-controller" *ngIf="cat.Category_name === 'Thiết bị gaming'"></i>
+        </div>
+        <span>{{ cat.Category_name }}</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="featured">
+  <div class="section-container">
+    <div class="section-header">
+      <h2 class="section-title">Sản phẩm nổi bật</h2>
+      <a [routerLink]="['/products']" [queryParams]="{sort: 'rating'}" class="view-all">Xem tất cả →</a>
+    </div>
+    <div class="product-grid">
+      <a
+        *ngFor="let product of featuredProducts"
+        [routerLink]="['/products', product.Product_id]"
+        class="product-card"
+      >
+        <div class="product-image">
+          <span class="badge badge-sale" *ngIf="product.Is_Flash_Sale">Sale {{product.Discount}}%</span>
+          <span class="badge badge-ai" *ngIf="product.Is_AI">AI Gợi ý</span>
+          <span class="badge badge-new" *ngIf="!product.Is_Flash_Sale && !product.Is_AI">Mới</span>
+          
+          <img 
+            [src]="(product.Images && product.Images.length > 0) ? '/assets/images/' + product.Images[0] : defaultImage" 
+            [alt]="product.Product_name" 
+            (error)="product.Images = null"
+            style="width: 100%; height: 160px; object-fit: contain;"
+          >
+        </div>
+        <div class="product-info">
+          <h3 class="product-name">{{ product.Product_name }}</h3>
+          <p class="product-spec">{{ product.Technical_specs?.CPU || product.Technical_specs?.Chipset }}</p>
+          <div class="price-wrap">
+            <p class="product-price">{{ formatPrice(getFinalPrice(product.min_price, product.Discount)) }}</p>
+            
+            <p class="product-original-price" *ngIf="product.Discount > 0">
+              <del>{{ formatPrice(product.min_price) }}</del>
+            </p>
+          </div>
+          <button class="btn-add-cart">Xem chi tiết</button>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="flash-sale">
+  <div class="section-container">
+    <div class="flash-sale-banner">
+      <div class="flash-sale-text">
+        <h3>Flash Sale hôm nay - Giảm đến 30%</h3>
+        <p>Chỉ còn hôm nay - Đừng bỏ lỡ!</p>
+      </div>
+      <a [routerLink]="['/products']" [queryParams]="{isFlashSale: 'true'}" class="btn-flash-sale">Xem ngay</a>
+    </div>
+  </div>
+</section>
+
+<section class="ai-suggest">
+  <div class="section-container">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="ph ph-robot"></i>
+        VISTA AI gợi ý cho bạn
+      </h2>
+      <a [routerLink]="['/products']" [queryParams]="{sort: 'newest'}" class="view-all">Xem tất cả →</a>
+    </div>
+    <p class="section-desc">Dựa trên xu hướng tìm kiếm và nhu cầu phổ biến</p>
+    <div class="product-grid">
+      <a
+        *ngFor="let product of aiProducts"
+        [routerLink]="['/products', product.Product_id]"
+        class="product-card"
+      >
+        <div class="product-image">
+          <span class="badge badge-sale" *ngIf="product.Is_Flash_Sale">Sale {{product.Discount}}%</span>
+          <span class="badge badge-ai" *ngIf="product.Is_AI">AI Gợi ý</span>
+          <span class="badge badge-new" *ngIf="!product.Is_Flash_Sale && !product.Is_AI">Mới</span>
+          
+          <img 
+            [src]="(product.Images && product.Images.length > 0) ? '/assets/images/' + product.Images[0] : defaultImage" 
+            [alt]="product.Product_name" 
+            (error)="product.Images = null"
+            style="width: 100%; height: 160px; object-fit: contain;"
+          >
+        </div>
+        <div class="product-info">
+          <h3 class="product-name">{{ product.Product_name }}</h3>
+          <p class="product-spec">{{ product.Technical_specs?.CPU || product.Technical_specs?.Chipset }}</p>
+          <div class="price-wrap">
+            <p class="product-price">{{ formatPrice(getFinalPrice(product.min_price, product.Discount)) }}</p>
+            
+            <p class="product-original-price" *ngIf="product.Discount > 0">
+              <del>{{ formatPrice(product.min_price) }}</del>
+            </p>
+          </div>
+          <button class="btn-add-cart">Xem chi tiết</button>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>

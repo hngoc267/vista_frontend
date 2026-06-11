@@ -1,0 +1,113 @@
+.policy-page {
+  background: #F8FAFC;
+  min-height: calc(100vh - 64px);
+  padding-bottom: 80px;
+}
+
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 120px;
+}
+
+.policy-header {
+  background: #1E3A5F;
+  color: #FFFFFF;
+  text-align: center;
+  padding: 48px 0;
+
+  h1 {
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  p {
+    font-size: 14px;
+    color: #CBD5E1;
+  }
+}
+
+.tab-bar {
+  background: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  
+  .tab-container {
+    display: flex;
+    justify-content: center; /* Thêm dòng này để căn giữa 3 chữ Giao hàng - Bảo hành - Đổi trả */
+    gap: 48px;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 16px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #94A3B8;
+    cursor: pointer;
+    font-family: inherit;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+
+    &:hover {
+      color: #334155;
+    }
+
+    &.active {
+      color: #2563B0;
+      border-bottom-color: #2563B0;
+    }
+  }
+}
+
+.policy-content-wrapper {
+  margin-top: 32px;
+}
+
+.policy-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  padding: 40px;
+  max-width: 1000px; 
+  margin: 0 auto; 
+  text-align: left; /* <-- Thêm dòng này để ép chữ căn lề trái */
+
+  hr {
+    border: none;
+    border-top: 1px solid #E2E8F0;
+    margin: 24px 0;
+  }
+}
+
+.policy-section {
+  text-align: center; /* Căn giữa toàn bộ chữ trong khu vực này */
+
+  h3 {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Căn giữa icon và tiêu đề */
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #0F172A;
+    margin-bottom: 16px;
+
+    i {
+      font-size: 24px;
+      color: #2563B0;
+    }
+  }
+
+  ul {
+    list-style-type: none; /* Bỏ dấu chấm đen đầu dòng */
+    padding-left: 0; /* Xóa khoảng lùi vào dư thừa của dấu chấm cũ */
+    
+    li {
+      font-size: 14px;
+      color: #334155;
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+  }
+}

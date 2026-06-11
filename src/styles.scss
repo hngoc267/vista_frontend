@@ -1,0 +1,42 @@
+/* Import font Be Vietnam Pro từ Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
+
+/* Reset CSS cơ bản */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  background-color: #F8FAFC; /* Màu nền xám sáng của VISTA */
+  color: #0F172A;
+}
+
+/* Cấu hình popup thông báo chuẩn tone Figma VISTA */
+.swal2-popup {
+  font-family: 'Be Vietnam Pro', sans-serif !important;
+  border-radius: 16px !important;
+  padding: 32px !important;
+}
+.swal2-title {
+  color: #0F172A !important;
+  font-weight: 600 !important;
+}
+.swal2-html-container {
+  color: #64748B !important;
+  font-size: 14px !important;
+}
+
+@media (max-width: 1200px) {
+  .section-container, .navbar-container, .profile-container, .container {
+    padding: 0 40px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-container, .navbar-container, .profile-container, .container {
+    padding: 0 16px !important;
+  }
+}

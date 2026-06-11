@@ -1,0 +1,167 @@
+.profile-page {
+  background: #F8FAFC;
+  padding: 40px 0 80px;
+  min-height: calc(100vh - 64px - 320px);
+  font-family: 'Be Vietnam Pro', sans-serif;
+}
+
+.profile-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 120px;
+  display: flex;
+  gap: 24px; /* Cột trái + cột phải -> Flow ngang -> Gap 24 */
+}
+
+.divider {
+  height: 1px;
+  background: #E2E8F0;
+  margin: 16px 0;
+}
+
+// ── CỘT TRÁI: SIDEBAR (W: 280) ──
+.profile-sidebar {
+  width: 280px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  padding: 24px;
+  height: fit-content;
+  box-sizing: border-box;
+
+  .user-info-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    .avatar-circle {
+      width: 80px;
+      height: 80px;
+      background: #2563B0; // Đổi sang màu web cho đồng bộ thương hiệu
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      
+      span { font-size: 32px; font-weight: 600; color: #FFFFFF; text-transform: uppercase; }
+    }
+
+    .user-name { font-size: 16px; font-weight: 600; color: #0F172A; margin-bottom: 4px; }
+    .user-email { font-size: 13px; color: #94A3B8; }
+  }
+
+  .sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Menu dọc: Gap 8 */
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #334155;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+
+      i { font-size: 20px; }
+
+      &:hover { background: #F1F5F9; color: #0F172A; }
+
+      &.active {
+        background: #F0F9FF;
+        color: #2563B0; /* Đang chọn: màu #2563B0 */
+        font-weight: 600;
+      }
+    }
+
+    .logout-btn {
+      color: #EF4444; /* Đăng xuất — màu #EF4444 */
+      margin-top: 16px;
+      &:hover { background: #FEECEC; color: #EF4444; }
+    }
+  }
+}
+
+// ── CỘT PHẢI: FORM THÔNG TIN (W: 880) ──
+.profile-content {
+  width: 880px;
+  box-sizing: border-box;
+}
+
+.content-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  padding: 32px; /* Padding 32 */
+
+  h2 { font-size: 20px; font-weight: 600; color: #0F172A; margin: 0; }
+  .subtitle { font-size: 13px; color: #64748B; margin-top: 4px; margin-bottom: 0; }
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Flow dọc -> Gap 16 */
+  width: 100%;
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    label { font-size: 13px; font-weight: 500; color: #334155; }
+    
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #0F172A;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+
+      &:focus { outline: none; border-color: #2563B0; }
+    }
+    
+    .disabled-input { background: #F8FAFC; cursor: not-allowed; color: #94A3B8; }
+  }
+
+  .btn-save {
+    width: 200px; /* Button: W 200px */
+    padding: 12px;
+    background: #2563B0;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.2s;
+
+    &:hover { background: #1E4D8C; }
+  }
+}
+
+.empty-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  color: #94A3B8;
+  i { font-size: 48px; margin-bottom: 12px; }
+}

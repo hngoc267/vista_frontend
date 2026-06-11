@@ -1,0 +1,105 @@
+<div class="policy-page">
+  <div class="policy-header">
+    <div class="container">
+      <h1>Chính sách & Hỗ trợ</h1>
+      <p>Cam kết minh bạch — Hỗ trợ tận tâm</p>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <div class="container tab-container">
+      <button class="tab-btn" [class.active]="activeTab === 'shipping'" (click)="setTab('shipping')">
+        Chính sách giao hàng
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'warranty'" (click)="setTab('warranty')">
+        Chính sách bảo hành
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'return'" (click)="setTab('return')">
+        Chính sách đổi trả
+      </button>
+    </div>
+  </div>
+
+  <div class="container policy-content-wrapper">
+    <div class="policy-card">
+      
+      <div class="tab-content" *ngIf="activeTab === 'shipping'">
+        <div class="policy-section">
+          <h3><i class="ph ph-truck"></i> Thời gian giao hàng</h3>
+          <ul>
+            <li>Nội thành TP.HCM & Hà Nội: 1 - 2 ngày làm việc</li>
+            <li>Các tỉnh thành khác: 3 - 5 ngày làm việc</li>
+            <li>Vùng sâu, vùng xa: 5 - 7 ngày làm việc</li>
+          </ul>
+        </div>
+        <hr>
+        <div class="policy-section">
+          <h3><i class="ph ph-package"></i> Phí giao hàng</h3>
+          <ul>
+            <li>Miễn phí giao hàng cho đơn từ 500.000 ₫</li>
+            <li>Đơn dưới 500.000 ₫: phí 30.000 ₫</li>
+            <li>Giao hàng nhanh trong ngày: phụ phí 50.000 ₫</li>
+          </ul>
+        </div>
+        <hr>
+        <div class="policy-section">
+          <h3><i class="ph ph-shield-check"></i> Đơn vị vận chuyển</h3>
+          <ul>
+            <li>GHTK, GHN, Viettel Post</li>
+            <li>Có thể theo dõi đơn hàng qua mã vận đơn cung cấp trong Lịch sử đơn hàng.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="tab-content" *ngIf="activeTab === 'warranty'">
+        <div class="policy-section">
+          <h3><i class="ph ph-shield-plus"></i> Thời gian bảo hành</h3>
+          <ul>
+            <li>Laptop: 12 - 24 tháng tại hãng tùy thương hiệu.</li>
+            <li>Smartphone: 12 tháng tại trung tâm bảo hành ủy quyền.</li>
+            <li>Phụ kiện: Bảo hành 1 đổi 1 trong 3 - 6 tháng.</li>
+          </ul>
+        </div>
+        <hr>
+        <div class="policy-section">
+          <h3><i class="ph ph-wrench"></i> Quy trình bảo hành</h3>
+          <ul>
+            <li>Bước 1: Liên hệ hotline VISTA 1800 1299 để báo lỗi.</li>
+            <li>Bước 2: Mang sản phẩm đến trung tâm bảo hành gần nhất hoặc gửi qua đường bưu điện.</li>
+            <li>Bước 3: VISTA kiểm tra và cập nhật tiến độ qua tin nhắn/email.</li>
+          </ul>
+        </div>
+        <hr>
+        <div class="policy-section">
+          <h3><i class="ph ph-x-circle"></i> Từ chối bảo hành</h3>
+          <ul>
+            <li>Sản phẩm bị vỡ, trầy xước, hoặc hỏng hóc do va đập mạnh.</li>
+            <li>Thiết bị bị ngấm nước hoặc hư hỏng do thiên tai, hỏa hoạn.</li>
+            <li>Đã bị can thiệp phần cứng hoặc phần mềm bởi bên thứ ba không được ủy quyền.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="tab-content" *ngIf="activeTab === 'return'">
+        <div class="policy-section">
+          <h3><i class="ph ph-arrows-clockwise"></i> Điều kiện đổi trả</h3>
+          <ul>
+            <li>Sản phẩm còn nguyên hộp, đầy đủ phụ kiện và tem mác.</li>
+            <li>Yêu cầu đổi trả trong vòng 7 ngày kể từ ngày nhận hàng.</li>
+            <li>Cung cấp hóa đơn mua hàng hợp lệ từ VISTA.</li>
+          </ul>
+        </div>
+        <hr>
+        <div class="policy-section">
+          <h3><i class="ph ph-clock"></i> Thời gian xử lý</h3>
+          <ul>
+            <li>Đổi sản phẩm: Xử lý và giao máy mới trong 3 - 5 ngày làm việc.</li>
+            <li>Hoàn tiền qua thẻ ngân hàng: 7 - 10 ngày làm việc.</li>
+            <li>Hoàn tiền qua ví điện tử: 1 - 3 ngày làm việc.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

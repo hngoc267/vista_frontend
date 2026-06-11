@@ -1,0 +1,268 @@
+<div *ngIf="product">
+
+  <div class="breadcrumb-bar">
+    <div class="section-container">
+      <a [routerLink]="['/']">Trang chủ</a>
+      <span class="sep">›</span>
+      <a [routerLink]="['/products']" [queryParams]="{category: product.Category_id}">
+        {{ category?.Category_name }}
+      </a>
+      <span class="sep">›</span>
+      <span class="current">{{ product.Product_name }}</span>
+    </div>
+  </div>
+
+  <div class="main-section">
+    <div class="section-container main-layout">
+
+      <div class="product-images">
+  <div class="main-image">
+    <img 
+      [src]="(product.Images && product.Images.length > 0) ? '/assets/images/' + product.Images[selectedImageIndex] : defaultImage" 
+      [alt]="product.Product_name" 
+      (error)="$any($event.target).src = defaultImage"
+      style="width: 100%; height: auto; max-height: 400px; object-fit: contain;"
+    >
+  </div>
+  
+  <div class="thumbnail-list" *ngIf="product.Images && product.Images.length > 1">
+    <div 
+      *ngFor="let img of product.Images; let i = index" 
+      class="thumbnail"
+      [class.active]="selectedImageIndex === i"
+      (click)="selectedImageIndex = i"
+    >
+      <img 
+        [src]="'/assets/images/' + img" 
+        [alt]="product.Product_name"
+        (error)="$any($event.target).src = defaultImage"
+        style="width: 100%; height: 100%; object-fit: contain;"
+      >
+    </div>
+  </div>
+</div>
+
+      <div class="product-info">
+
+        <span class="badge badge-sale" *ngIf="product.Is_Flash_Sale">Sale {{product.Discount}}%</span>
+        <span class="badge badge-ai" *ngIf="product.Is_AI">AI Gợi ý</span>
+        <span class="badge badge-new" *ngIf="!product.Is_Flash_Sale && !product.Is_AI">Mới</span>
+        
+        <h1 class="product-name">{{ product.Product_name }}</h1>
+
+        <div class="rating-row">
+          <div class="stars">
+            <div class="star-wrapper" *ngFor="let s of [1,2,3,4,5]">
+              <i class="ph-fill ph-star star-empty"></i>
+              <i class="ph-fill ph-star star-filled" [style.width.%]="getStarFill(s)"></i>
+            </div>
+          </div>
+          <span class="rating-score">{{ product.Average_rating }}</span>
+          <span class="rating-count">({{ product.Total_reviews }} đánh giá)</span>
+        </div>
+
+        <div class="price-wrap">
+          <p class="product-price">
+            {{ formatPrice(getFinalPrice(selectedVariant?.Price || product.min_price, product.Discount)) }}
+          </p>
+          <p class="product-original-price" *ngIf="product.Discount > 0">
+            <del>{{ formatPrice(selectedVariant?.Price || product.min_price) }}</del>
+          </p>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="quick-specs" *ngIf="product.Technical_specs">
+          <div class="spec-item" *ngIf="product.Technical_specs.CPU">
+            <span class="spec-label">CPU</span>
+            <span class="spec-value">{{ product.Technical_specs.CPU }}</span>
+          </div>
+          <div class="spec-item" *ngIf="product.Technical_specs.RAM">
+            <span class="spec-label">RAM</span>
+            <span class="spec-value">{{ product.Technical_specs.RAM }}</span>
+          </div>
+          <div class="spec-item" *ngIf="product.Technical_specs.Chipset">
+            <span class="spec-label">Chipset</span>
+            <span class="spec-value">{{ product.Technical_specs.Chipset }}</span>
+          </div>
+          <div class="spec-item" *ngIf="product.Technical_specs.Battery">
+            <span class="spec-label">Pin</span>
+            <span class="spec-value">{{ product.Technical_specs.Battery }}</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="variant-section" *ngIf="variants.length > 0">
+          <p class="variant-label">Phiên bản:</p>
+          <div class="variant-list">
+            <button
+              *ngFor="let v of variants"
+              class="variant-btn"
+              [class.active]="selectedVariant?.Product_variant_id === v.Product_variant_id"
+              (click)="selectVariant(v)"
+            >{{ v.Variant_name }}</button>
+          </div>
+        </div>
+
+        <div class="quantity-section">
+          <p class="variant-label">Số lượng:</p>
+          <div class="quantity-control">
+            <button (click)="changeQuantity(-1)">−</button>
+            <span>{{ quantity }}</span>
+            <button (click)="changeQuantity(1)">+</button>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-cart">Thêm vào giỏ hàng</button>
+          <button class="btn-buy">Mua ngay</button>
+        </div>
+
+        <div class="policies">
+          <div class="policy-item">
+            <i class="ph ph-truck"></i>
+            <span>Miễn phí giao hàng từ 500K</span>
+          </div>
+          <div class="policy-item">
+            <i class="ph ph-shield-check"></i>
+            <span>Bảo hành 12 tháng chính hãng</span>
+          </div>
+          <div class="policy-item">
+            <i class="ph ph-arrow-counter-clockwise"></i>
+            <span>Đổi trả trong 7 ngày</span>
+          </div>
+          <button class="btn-compare">Thêm vào so sánh</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-section">
+    <div class="section-container">
+      <div class="tab-bar">
+        <button class="tab-btn" [class.active]="activeTab === 'description'" (click)="setTab('description')">Mô tả sản phẩm</button>
+        <button class="tab-btn" [class.active]="activeTab === 'specs'" (click)="setTab('specs')">Thông số kỹ thuật</button>
+        <button class="tab-btn" [class.active]="activeTab === 'reviews'" (click)="setTab('reviews')">Đánh giá ({{ product.Total_reviews }})</button>
+      </div>
+
+      <div class="tab-content">
+        <div *ngIf="activeTab === 'description'" class="tab-pane">
+          <h3>{{ product.Product_name }}</h3>
+          <p>{{ product.Description }}</p>
+        </div>
+
+        <div *ngIf="activeTab === 'specs'" class="tab-pane">
+          <table class="specs-table">
+            <tbody>
+              <tr *ngFor="let spec of getSpecEntries(); let i = index" [class.odd]="i % 2 === 0">
+                <td class="spec-key">{{ spec.key }}</td>
+                <td class="spec-val">{{ spec.value }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="activeTab === 'reviews'" class="tab-pane">
+          <div class="rating-summary">
+            <div class="rating-big">
+              <span class="rating-number">{{ product.Average_rating }}</span>
+              <div class="stars">
+                <div class="star-wrapper" *ngFor="let s of [1,2,3,4,5]">
+                  <i class="ph-fill ph-star star-empty"></i>
+                  <i class="ph-fill ph-star star-filled" [style.width.%]="getStarFill(s)"></i>
+                </div>
+              </div>
+              <span class="rating-total">{{ product.Total_reviews }} đánh giá</span>
+            </div>
+          </div>
+          
+          <div class="reviews-list" *ngIf="reviews && reviews.length > 0; else noReviews">
+            
+            <div class="review-item" *ngFor="let review of reviews | slice:0:visibleReviewsCount">
+              <div class="review-avatar">{{ review.user.charAt(0) }}</div>
+              <div class="review-content">
+                <div class="review-header">
+                  <span class="reviewer-name">{{ review.user }}</span>
+                  <span class="review-date">{{ review.date }}</span>
+                </div>
+                
+                <div class="review-stars">
+                  <div class="stars" style="gap: 2px;">
+                    <div class="star-wrapper" *ngFor="let s of [1,2,3,4,5]" style="width: 14px; height: 14px;">
+                      <i class="ph-fill ph-star star-empty" style="font-size: 14px;"></i>
+                      <i class="ph-fill ph-star star-filled" [style.width.%]="s <= review.rating ? 100 : 0" style="font-size: 14px;"></i>
+                    </div>
+                  </div>
+                </div>
+                
+                <p class="review-text" *ngIf="review.comment">{{ review.comment }}</p>
+              </div>
+            </div>
+
+            <div class="review-actions" *ngIf="reviews.length > 5">
+              <button class="btn-outline" 
+                      *ngIf="visibleReviewsCount < reviews.length" 
+                      (click)="visibleReviewsCount = visibleReviewsCount + 5">
+                Xem thêm (còn {{ reviews.length - visibleReviewsCount }})
+              </button>
+              
+              <button class="btn-outline" 
+                      *ngIf="visibleReviewsCount > 5" 
+                      (click)="visibleReviewsCount = 5">
+                Ẩn bớt
+              </button>
+            </div>
+
+          </div>
+
+          <ng-template #noReviews>
+            <p class="no-reviews">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="related-section" *ngIf="relatedProducts.length > 0">
+  <div class="section-container">
+    <h2 class="section-title">Sản phẩm liên quan</h2>
+    <div class="related-grid">
+
+      <a *ngFor="let p of relatedProducts" [routerLink]="['/products', p.Product_id]" class="product-card">
+        <div class="product-image">
+          <span class="badge badge-sale" *ngIf="p.Is_Flash_Sale">Sale {{p.Discount}}%</span>
+          <span class="badge badge-ai" *ngIf="p.Is_AI">AI Gợi ý</span>
+          <span class="badge badge-new" *ngIf="!p.Is_Flash_Sale && !p.Is_AI">Mới</span>
+          
+          <img 
+            [src]="(p.Images && p.Images.length > 0) ? '/assets/images/' + p.Images[0] : defaultImage" 
+            [alt]="p.Product_name" 
+            (error)="p.Images = null"
+            style="width: 100%; height: 160px; object-fit: contain;"
+          >
+        </div>
+
+        <div class="product-info-card">
+          <h3>{{ p.Product_name }}</h3>
+          
+          <p class="spec">
+            {{ p.Technical_specs?.CPU || p.Technical_specs?.Chipset || p.Technical_specs?.Connection || p.Technical_specs?.Type || p.Technical_specs?.Sensor || 'Thiết bị công nghệ' }}
+          </p>
+
+          <div class="price-wrap">
+            <p class="product-price">{{ formatPrice(getFinalPrice(p.min_price, p.Discount)) }}</p>
+            <p class="product-original-price" *ngIf="p.Discount > 0">
+              <del>{{ formatPrice(p.min_price) }}</del>
+            </p>
+          </div>
+          
+          <div class="btn-add-cart" style="text-align: center;">Xem chi tiết</div>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</div>
+</div>

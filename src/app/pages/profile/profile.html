@@ -1,0 +1,93 @@
+<div class="profile-page" *ngIf="user">
+  <div class="profile-container">
+    
+    <aside class="profile-sidebar">
+      <div class="user-info-summary">
+        <div class="avatar-circle">
+          <span>{{ user.Full_name ? user.Full_name.charAt(0) : 'U' }}</span>
+        </div>
+        <h3 class="user-name">{{ user.Full_name }}</h3>
+        <p class="user-email">{{ user.Email }}</p>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <nav class="sidebar-menu">
+        <button class="menu-item" [class.active]="activeTab === 'info'" (click)="activeTab = 'info'">
+          <i class="ph ph-user"></i> Thông tin cá nhân
+        </button>
+        <button class="menu-item" [class.active]="activeTab === 'notifications'" (click)="activeTab = 'notifications'">
+          <i class="ph ph-bell"></i> Thông báo
+        </button>
+        <button class="menu-item" [class.active]="activeTab === 'password'" (click)="activeTab = 'password'">
+          <i class="ph ph-lock"></i> Đổi mật khẩu
+        </button>
+        <button class="menu-item logout-btn" (click)="logout()">
+          <i class="ph ph-sign-out"></i> Đăng xuất
+        </button>
+      </nav>
+    </aside>
+
+    <main class="profile-content">
+      
+      <div class="content-card" *ngIf="activeTab === 'info'">
+        <h2>Thông tin cá nhân</h2>
+        <div class="divider"></div>
+        
+        <form class="profile-form" (ngSubmit)="saveProfile()">
+          <div class="form-group">
+            <label>Tên tài khoản (Username)</label>
+            <input type="text" [value]="user.Username" disabled class="disabled-input">
+          </div>
+
+          <div class="form-group">
+            <label>Họ và Tên</label>
+            <input type="text" name="profileName" [(ngModel)]="user.Full_name" required placeholder="Nhập họ và tên">
+          </div>
+
+          <div class="form-group">
+            <label>Địa chỉ Email (Không thể thay đổi)</label>
+            <input type="email" [value]="user.Email" disabled class="disabled-input">
+          </div>
+
+          <div class="form-group">
+            <label>Số điện thoại</label>
+            <input type="text" name="profilePhone" [(ngModel)]="user.Phone_number" placeholder="Nhập số điện thoại">
+          </div>
+
+          <button type="submit" class="btn-save">Lưu thay đổi</button>
+        </form>
+      </div>
+
+      <div class="content-card" *ngIf="activeTab === 'password'">
+        <h2>Đặt mật khẩu mới</h2>
+        <p class="subtitle">Mật khẩu mới phải khác mật khẩu cũ để đảm bảo an toàn cho tài khoản</p>
+        <div class="divider"></div>
+        
+        <form class="profile-form" (ngSubmit)="updatePassword()">
+          <div class="form-group">
+            <label>Mật khẩu hiện tại</label>
+            <input type="password" name="oldPass" [(ngModel)]="oldPassword" required placeholder="Nhập mật khẩu cũ">
+          </div>
+          <div class="form-group">
+            <label>Mật khẩu mới</label>
+            <input type="password" name="newPass" [(ngModel)]="newPassword" required placeholder="Tối thiểu 8 ký tự">
+          </div>
+          <div class="form-group">
+            <label>Xác nhận mật khẩu mới</label>
+            <input type="password" name="confirmPass" [(ngModel)]="confirmPassword" required placeholder="Nhập lại mật khẩu mới">
+          </div>
+
+          <button type="submit" class="btn-save">Xác nhận đổi mật khẩu</button>
+        </form>
+      </div>
+
+      <div class="content-card empty-tab" *ngIf="activeTab === 'notifications'">
+  <i class="ph ph-bell"></i>
+  <p>Hiện chưa có thông báo nào.</p>
+</div>
+
+    </main>
+
+  </div>
+</div>

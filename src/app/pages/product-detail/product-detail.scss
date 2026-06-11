@@ -1,0 +1,779 @@
+// ── BREADCRUMB ─────────────────────────────────
+.breadcrumb-bar {
+  background: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 12px 0;
+
+  .section-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 120px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #94A3B8;
+
+    a {
+      color: #2563B0;
+      text-decoration: none;
+      &:hover { text-decoration: underline; }
+    }
+
+    .sep { color: #E2E8F0; }
+    .current { color: #94A3B8; }
+  }
+}
+
+// ── SHARED ─────────────────────────────────────
+.section-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 120px;
+}
+
+.divider {
+  height: 1px;
+  background: #E2E8F0;
+  margin: 16px 0;
+}
+
+// ── MAIN SECTION ───────────────────────────────
+.main-section {
+  padding: 32px 0;
+  background: #FFFFFF;
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: 480px 1fr;
+    gap: 48px;
+    align-items: flex-start;
+  }
+}
+
+// ── ẢNH SẢN PHẨM ──────────────────────────────
+.product-images {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .main-image {
+    width: 100%;
+    height: 360px;
+    background: #FFFFFF; /* Đổi nền khung thành màu trắng cho liền mạch */
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    border: 1px solid #E2E8F0; /* Thêm cái viền mỏng manh cho sang */
+    overflow: hidden; /* Cực kỳ quan trọng để ảnh không tràn góc bo tròn */
+
+    /* CSS xịn cho thẻ ảnh */
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 24px; /* Đẩy padding ra ngoài CSS cho an toàn */
+    }
+
+    .image-placeholder {
+      i {
+        font-size: 64px;
+        color: #CBD5E1;
+      }
+    }
+  }
+
+  .thumbnail-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    width: 100%;
+
+    .thumbnail {
+      width: 72px;
+      height: 72px;
+      background: #F8FAFC;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+
+      &:hover {
+        border-color: #CBD5E1;
+        transform: translateY(-2px);
+      }
+
+      &.active {
+        border-color: #2563B0;
+        background: #EEF2FF;
+      }
+    }
+  }
+}
+// ── THÔNG TIN SẢN PHẨM ────────────────────────
+.product-info {
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+
+    &.badge-new { background: #E1F5EE; color: #16A34A; }
+    &.badge-sale { background: #FEECEC; color: #EF4444; }
+    &.badge-ai { background: #E0F7FA; color: #00C2D4; }
+  }
+
+  .product-name {
+    font-size: 24px;
+    font-weight: 600;
+    color: #0F172A;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .price-wrap {
+  margin: 16px 0 24px 0; /* Khoảng cách ở trang chi tiết có thể cho rộng hơn trang chủ 1 chút */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .product-price {
+    color: #1e50b5; 
+    font-size: 1.75rem; /* Font chữ ở trang chi tiết phải to đùng cho "uy tín" */
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .product-original-price {
+    margin: 0;
+    del {
+      color: #94a3b8;
+      font-size: 1.125rem;
+      font-weight: 500;
+      text-decoration: line-through;
+    }
+  }
+}
+
+  .rating-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+
+
+  .rating-score {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0F172A;
+  }
+
+  .rating-count {
+    font-size: 13px;
+    color: #94A3B8;
+  }
+}
+
+  .price-section {
+    margin-bottom: 16px;
+
+    .price-main {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2563B0;
+    }
+  }
+
+  .quick-specs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .spec-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      .spec-label {
+        font-size: 11px;
+        color: #94A3B8;
+      }
+
+      .spec-value {
+        font-size: 13px;
+        font-weight: 500;
+        color: #0F172A;
+      }
+    }
+  }
+
+  .variant-section {
+    margin-bottom: 16px;
+
+    .variant-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #0F172A;
+      margin-bottom: 8px;
+    }
+
+    .variant-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      .variant-btn {
+        padding: 6px 14px;
+        border-radius: 8px;
+        border: 1px solid #E2E8F0;
+        background: #FFFFFF;
+        font-size: 12px;
+        color: #334155;
+        cursor: pointer;
+        font-family: 'Be Vietnam Pro', sans-serif;
+        transition: all 0.2s;
+
+        &:hover {
+          border-color: #2563B0;
+          color: #2563B0;
+        }
+
+        &.active {
+          border-color: #2563B0;
+          background: #EEF2FF;
+          color: #2563B0;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .quantity-section {
+    margin-bottom: 20px;
+
+    .variant-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #0F172A;
+      margin-bottom: 8px;
+    }
+
+    .quantity-control {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      width: fit-content;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      overflow: hidden;
+
+      button {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: #F8FAFC;
+        font-size: 18px;
+        cursor: pointer;
+        color: #334155;
+        transition: background 0.2s;
+
+        &:hover { background: #E2E8F0; }
+      }
+
+      span {
+        width: 48px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 500;
+        color: #0F172A;
+      }
+    }
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+
+    .btn-cart {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #2563B0;
+      background: #FFFFFF;
+      color: #2563B0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #EEF2FF;
+      }
+    }
+
+    .btn-buy {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: #2563B0;
+      color: #FFFFFF;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      transition: background 0.2s;
+
+      &:hover { background: #1E4D8C; }
+    }
+  }
+
+  .policies {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .policy-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #334155;
+
+      i {
+        font-size: 16px;
+        color: #2563B0;
+      }
+    }
+  }
+}
+
+// ── TAB SECTION ────────────────────────────────
+.tab-section {
+  padding: 32px 0;
+  background: #F8FAFC;
+
+  .tab-bar {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    border-bottom: 1px solid #E2E8F0;
+    margin-bottom: 0;
+
+    .tab-btn {
+      padding: 12px 24px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: #94A3B8;
+      cursor: pointer;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+
+      &:hover { color: #2563B0; }
+
+      &.active {
+        color: #2563B0;
+        border-bottom-color: #2563B0;
+      }
+    }
+  }
+
+  .tab-content {
+    .tab-pane {
+      background: #FFFFFF;
+      border-radius: 0 0 12px 12px;
+      padding: 32px;
+
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #0F172A;
+        margin-bottom: 12px;
+      }
+
+      p {
+        font-size: 13px;
+        color: #334155;
+        line-height: 1.8;
+      }
+    }
+  }
+
+  /* TÍCH HỢP CSS CHO LIST ĐÁNH GIÁ VÀO ĐÂY */
+      .reviews-list {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        margin-top: 32px;
+        border-top: 1px solid #E2E8F0;
+        padding-top: 24px;
+
+        /* CỤM NÚT XEM THÊM */
+        .review-actions {
+          display: flex;
+          justify-content: center;
+          gap: 16px;
+          margin-top: 24px;
+          padding-top: 16px;
+
+          .btn-outline {
+            padding: 8px 24px;
+            border: 1px solid #2563B0;
+            background: #FFFFFF;
+            color: #2563B0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Be Vietnam Pro', sans-serif;
+
+            &:hover {
+              background: #EEF2FF; /* Màu nền xanh nhạt khi hover */
+            }
+          }
+        }
+
+        .review-item {
+          display: flex;
+          gap: 16px;
+
+          .review-avatar {
+            width: 44px;
+            height: 44px;
+            background: #E0F2FE;
+            color: #2563B0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            flex-shrink: 0;
+          }
+
+          .review-content {
+            flex: 1;
+
+            .review-header {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 4px;
+
+              .reviewer-name {
+                font-size: 14px;
+                font-weight: 600;
+                color: #0F172A;
+              }
+
+              .review-date {
+                font-size: 12px;
+                color: #94A3B8;
+              }
+            }
+
+            .review-stars {
+              margin-bottom: 8px;
+            }
+
+            .review-text {
+              font-size: 14px;
+              color: #334155;
+              line-height: 1.6;
+              margin: 0;
+            }
+          }
+        }
+      }
+
+  .specs-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  tr {
+    &.odd {
+      background: #F8FAFC;
+    }
+
+    td {
+      padding: 14px 20px;
+      font-size: 13px;
+      border-bottom: 1px solid #E2E8F0;
+      vertical-align: middle;
+    }
+
+    .spec-key {
+      width: 220px;
+      color: #64748B;
+      font-weight: 500;
+      text-align: center; // căn giữa ngang
+    }
+
+    .spec-val {
+      color: #0F172A;
+      text-align: center; // căn giữa ngang
+      font-weight: 500;
+    }
+  }
+}
+
+  .rating-summary {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    margin-bottom: 24px;
+
+    .rating-big {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+
+      .rating-number {
+        font-size: 48px;
+        font-weight: 700;
+        color: #0F172A;
+      }
+
+      .rating-total {
+        font-size: 13px;
+        color: #94A3B8;
+      }
+    }
+  }
+
+  .no-reviews {
+    text-align: center;
+    color: #94A3B8;
+    padding: 32px 0;
+  }
+}
+
+// ── RELATED ────────────────────────────────────
+.related-section {
+  padding: 48px 0;
+  background: #FFFFFF;
+
+  .section-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #0F172A;
+    margin-bottom: 24px;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .product-card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    &:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    .product-image {
+      height: 160px;
+      background: #F1F5F9;
+      position: relative; /* Bắt buộc để tag nổi lên góc ảnh */
+
+      /* 1. CSS CHO CÁC TAG (BADGE) */
+      .badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        z-index: 10;
+      }
+
+      .badge-new {
+        background-color: #e6f4ea;
+        color: #1e8e3e;
+      }
+
+      .badge-ai {
+        background-color: #e0f2fe;
+        color: #0284c7;
+      }
+
+      .badge-sale {
+        background-color: #fee2e2;
+        color: #dc2626;
+      }
+    }
+
+    .product-info-card {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1; /* Đẩy các phần tử xuống kín card */
+
+      /* Tên sản phẩm */
+      h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 4px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.4;
+      }
+
+      /* Thông số xám mờ */
+      .spec {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-bottom: 8px;
+      }
+
+      /* Giá thông minh */
+      .price-wrap {
+        min-height: 45px;
+        margin: 16px 0 24px 0; /* Tự động đẩy cụm giá xuống đáy nếu tên ngắn */
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+
+        .product-price {
+          color: #1e50b5;
+          font-size: 1.125rem;
+          font-weight: 700;
+          margin: 0;
+        }
+
+        .product-original-price {
+          margin: 0;
+          del {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: line-through;
+          }
+        }
+      }
+
+      /* Nút Xem chi tiết */
+      .btn-add-cart {
+        width: 100%;
+        background-color: #1e50b5;
+        color: #ffffff;
+        border: none;
+        padding: 8px 0;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-top: auto;
+
+        &:hover {
+          background-color: #153e90;
+        }
+      }
+    }
+  }
+}
+
+// ── LOADING ────────────────────────────────────
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  font-size: 16px;
+  color: #94A3B8;
+}
+
+.btn-compare {
+  width: fit-content;
+  padding: 10px 18px;
+  margin-bottom: 20px;
+  border: 1px solid #2563B0;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #2563B0;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #EEF2FF;
+  }
+}
+
+/* ── STAR RATING ───────────────────────────── */
+.stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star-wrapper {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* sao nền xám */
+.star-empty {
+  position: absolute;
+  inset: 0;
+  font-size: 18px;
+  color: #CBD5E1;
+}
+
+/* sao vàng fill theo % */
+.star-filled {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 18px;
+  color: #F59E0B;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* rating dưới to hơn */
+.rating-summary .star-wrapper {
+  width: 22px;
+  height: 22px;
+}
+
+.rating-summary .star-empty,
+.rating-summary .star-filled {
+  font-size: 22px;
+}

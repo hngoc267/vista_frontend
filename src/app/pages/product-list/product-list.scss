@@ -1,0 +1,324 @@
+// ── BREADCRUMB ─────────────────────────────────
+.breadcrumb-bar {
+  background: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 12px 0;
+
+  .section-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 120px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #94A3B8;
+
+    a {
+      color: #2563B0;
+      text-decoration: none;
+      &:hover { text-decoration: underline; }
+    }
+
+    .current { color: #94A3B8; }
+  }
+}
+
+// ── LAYOUT ─────────────────────────────────────
+.page-layout {
+  padding: 32px 0 64px;
+  background: #F8FAFC;
+  min-height: 80vh;
+}
+
+.section-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 120px;
+}
+
+.layout-inner {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+// ── BỘ LỌC ─────────────────────────────────────
+.filter-panel {
+  width: 260px;
+  flex-shrink: 0;
+  background: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  padding: 20px;
+
+  .filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #0F172A;
+    }
+
+    i {
+      font-size: 20px;
+      color: #94A3B8;
+    }
+  }
+
+  .filter-group {
+    margin-bottom: 16px;
+
+    h4 {
+      font-size: 13px;
+      font-weight: 500;
+      color: #0F172A;
+      margin-bottom: 10px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      li {
+        font-size: 13px;
+        color: #334155;
+        cursor: pointer;
+        padding: 6px 10px;
+        border-radius: 6px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        &:hover {
+          background: #F1F5F9;
+          color: #2563B0;
+        }
+
+        &.active {
+          background: #EEF2FF;
+          color: #2563B0;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  .divider {
+    height: 1px;
+    background: #E2E8F0;
+    margin: 16px 0;
+  }
+}
+
+// ── PRODUCT AREA ───────────────────────────────
+.product-area {
+  flex: 1;
+
+  .product-area-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+
+    h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #0F172A;
+    }
+
+    .total {
+      font-size: 13px;
+      color: #94A3B8;
+    }
+  }
+}
+
+// ── PRODUCT GRID ───────────────────────────────
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.product-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+
+  .product-image {
+    height: 180px;
+    background: #F1F5F9;
+    position: relative;
+
+    .badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 20px;
+
+      &.badge-new { background: #E1F5EE; color: #16A34A; }
+      &.badge-sale { background: #FEECEC; color: #EF4444; }
+      &.badge-ai { background: #E0F7FA; color: #00C2D4; }
+    }
+  }
+
+  .product-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    
+    .product-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #0F172A;
+      margin-bottom: 4px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .price-wrap {
+    min-height: 45px;
+    margin: 16px 0 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .product-price {
+      color: #1e50b5; 
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .product-original-price {
+      margin: 0;
+      del {
+        color: #94a3b8;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: line-through;
+      }
+    }
+  }
+
+    .product-spec {
+      font-size: 11px;
+      color: #94A3B8;
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .product-price {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2563B0;
+      margin-bottom: 8px;
+    }
+
+    .btn-add-cart {
+      width: 100%;
+      padding: 8px;
+      background: #2563B0;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      transition: background 0.2s;
+      margin-top: auto;
+
+      &:hover { background: #1E4D8C; }
+    }
+  }
+}
+
+// ── EMPTY STATE ────────────────────────────────
+.empty-state {
+  text-align: center;
+  padding: 80px 0;
+  color: #94A3B8;
+
+  i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  p {
+    font-size: 16px;
+  }
+}
+
+// ── PAGINATION ─────────────────────────────────
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+
+  .page-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+    background: #FFFFFF;
+    color: #334155;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+      background: #F1F5F9;
+      border-color: #2563B0;
+      color: #2563B0;
+    }
+
+    &.active {
+      background: #2563B0;
+      border-color: #2563B0;
+      color: #FFFFFF;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+}

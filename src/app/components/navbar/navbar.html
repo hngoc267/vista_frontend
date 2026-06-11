@@ -1,0 +1,26 @@
+<nav class="navbar">
+  <div class="navbar-container">
+    <!-- Logo -->
+    <a routerLink="/" class="navbar-logo">
+  <img src="/logo.png" alt="VISTA" height="36">
+</a>
+
+    <!-- Menu -->
+    <ul class="navbar-menu">
+      <li><a routerLink="/products" [queryParams]="{category: 'CAT_001'}">Laptop</a></li>
+      <li><a routerLink="/products" [queryParams]="{category: 'CAT_002'}">Smartphone</a></li>
+      <li><a routerLink="/products" [queryParams]="{category: 'CAT_003'}">Tablet</a></li>
+      <li><a routerLink="/products" [queryParams]="{category: 'CAT_004'}">Thiết bị âm thanh</a></li>
+      <li><a routerLink="/products" [queryParams]="{category: 'CAT_005'}">Phụ kiện công nghệ</a></li>
+      <li><a routerLink="/products" [queryParams]="{category: 'CAT_006'}">Thiết bị Gaming</a></li>
+    </ul>
+
+    <!-- Icons -->
+    <div class="navbar-icons">
+  <button class="icon-btn" title="Tìm kiếm"><i class="ph ph-magnifying-glass"></i></button>
+  <button class="icon-btn" title="Giỏ hàng"><i class="ph ph-shopping-cart"></i></button>
+  <a *ngIf="!isLoggedIn" routerLink="/login" class="icon-btn" title="Đăng nhập"><i class="ph ph-user"></i></a>
+  <a *ngIf="isLoggedIn" routerLink="/profile" class="icon-btn" title="Tài khoản"><i class="ph ph-user"></i></a>
+</div>
+  </div>
+</nav>
