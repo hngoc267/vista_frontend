@@ -21,7 +21,7 @@ export class ProductDetail implements OnInit {
   selectedImageIndex = 0;
   quantity = 1;
   activeTab = 'description';
-  defaultImage = 'https://placehold.co/600x400/2563b0/ffffff?text=VISTA+Product';
+  
   
   reviews: any[] = []; // <-- Đã thêm mảng chứa đánh giá
 

@@ -78,7 +78,7 @@
           <span class="badge badge-new" *ngIf="!product.Is_Flash_Sale && !product.Is_AI">Mới</span>
           
           <img 
-            [src]="(product.Images && product.Images.length > 0) ? '/assets/images/' + product.Images[0] : defaultImage" 
+            [src]="'/assets/images/' + product.Images[0]" 
             [alt]="product.Product_name" 
             (error)="product.Images = null"
             style="width: 100%; height: 160px; object-fit: contain;"
@@ -120,7 +120,7 @@
         <i class="ph ph-robot"></i>
         VISTA AI gợi ý cho bạn
       </h2>
-      <a [routerLink]="['/products']" [queryParams]="{sort: 'newest'}" class="view-all">Xem tất cả →</a>
+      <a [routerLink]="['/products']" [queryParams]="{ filter: 'ai-suggested' }" class="view-all">Xem tất cả →</a>
     </div>
     <p class="section-desc">Dựa trên xu hướng tìm kiếm và nhu cầu phổ biến</p>
     <div class="product-grid">
@@ -135,7 +135,7 @@
           <span class="badge badge-new" *ngIf="!product.Is_Flash_Sale && !product.Is_AI">Mới</span>
           
           <img 
-            [src]="(product.Images && product.Images.length > 0) ? '/assets/images/' + product.Images[0] : defaultImage" 
+            [src]="'/assets/images/' + product.Images[0]" 
             [alt]="product.Product_name" 
             (error)="product.Images = null"
             style="width: 100%; height: 160px; object-fit: contain;"

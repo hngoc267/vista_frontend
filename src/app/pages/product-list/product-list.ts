@@ -6,6 +6,7 @@ import { ProductService } from '../../services/product';
 
 @Component({
   selector: 'app-product-list',
+  standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './product-list.html',
   styleUrl: './product-list.scss'
@@ -16,7 +17,6 @@ export class ProductList implements OnInit {
   totalProducts = 0;
   totalPages = 0;
   currentPage = 1;
-  defaultImage = 'https://placehold.co/400x400/e2e8f0/475569?text=VISTA+Product'; // Đổi màu cho đồng bộ trang chủ
 
   filters: any = {
     category: '',
@@ -24,7 +24,9 @@ export class ProductList implements OnInit {
     minPrice: '',
     maxPrice: '',
     sort: 'newest',
-    isFlashSale: '' // THÊM MỚI: Biến hứng Flash Sale
+    isFlashSale: '',
+    isAI: '', // THÊM MỚI: Biến hứng sản phẩm AI gợi ý
+    isNew: '' // <-- THÊM MỚI BIẾN NÀY
   };
 
   priceRanges = [
@@ -56,7 +58,13 @@ export class ProductList implements OnInit {
       this.filters.category = params['category'] || '';
       this.filters.search = params['search'] || '';
       this.filters.sort = params['sort'] || 'newest';
-      this.filters.isFlashSale = params['isFlashSale'] || ''; // THÊM MỚI: Bắt params từ URL
+      this.filters.isFlashSale = params['isFlashSale'] || '';
+      this.filters.isNew = params['isNew'] || '';
+      if (params['filter'] === 'ai-suggested') {
+        this.filters.isAI = 'true';
+      } else {
+        this.filters.isAI = params['isAI'] || '';
+      }
       this.currentPage = Number(params['page']) || 1;
       this.loadProducts();
     });
@@ -109,14 +117,15 @@ export class ProductList implements OnInit {
     return price ? price.toLocaleString('vi-VN') + ' ₫' : 'Liên hệ';
   }
 
-  // THÊM MỚI: Hàm tính giá sau giảm
   getFinalPrice(price: number, discount: number): number {
     if (!discount || discount === 0) return price;
     return price - (price * discount / 100);
   }
 
   getCategoryName(): string {
-    if (this.filters.isFlashSale === 'true') return 'Flash Sale'; // THÊM MỚI: Đổi title nếu đang ở trang Sale
+    if (this.filters.isFlashSale === 'true') return 'Flash Sale';
+    if (this.filters.isAI === 'true') return 'AI Gợi ý cho bạn'; // THÊM MỚI: Đổi tiêu đề động nếu lọc theo AI
+    if (this.filters.isNew === 'true') return 'Sản phẩm mới nhất';
     if (!this.filters.category) return 'Tất cả sản phẩm';
     const cat = this.categories.find(c => c.Category_id === this.filters.category);
     return cat ? cat.Category_name : 'Sản phẩm';

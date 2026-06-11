@@ -16,7 +16,7 @@ export class Home implements OnInit {
   aiProducts: any[] = [];
   flashSaleProducts: any[] = []; // Thêm biến này
   searchQuery = '';
-  defaultImage = 'https://placehold.co/400x400/e2e8f0/475569?text=VISTA+Product';
+  
 
   constructor(
     private productService: ProductService,

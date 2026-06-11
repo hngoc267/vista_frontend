@@ -18,7 +18,6 @@
         <i class="ph ph-sliders"></i>
       </div>
 
-      <!-- Danh mục -->
       <div class="filter-group">
         <h4>Danh mục</h4>
         <ul>
@@ -36,7 +35,30 @@
 
       <div class="divider"></div>
 
-      <!-- Mức giá -->
+      <div class="filter-group">
+        <h4>Nhãn sản phẩm</h4>
+        <ul>
+          <li
+            [class.active]="filters.isAI === '' && filters.isFlashSale === '' && filters.isNew === ''"
+            (click)="filters.isAI = ''; filters.isFlashSale = ''; filters.isNew = ''; applyFilter()"
+          >Tất cả sản phẩm</li>
+          <li
+            [class.active]="filters.isAI === 'true'"
+            (click)="filters.isAI = 'true'; filters.isFlashSale = ''; filters.isNew = ''; applyFilter()"
+          >AI Gợi ý</li>
+          <li
+            [class.active]="filters.isFlashSale === 'true'"
+            (click)="filters.isAI = ''; filters.isFlashSale = 'true'; filters.isNew = ''; applyFilter()"
+          >Flash Sale</li>
+          <li
+            [class.active]="filters.isNew === 'true'"
+            (click)="filters.isAI = ''; filters.isFlashSale = ''; filters.isNew = 'true'; applyFilter()"
+          >Mới</li>
+        </ul>
+      </div>
+
+      <div class="divider"></div>
+
       <div class="filter-group">
         <h4>Mức giá</h4>
         <ul>
@@ -50,7 +72,6 @@
 
       <div class="divider"></div>
 
-      <!-- Sắp xếp -->
       <div class="filter-group">
         <h4>Sắp xếp</h4>
         <ul>
@@ -85,9 +106,9 @@
       <span class="badge badge-new" *ngIf="!product.Is_Flash_Sale && !product.Is_AI">Mới</span>
       
       <img 
-        [src]="(product.Images && product.Images.length > 0) ? '/assets/images/' + product.Images[0] : defaultImage" 
+        [src]="'/assets/images/' + product.Images[0]" 
         [alt]="product.Product_name" 
-        (error)="product.Image = defaultImage"
+        (error)="product.Images = null"
         style="width: 100%; height: 160px; object-fit: contain;"
       >
     </div>

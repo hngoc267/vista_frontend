@@ -18,9 +18,9 @@
       <div class="product-images">
   <div class="main-image">
     <img 
-      [src]="(product.Images && product.Images.length > 0) ? '/assets/images/' + product.Images[selectedImageIndex] : defaultImage" 
+      [src]="'/assets/images/' + product.Images[selectedImageIndex]" 
       [alt]="product.Product_name" 
-      (error)="$any($event.target).src = defaultImage"
+      (error)="$any($event.target).src = '/assets/images/' + product.Images[0]"
       style="width: 100%; height: auto; max-height: 400px; object-fit: contain;"
     >
   </div>
@@ -35,7 +35,7 @@
       <img 
         [src]="'/assets/images/' + img" 
         [alt]="product.Product_name"
-        (error)="$any($event.target).src = defaultImage"
+        (error)="$any($event.target).style.display = 'none'"
         style="width: 100%; height: 100%; object-fit: contain;"
       >
     </div>
@@ -237,7 +237,7 @@
           <span class="badge badge-new" *ngIf="!p.Is_Flash_Sale && !p.Is_AI">Mới</span>
           
           <img 
-            [src]="(p.Images && p.Images.length > 0) ? '/assets/images/' + p.Images[0] : defaultImage" 
+            [src]="'/assets/images/' + p.Images[0]" 
             [alt]="p.Product_name" 
             (error)="p.Images = null"
             style="width: 100%; height: 160px; object-fit: contain;"
