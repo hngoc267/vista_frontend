@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Ngoctub23406 } from './ngoctub23406';
+import { Cart } from './cart';
 
-describe('Ngoctub23406', () => {
-  let component: Ngoctub23406;
-  let fixture: ComponentFixture<Ngoctub23406>;
+describe('Cart', () => {
+  let component: Cart;
+  let fixture: ComponentFixture<Cart>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Ngoctub23406],
+      imports: [Cart],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Ngoctub23406);
+    fixture = TestBed.createComponent(Cart);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
