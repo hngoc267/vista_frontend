@@ -23,41 +23,58 @@
         <ul>
           <li
             [class.active]="filters.category === ''"
-            (click)="filters.category = ''; applyFilter()"
+            (click)="selectCategory('')"
           >Tất cả</li>
           <li
             *ngFor="let cat of categories"
             [class.active]="filters.category === cat.Category_id"
-            (click)="filters.category = cat.Category_id; applyFilter()"
+            (click)="selectCategory(cat.Category_id)"
           >{{ cat.Category_name }}</li>
         </ul>
       </div>
 
       <div class="divider"></div>
 
-      <div class="filter-group">
+      <div class="filter-group" *ngIf="filters.category && availableBrands.length > 0">
+        <h4>Thương hiệu</h4>
+        <ul>
+          <li
+            [class.active]="filters.brand === ''"
+            (click)="selectBrand('')"
+          >Tất cả thương hiệu</li>
+          <li
+            *ngFor="let brand of availableBrands"
+            [class.active]="filters.brand === brand"
+            (click)="selectBrand(brand)"
+          >{{ brand }}</li>
+        </ul>
+      </div>
+
+      <div class="divider" *ngIf="filters.category && availableBrands.length > 0"></div>
+
+      <div class="filter-group" *ngIf="filters.brand">
         <h4>Nhãn sản phẩm</h4>
         <ul>
           <li
             [class.active]="filters.isAI === '' && filters.isFlashSale === '' && filters.isNew === ''"
-            (click)="filters.isAI = ''; filters.isFlashSale = ''; filters.isNew = ''; applyFilter()"
+            (click)="selectLabel('all')"
           >Tất cả sản phẩm</li>
           <li
             [class.active]="filters.isAI === 'true'"
-            (click)="filters.isAI = 'true'; filters.isFlashSale = ''; filters.isNew = ''; applyFilter()"
+            (click)="selectLabel('ai')"
           >AI Gợi ý</li>
           <li
-  [class.active]="filters.isFlashSale === 'true'"
-  (click)="filters.isAI = ''; filters.isFlashSale = 'true'; filters.isNew = ''; applyFilter()"
->Ưu đãi</li>
+            [class.active]="filters.isFlashSale === 'true'"
+            (click)="selectLabel('flashsale')"
+          >Ưu đãi</li>
           <li
             [class.active]="filters.isNew === 'true'"
-            (click)="filters.isAI = ''; filters.isFlashSale = ''; filters.isNew = 'true'; applyFilter()"
+            (click)="selectLabel('new')"
           >Mới</li>
         </ul>
       </div>
 
-      <div class="divider"></div>
+      <div class="divider" *ngIf="filters.brand"></div>
 
       <div class="filter-group">
         <h4>Mức giá</h4>
@@ -75,10 +92,10 @@
       <div class="filter-group">
         <h4>Sắp xếp</h4>
         <ul>
-          <li [class.active]="filters.sort === 'newest'" (click)="filters.sort = 'newest'; applyFilter()">Mới nhất</li>
-          <li [class.active]="filters.sort === 'rating'" (click)="filters.sort = 'rating'; applyFilter()">Đánh giá cao</li>
-          <li [class.active]="filters.sort === 'price_asc'" (click)="filters.sort = 'price_asc'; applyFilter()">Giá tăng dần</li>
-          <li [class.active]="filters.sort === 'price_desc'" (click)="filters.sort = 'price_desc'; applyFilter()">Giá giảm dần</li>
+          <li [class.active]="filters.sort === 'newest'" (click)="selectSort('newest')">Mới nhất</li>
+          <li [class.active]="filters.sort === 'rating'" (click)="selectSort('rating')">Đánh giá cao</li>
+          <li [class.active]="filters.sort === 'price_asc'" (click)="selectSort('price_asc')">Giá tăng dần</li>
+          <li [class.active]="filters.sort === 'price_desc'" (click)="selectSort('price_desc')">Giá giảm dần</li>
         </ul>
       </div>
     </aside>
