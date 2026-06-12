@@ -138,29 +138,35 @@
     line-height: 1.3;
   }
 
-  .price-wrap {
-  margin: 16px 0 24px 0; /* Khoảng cách ở trang chi tiết có thể cho rộng hơn trang chủ 1 chút */
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  /* Giá thông minh */
+      .price-wrap {
+        margin-top: auto; /* Tiếp tục đẩy cụm giá xuống sát nút */
+        height: 48px; /* KHÓA CỨNG CHIỀU CAO 48px */
+        margin-bottom: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start; /* SỬA Ở ĐÂY: Ép giá xanh lên sát trần của khối 48px */
+        gap: 2px;
 
-  .product-price {
-    color: #1e50b5; 
-    font-size: 1.75rem; /* Font chữ ở trang chi tiết phải to đùng cho "uy tín" */
-    font-weight: 700;
-    margin: 0;
-  }
+        .product-price {
+          color: #1e50b5;
+          font-size: 1.125rem;
+          font-weight: 700;
+          margin: 0;
+          line-height: 1.2;
+        }
 
-  .product-original-price {
-    margin: 0;
-    del {
-      color: #94a3b8;
-      font-size: 1.125rem;
-      font-weight: 500;
-      text-decoration: line-through;
-    }
-  }
-}
+        .product-original-price {
+          margin: 0;
+          line-height: 1;
+          del {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: line-through;
+          }
+        }
+      }
 
   .rating-row {
   display: flex;
@@ -660,11 +666,13 @@
 
       /* Giá thông minh */
       .price-wrap {
-        min-height: 45px;
-        margin: 16px 0 24px 0; /* Tự động đẩy cụm giá xuống đáy nếu tên ngắn */
+        margin-top: auto; /* DÒNG QUAN TRỌNG: Ép cả cụm giá và nút xuống đáy */
+        min-height: 48px; /* Tăng nhẹ để đồng bộ với thẻ ở trang chủ */
         display: flex;
         flex-direction: column;
+        justify-content: flex-start; /* Luôn căn sát đáy khối này */
         gap: 2px;
+        margin-bottom: 12px;
 
         .product-price {
           color: #1e50b5;
@@ -695,7 +703,7 @@
         font-weight: 600;
         cursor: pointer;
         transition: background-color 0.2s;
-        margin-top: auto;
+        /* Không cần margin-top: auto nữa vì price-wrap đã gánh việc này */
 
         &:hover {
           background-color: #153e90;

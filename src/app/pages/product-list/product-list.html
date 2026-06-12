@@ -47,9 +47,9 @@
             (click)="filters.isAI = 'true'; filters.isFlashSale = ''; filters.isNew = ''; applyFilter()"
           >AI Gợi ý</li>
           <li
-            [class.active]="filters.isFlashSale === 'true'"
-            (click)="filters.isAI = ''; filters.isFlashSale = 'true'; filters.isNew = ''; applyFilter()"
-          >Flash Sale</li>
+  [class.active]="filters.isFlashSale === 'true'"
+  (click)="filters.isAI = ''; filters.isFlashSale = 'true'; filters.isNew = ''; applyFilter()"
+>Ưu đãi</li>
           <li
             [class.active]="filters.isNew === 'true'"
             (click)="filters.isAI = ''; filters.isFlashSale = ''; filters.isNew = 'true'; applyFilter()"
