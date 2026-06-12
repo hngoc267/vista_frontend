@@ -27,6 +27,10 @@ export class Login implements OnInit {
   constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit() {
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/']); // Nếu đã đăng nhập, đá văng về trang chủ
+      return; 
+    }
     this.checkLockout(); // Kiểm tra xem user có đang bị khóa từ trước không
   }
 

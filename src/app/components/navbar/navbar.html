@@ -1,26 +1,64 @@
 <nav class="navbar">
   <div class="navbar-container">
-    <!-- Logo -->
-    <a routerLink="/" class="navbar-logo">
-  <img src="/logo.png" alt="VISTA" height="36">
-</a>
+    
+    <div class="nav-left">
+      <a routerLink="/" class="navbar-logo">
+        <img src="/logo.png" alt="VISTA" height="44">
+      </a>
 
-    <!-- Menu -->
-    <ul class="navbar-menu">
-      <li><a routerLink="/products" [queryParams]="{category: 'CAT_001'}">Laptop</a></li>
-      <li><a routerLink="/products" [queryParams]="{category: 'CAT_002'}">Smartphone</a></li>
-      <li><a routerLink="/products" [queryParams]="{category: 'CAT_003'}">Tablet</a></li>
-      <li><a routerLink="/products" [queryParams]="{category: 'CAT_004'}">Thiết bị âm thanh</a></li>
-      <li><a routerLink="/products" [queryParams]="{category: 'CAT_005'}">Phụ kiện công nghệ</a></li>
-      <li><a routerLink="/products" [queryParams]="{category: 'CAT_006'}">Thiết bị Gaming</a></li>
-    </ul>
+      <div class="category-dropdown">
+        <div class="dropdown-trigger">
+          <i class="ph ph-list"></i>
+          <span>Danh mục sản phẩm</span>
+          <i class="ph ph-caret-down arrow-icon"></i>
+        </div>
+        <ul class="dropdown-menu">
+          <li><a routerLink="/products" [queryParams]="{category: 'CAT_001'}">Laptop</a></li>
+          <li><a routerLink="/products" [queryParams]="{category: 'CAT_002'}">Smartphone</a></li>
+          <li><a routerLink="/products" [queryParams]="{category: 'CAT_003'}">Tablet</a></li>
+          <li><a routerLink="/products" [queryParams]="{category: 'CAT_004'}">Thiết bị âm thanh</a></li>
+          <li><a routerLink="/products" [queryParams]="{category: 'CAT_005'}">Phụ kiện công nghệ</a></li>
+          <li><a routerLink="/products" [queryParams]="{category: 'CAT_006'}">Thiết bị Gaming</a></li>
+        </ul>
+      </div>
+    </div>
 
-    <!-- Icons -->
-    <div class="navbar-icons">
-  <button class="icon-btn" title="Tìm kiếm"><i class="ph ph-magnifying-glass"></i></button>
-  <button class="icon-btn" title="Giỏ hàng"><i class="ph ph-shopping-cart"></i></button>
-  <a *ngIf="!isLoggedIn" routerLink="/login" class="icon-btn" title="Đăng nhập"><i class="ph ph-user"></i></a>
-  <a *ngIf="isLoggedIn" routerLink="/profile" class="icon-btn" title="Tài khoản"><i class="ph ph-user"></i></a>
-</div>
+    <div class="nav-center greeting-wrapper">
+      <div class="greeting-text">
+        <span *ngIf="isLoggedIn">
+          ✨ Xin chào <strong>{{ userName }}</strong>, hãy khám phá thiết bị hoàn hảo dành cho bạn cùng VISTA nhé! ✨
+        </span>
+      </div>
+      
+      <div class="petals-container">
+        <span class="petal">🌸</span>
+        <span class="petal">🌸</span>
+        <span class="petal">🌸</span>
+        <span class="petal">🌸</span>
+      </div>
+    </div>
+
+    <div class="nav-right">
+      <a routerLink="/cart" class="action-btn">
+        <i class="ph ph-shopping-cart"></i>
+        <span>Giỏ hàng</span>
+      </a>
+
+      <a *ngIf="!isLoggedIn" routerLink="/login" class="action-btn">
+        <i class="ph ph-user"></i>
+        <span>Đăng nhập</span>
+      </a>
+      
+      <a *ngIf="isLoggedIn" routerLink="/profile" class="action-btn">
+        <i class="ph ph-user"></i>
+        <span>Hồ sơ</span>
+      </a>
+
+      <a href="#" class="action-btn">
+        <i class="ph ph-robot"></i>
+        <span>AI Assistant</span>
+      </a>
+    </div>
+
   </div>
 </nav>

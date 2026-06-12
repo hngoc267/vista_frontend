@@ -8,16 +8,24 @@ import { tap } from 'rxjs/operators';
 })
 export class AuthService {
   private apiUrl = 'http://localhost:5000/api';
-  private currentUserSubject = new BehaviorSubject<any>(null);
+  private currentUserSubject = new BehaviorSubject<any>(this.getUserFromStorage());
   currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    // Kiểm tra token khi khởi động app
+  // 3. Constructor
+  constructor(private http: HttpClient) {}
+
+  // 4. Hàm đọc dữ liệu an toàn
+  private getUserFromStorage(): any {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     if (token && user) {
-      this.currentUserSubject.next(JSON.parse(user));
+      try {
+        return JSON.parse(user);
+      } catch (e) {
+        return null;
+      }
     }
+    return null;
   }
 
   // Đăng ký

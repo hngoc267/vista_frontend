@@ -5,72 +5,221 @@
   position: sticky;
   top: 0;
   z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 
   .navbar-container {
     max-width: 1440px;
     margin: 0 auto;
-    padding: 0 120px;
+    padding: 0 40px;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
 
-  .navbar-logo {
-    text-decoration: none;
-    .logo-text {
-      font-size: 22px;
-      font-weight: 700;
-      color: #00C2D4;
-      letter-spacing: 2px;
-      align-self: center;
+  /* --- BÊN TRÁI --- */
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 48px; /* Trả lại gap rộng rãi cho bên trái */
+
+    .navbar-logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .category-dropdown {
+      position: relative;
+      height: 64px;
+      display: flex;
+      align-items: center;
+
+      .dropdown-trigger {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #c9cef7;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: color 0.2s;
+
+        i { font-size: 20px; }
+        .arrow-icon { font-size: 14px; transition: transform 0.2s; }
+        &:hover { color: #00C2D4; }
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: #FFFFFF;
+        min-width: 240px;
+        list-style: none;
+        margin: 0;
+        padding: 8px 0;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px);
+        transition: all 0.2s ease-in-out;
+
+        li a {
+          display: block;
+          padding: 12px 20px;
+          color: #0F172A;
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 500;
+          &:hover { background: #F8FAFC; color: #00C2D4; }
+        }
+      }
+
+      &:hover {
+        .dropdown-trigger { color: #00C2D4; }
+        .arrow-icon { transform: rotate(180deg); }
+        .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+      }
     }
   }
 
-  .navbar-menu {
+  /* --- BÊN GIỮA: Thanh lời chào động --- */
+  .nav-center.greeting-wrapper {
+    flex: 1;
+    max-width: 650px;
+    margin: 0 24px;
+    position: relative;
+    height: 40px;
     display: flex;
-    list-style: none;
-    gap: 32px;
-    margin: 0;
-    padding: 0;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1) !important; /* Nền kính mờ nhẹ nhàng */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    overflow: hidden; 
+    cursor: default;
+    transition: all 0.3s ease; /* Lệnh tạo độ mượt 0.3 giây khi đổi màu */
 
-    li a {
+    .greeting-text {
+      color: #c9cef7 !important; /* Chữ xám bạc sang trọng, không bị chói */
+      font-size: 14px;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      font-weight: 500;
+      z-index: 2;
+      text-align: center;
+      white-space: nowrap;
+      transition: all 0.3s ease; /* Tạo độ mượt cho chữ */
+      
+      strong {
+        color: #00C2D4 !important; /* Tên màu xanh ngọc đặc trưng của VISTA */
+        font-weight: 700;
+        transition: all 0.3s ease;
+      }
+    }
+
+    /* 🔥 HIỆU ỨNG KHI ĐƯA CHUỘT VÀO KHUNG (HOVER) 🔥 */
+    &:hover {
+      background: rgba(0, 194, 212, 0.15) !important; /* Khung bừng sáng màu xanh ngọc mờ */
+      border-color: rgba(0, 194, 212, 0.4);
+      box-shadow: 0 0 15px rgba(0, 194, 212, 0.2);
+
+      .greeting-text {
+        color: #FFFFFF !important; /* Chữ chuyển sang trắng tinh phát sáng */
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+        
+        strong {
+          color: #e7d67a !important; /* Tên khách hàng đổi sang VÀNG GOLD cực VIP */
+          text-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+          transform: scale(1.05); /* Tên hơi phóng to nhẹ lên một chút */
+          display: inline-block;
+        }
+      }
+    }
+
+    /* --- CÁNH HOA BAY --- */
+    .petals-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+
+      .petal {
+        position: absolute;
+        top: -20px;
+        animation: falling-petals 3s infinite linear;
+        
+        &:nth-child(1) { left: 15%; animation-delay: 0s; font-size: 14px; }
+        &:nth-child(2) { left: 45%; animation-delay: 1.2s; font-size: 10px; }
+        &:nth-child(3) { left: 75%; animation-delay: 2s; font-size: 15px; }
+        &:nth-child(4) { left: 88%; animation-delay: 0.5s; font-size: 12px; }
+      }
+    }
+  }
+
+
+  /* --- BÊN PHẢI --- */
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       color: #c9cef7;
       text-decoration: none;
       font-size: 14px;
       font-weight: 500;
       transition: color 0.2s;
+      i { font-size: 22px; }
+      &:hover { color: #00C2D4; }
+    }
+
+    /* Đưa CSS Nút AI Assistant sang bên phải */
+    .ai-assistant-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #00C2D4; 
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: rgba(0, 194, 212, 0.08); 
+      border: 1px solid rgba(0, 194, 212, 0.2);
+      transition: all 0.2s ease-in-out;
+      margin-left: 8px; /* Đẩy ra xa một chút so với nút Đăng nhập */
+
+      i { font-size: 18px; }
 
       &:hover {
-        color: #00C2D4;
-      }
-      &:hover {
-        opacity: 0.8;
+        background: rgba(0, 194, 212, 0.18);
+        transform: translateY(-1px);
+        box-shadow: 0 0 10px rgba(0, 194, 212, 0.3);
       }
     }
   }
+}
 
-  .navbar-icons {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-
-    .icon-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 20px;
-      color: #94A3B8;
-      text-decoration: none;
-      transition: opacity 0.2s;
-
-      &:hover {
-        color: #00C2D4;
-      }
-
-      &:hover {
-        opacity: 0.8;
-      }
-    }
+/* HIỆU ỨNG CÁNH HOA RƠI */
+@keyframes falling-petals {
+  0% {
+    top: -15px;
+    opacity: 1; 
+    transform: translateX(0) rotate(0deg);
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    top: 45px; 
+    opacity: 0;
+    transform: translateX(30px) rotate(360deg);
   }
 }
