@@ -10,9 +10,11 @@ import { Profile } from './pages/profile/profile';
 import { VerifyCode } from './pages/verify-code/verify-code'; // <-- Thêm dòng này
 import { ResetPassword } from './pages/reset-password/reset-password'; // <-- Thêm dòng này
 import { AuthGuard } from './guards/auth-guard';
+import {Cart} from "./pages/cart/cart";
 
 export const routes: Routes = [
   { path: 'profile', component: Profile, canActivate: [AuthGuard] },
+  { path: 'cart', component: Cart },
   { path: '', component: Home },
   { path: 'products', component: ProductList },
   { path: 'products/:id', component: ProductDetail },
