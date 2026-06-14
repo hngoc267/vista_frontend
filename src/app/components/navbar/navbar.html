@@ -39,8 +39,11 @@
     </div>
 
     <div class="nav-right">
-      <a routerLink="/cart" class="action-btn">
-        <i class="ph ph-shopping-cart"></i>
+      <a routerLink="/cart" class="action-btn cart-action">
+        <span class="cart-icon-wrap">
+          <i class="ph ph-shopping-cart"></i>
+          <span class="cart-badge" *ngIf="cartCount > 0">{{ cartCount }}</span>
+        </span>
         <span>Giỏ hàng</span>
       </a>
 

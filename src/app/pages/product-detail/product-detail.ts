@@ -2,6 +2,9 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { ProductService } from '../../services/product';
+import { CartService } from '../../services/cart';
+import { CartStateService } from '../../services/cart-state.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-product-detail',
@@ -27,6 +30,8 @@ export class ProductDetail implements OnInit {
 
   constructor(
     private productService: ProductService,
+    private cartService: CartService,
+    private cartState: CartStateService,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) {}
@@ -75,7 +80,60 @@ export class ProductDetail implements OnInit {
   }
 
   changeQuantity(delta: number) {
-    this.quantity = Math.max(1, this.quantity + delta);
+    const nextQuantity = Math.max(1, this.quantity + delta);
+    const maxStock = Number(this.selectedVariant?.Stock_quantity || 0);
+
+    if (maxStock > 0 && nextQuantity > maxStock) {
+      return;
+    }
+
+    this.quantity = nextQuantity;
+  }
+
+  addToCart() {
+    const userId = this.cartService.getCurrentUserId();
+    if (!userId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Vui lòng đăng nhập',
+        text: 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.',
+        confirmButtonColor: '#2563B0'
+      });
+      return;
+    }
+
+    const variantId = this.selectedVariant?.Product_variant_id || this.variants[0]?.Product_variant_id;
+    if (!variantId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Chưa chọn phiên bản',
+        text: 'Vui lòng chọn một phiên bản sản phẩm trước khi thêm vào giỏ hàng.',
+        confirmButtonColor: '#2563B0'
+      });
+      return;
+    }
+
+    this.cartService.addToCart(userId, variantId, this.quantity).subscribe({
+      next: (res) => {
+        const totalProducts = res.data?.cart?.Total_product ?? this.cartState.getTotalQuantity(res.data?.items || []);
+        this.cartState.setCount(totalProducts);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Đã thêm vào giỏ hàng',
+          text: 'Sản phẩm đã được cập nhật vào giỏ hàng của bạn.',
+          confirmButtonColor: '#2563B0'
+        });
+      },
+      error: (err) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Không thể thêm vào giỏ hàng',
+          text: err.error?.message || 'Vui lòng thử lại sau.',
+          confirmButtonColor: '#2563B0'
+        });
+      }
+    });
   }
 
   setTab(tab: string) {

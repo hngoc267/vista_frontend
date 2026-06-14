@@ -1,0 +1,157 @@
+<div class="cart-page">
+  <div class="breadcrumb-bar">
+    <div class="section-container">
+      <a routerLink="/">Trang chủ</a>
+      <span class="sep">›</span>
+      <span class="current">Giỏ hàng</span>
+    </div>
+  </div>
+
+  <div class="cart-shell">
+    <div class="page-head">
+      <h1>Giỏ hàng của bạn</h1>
+
+      <a class="continue-link" routerLink="/products">
+        <i class="ph ph-arrow-left"></i>
+        <span>Tiếp tục mua sắm</span>
+      </a>
+    </div>
+
+    <div class="cart-layout">
+      <section class="cart-main">
+        <div class="selection-bar">
+          <label class="select-all">
+            <input
+              #selectAllCheckbox
+              type="checkbox"
+              [checked]="isAllSelected()"
+              (change)="toggleAll(selectAllCheckbox.checked)"
+            />
+            <span>Chọn tất cả ({{ itemCount }} sản phẩm)</span>
+          </label>
+
+          <button
+            class="remove-selected"
+            type="button"
+            (click)="removeSelected()"
+            [disabled]="selectedItemsCount === 0"
+          >
+            Xóa đã chọn
+          </button>
+        </div>
+
+        <div class="item-list" *ngIf="items.length > 0; else emptyState">
+          <article
+            class="item-card"
+            *ngFor="let item of items; trackBy: trackByItemId"
+            [class.is-selected]="item.selected"
+          >
+            <label class="item-check">
+              <input
+                #itemCheckbox
+                type="checkbox"
+                [checked]="item.selected"
+                (change)="toggleItem(item, itemCheckbox.checked)"
+              />
+            </label>
+
+            <div class="item-media">
+              <img [src]="item.img" [alt]="item.name" />
+            </div>
+
+            <div class="item-content">
+              <h2 class="item-name">{{ item.name }}</h2>
+              <p class="item-specs">{{ item.specs }}</p>
+              <span class="stock-pill">Còn {{ item.stock }} sp</span>
+            </div>
+
+            <div class="item-price unit-price">
+              {{ formatPrice(item.price) }}
+            </div>
+
+            <div class="qty-control">
+              <button
+                type="button"
+                class="qty-btn"
+                (click)="changeQuantity(item, -1)"
+                [attr.aria-label]="'Giảm số lượng ' + item.name"
+              >
+                <i class="ph ph-minus"></i>
+              </button>
+              <span class="qty-value">{{ item.qty }}</span>
+              <button
+                type="button"
+                class="qty-btn"
+                (click)="changeQuantity(item, 1)"
+                [attr.aria-label]="'Tăng số lượng ' + item.name"
+              >
+                <i class="ph ph-plus"></i>
+              </button>
+            </div>
+
+            <div class="item-price line-total">
+              {{ formatPrice(lineTotal(item)) }}
+            </div>
+
+            <button
+              class="remove-btn"
+              type="button"
+              (click)="removeItem(item)"
+              aria-label="Xóa sản phẩm"
+            >
+              <i class="ph ph-trash"></i>
+            </button>
+          </article>
+        </div>
+
+        <ng-template #emptyState>
+          <div class="empty-state">
+            <div class="empty-icon">
+              <i class="ph ph-shopping-cart"></i>
+            </div>
+            <h2>Giỏ hàng đang trống</h2>
+            <p>Hãy thêm một vài sản phẩm để bắt đầu đặt hàng.</p>
+            <a routerLink="/products" class="empty-action">Khám phá sản phẩm</a>
+          </div>
+        </ng-template>
+      </section>
+
+      <aside class="summary-panel">
+        <div class="summary-card">
+          <div class="summary-header">
+            <div class="summary-icon">
+              <i class="ph ph-clipboard-text"></i>
+            </div>
+            <h2>Tóm tắt đơn hàng</h2>
+          </div>
+
+          <div class="summary-row">
+            <span>Sản phẩm đã chọn</span>
+            <strong>{{ selectedItemsCount }} sản phẩm</strong>
+          </div>
+
+          <div class="summary-row">
+            <span>Tạm tính</span>
+            <strong>{{ formatPrice(subtotal()) }}</strong>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-total-row">
+            <span>Tổng thanh toán</span>
+            <strong>{{ formatPrice(grandTotal) }}</strong>
+          </div>
+
+          <button class="checkout-btn" type="button" [disabled]="selectedItemsCount === 0">
+            Đặt mua
+          </button>
+
+          <p class="summary-note">
+            <i class="ph ph-lock"></i>
+            Thanh toán an toàn &amp; bảo mật
+          </p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>

@@ -180,6 +180,36 @@
       &:hover { color: #00C2D4; }
     }
 
+    .cart-action {
+      .cart-icon-wrap {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .cart-badge {
+        position: absolute;
+        top: -7px;
+        right: -10px;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 4px;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+        pointer-events: none;
+      }
+    }
+
     /* Đưa CSS Nút AI Assistant sang bên phải */
     .ai-assistant-btn {
       display: flex;
