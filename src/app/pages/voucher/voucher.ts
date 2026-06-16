@@ -28,6 +28,7 @@ interface VoucherResponse {
 
 @Component({
   selector: 'app-voucher',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './voucher.html',
   styleUrl: './voucher.scss',
