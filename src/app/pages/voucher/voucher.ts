@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { VoucherService } from '../../services/voucher';
 
 type VoucherTab = 'all' | 'freeship' | 'discount' | 'used' | 'expiring';
@@ -12,13 +12,18 @@ interface VoucherItem {
   category: 'freeship' | 'discount';
   status: 'available' | 'used' | 'expiring';
   expiry?: string;
-  expiresInDays?: number;
+  daysLeft?: number | null;
   description: string;
   benefits: string[];
   conditions: string[];
   startDate: string;
   usageLimit: string;
   statusText: string;
+}
+
+interface VoucherResponse {
+  success: boolean;
+  data: VoucherItem[];
 }
 
 @Component({
@@ -32,6 +37,8 @@ export class Voucher implements OnInit {
   activeTab: VoucherTab = 'all';
   copyMessage = '';
   selectedVoucher: VoucherItem | null = null;
+  vouchers: VoucherItem[] = [];
+  isLoading = false;
 
   tabs: { key: VoucherTab; label: string }[] = [
     { key: 'all', label: 'Tất cả' },
@@ -41,32 +48,49 @@ export class Voucher implements OnInit {
     { key: 'expiring', label: 'Sắp hết hạn' },
   ];
 
-  // Khai báo mảng rỗng, đợi API trả dữ liệu về
-  vouchers: VoucherItem[] = [];
-
   constructor(
     private voucherService: VoucherService,
     private cdr: ChangeDetectorRef
   ) {}
 
-  // Vừa vào trang là gọi API liền
   ngOnInit(): void {
-    this.voucherService.getAllVouchers().subscribe({
-      next: (res) => {
-        if (res.success) {
-          this.vouchers = res.data;
-          this.cdr.detectChanges(); // Báo cho giao diện cập nhật
-        }
+    this.activeTab = 'all';
+    this.loadVouchers();
+  }
+
+  loadVouchers(): void {
+    this.isLoading = true;
+
+    this.voucherService.getMyVouchers().subscribe({
+      next: (res: VoucherResponse) => {
+        this.vouchers = [...(res.data || [])];
+        this.activeTab = 'all';
+        this.isLoading = false;
+        this.cdr.detectChanges();
       },
-      error: (err) => console.error('Lỗi khi lấy voucher từ API:', err)
+      error: (err: unknown) => {
+        console.error('Không thể tải voucher:', err);
+        this.vouchers = [];
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
     });
   }
 
   get filteredVouchers(): VoucherItem[] {
-    if (this.activeTab === 'all') return this.vouchers;
-    if (this.activeTab === 'used') return this.vouchers.filter(voucher => voucher.status === 'used');
-    if (this.activeTab === 'expiring') return this.vouchers.filter(voucher => voucher.status === 'expiring');
-    return this.vouchers.filter(voucher => voucher.category === this.activeTab);
+    if (this.activeTab === 'all') {
+      return this.vouchers;
+    }
+
+    if (this.activeTab === 'used') {
+      return this.vouchers.filter((voucher: VoucherItem) => voucher.status === 'used');
+    }
+
+    if (this.activeTab === 'expiring') {
+      return this.vouchers.filter((voucher: VoucherItem) => voucher.status === 'expiring');
+    }
+
+    return this.vouchers.filter((voucher: VoucherItem) => voucher.category === this.activeTab);
   }
 
   setTab(tab: VoucherTab): void {
@@ -74,22 +98,11 @@ export class Voucher implements OnInit {
   }
 
   getDaysLeft(voucher: VoucherItem): number {
-    return voucher.expiresInDays ?? 0;
+    return voucher.daysLeft ?? 0;
   }
 
   getExpiryDate(voucher: VoucherItem): string {
-    if (voucher.expiresInDays !== undefined) {
-      const date = new Date();
-      date.setDate(date.getDate() + voucher.expiresInDays);
-
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-
-      return `${day}/${month}/${year}`;
-    }
-
-    return voucher.expiry ?? '';
+    return voucher.expiry || '';
   }
 
   copyCode(code: string): void {
@@ -98,6 +111,7 @@ export class Voucher implements OnInit {
 
       setTimeout(() => {
         this.copyMessage = '';
+        this.cdr.detectChanges();
       }, 1800);
     });
   }
