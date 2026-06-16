@@ -11,10 +11,12 @@ import { VerifyCode } from './pages/verify-code/verify-code'; // <-- Thêm dòng
 import { ResetPassword } from './pages/reset-password/reset-password'; // <-- Thêm dòng này
 import { AuthGuard } from './guards/auth-guard';
 import {Cart} from "./pages/cart/cart";
+import { Voucher } from './pages/voucher/voucher';
 
 export const routes: Routes = [
   { path: 'profile', component: Profile, canActivate: [AuthGuard] },
   { path: 'cart', component: Cart },
+  { path: 'voucher', component: Voucher },
   { path: '', component: Home },
   { path: 'products', component: ProductList },
   { path: 'products/:id', component: ProductDetail },
