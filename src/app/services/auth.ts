@@ -86,7 +86,15 @@ export class AuthService {
 
   // Cập nhật hồ sơ
   updateProfile(data: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/auth/profile`, data, { headers: this.getAuthHeaders() });
+    return this.http.put(`${this.apiUrl}/auth/profile`, data, { headers: this.getAuthHeaders() }).pipe(
+      tap((res: any) => {
+        if (res.success) {
+          // Khi API báo thành công, Service sẽ tự động cập nhật ổ cứng và hô to cho Navbar biết
+          localStorage.setItem('user', JSON.stringify(res.data));
+          this.currentUserSubject.next(res.data);
+        }
+      })
+    );
   }
 
   // Đổi mật khẩu

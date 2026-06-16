@@ -26,7 +26,7 @@
     <div class="nav-center greeting-wrapper">
       <div class="greeting-text">
         <span *ngIf="isLoggedIn">
-          ✨ Xin chào <strong>{{ userName }}</strong>, hãy khám phá thiết bị hoàn hảo dành cho bạn cùng VISTA nhé! ✨
+          ✨ <strong>{{ userName }}</strong> ơi, khám phá thiết bị hoàn hảo cùng VISTA nhé! ✨
         </span>
       </div>
       
@@ -53,16 +53,21 @@
       </a>
       
       <div *ngIf="isLoggedIn" class="profile-dropdown">
-      <a routerLink="/profile" class="action-btn profile-trigger">
-        <i class="ph ph-user"></i>
-        <span>Hồ sơ</span>
-      </a>
+        <a class="action-btn profile-trigger" style="cursor: pointer;">
+          <i class="ph ph-user"></i>
+          <span>{{ userName || 'Tài khoản' }}</span>
+          <i class="ph ph-caret-down" style="font-size: 12px; margin-left: 2px;"></i>
+        </a>
 
-  <ul class="profile-menu">
-      <li>
-        <a routerLink="/voucher">Mã giảm giá của tôi</a>
-      </li>
-      </ul>
+        <ul class="profile-menu">
+          <li>
+            <a routerLink="/profile">Hồ sơ cá nhân</a>
+          </li>
+          <li>
+            <a routerLink="/voucher">Mã giảm giá của tôi</a>
+          </li>
+          
+          </ul>
       </div>
 
       <a href="#" class="action-btn">
