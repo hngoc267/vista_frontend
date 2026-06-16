@@ -52,10 +52,18 @@
         <span>Đăng nhập</span>
       </a>
       
-      <a *ngIf="isLoggedIn" routerLink="/profile" class="action-btn">
+      <div *ngIf="isLoggedIn" class="profile-dropdown">
+      <a routerLink="/profile" class="action-btn profile-trigger">
         <i class="ph ph-user"></i>
         <span>Hồ sơ</span>
       </a>
+
+  <ul class="profile-menu">
+      <li>
+        <a routerLink="/voucher">Voucher của tôi</a>
+      </li>
+      </ul>
+      </div>
 
       <a href="#" class="action-btn">
         <i class="ph ph-robot"></i>
