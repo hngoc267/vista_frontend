@@ -35,17 +35,11 @@
         </div>
 
         <div class="voucher-right">
-          <span
-            *ngIf="voucher.status === 'expiring'"
-            class="expiry-badge"
-          >
-            Còn {{ voucher.daysLeft }} ngày
+          <span *ngIf="voucher.status === 'expiring'" class="expiry-badge">
+            Còn {{ getDaysLeft(voucher) }} ngày
           </span>
 
-          <span
-            *ngIf="voucher.status === 'used'"
-            class="used-badge"
-          >
+          <span *ngIf="voucher.status === 'used'" class="used-badge">
             Đã sử dụng
           </span>
 
@@ -70,10 +64,16 @@
 
           <div class="voucher-date">
             <i class="ph ph-calendar-blank"></i>
-            <span>HSD: {{ voucher.expiry }}</span>
+            <span>HSD: {{ getExpiryDate(voucher) }}</span>
           </div>
 
-          <button type="button" class="detail-btn">Chi tiết</button>
+          <button
+            type="button"
+            class="detail-btn"
+            (click)="openVoucherDetail(voucher)"
+          >
+            Chi tiết
+          </button>
         </div>
       </article>
     </div>
@@ -88,5 +88,64 @@
 
   <div class="copy-toast" *ngIf="copyMessage">
     {{ copyMessage }}
+  </div>
+
+  <div
+    class="voucher-modal-backdrop"
+    *ngIf="selectedVoucher"
+    (click)="closeVoucherDetail()"
+  >
+    <div class="voucher-modal" (click)="$event.stopPropagation()">
+      <button
+        type="button"
+        class="modal-close-btn"
+        (click)="closeVoucherDetail()"
+        aria-label="Đóng"
+      >
+        <i class="ph ph-x"></i>
+      </button>
+
+      <h2>{{ selectedVoucher.title }}</h2>
+      <p class="modal-description">{{ selectedVoucher.description }}</p>
+
+      <div class="modal-code">
+        <span>Mã voucher:</span>
+        <strong>{{ selectedVoucher.code }}</strong>
+      </div>
+
+      <div class="modal-section">
+        <h3>Ưu đãi</h3>
+        <ul>
+          <li *ngFor="let benefit of selectedVoucher.benefits">
+            {{ benefit }}
+          </li>
+        </ul>
+      </div>
+
+      <div class="modal-section">
+        <h3>Điều kiện áp dụng</h3>
+        <ul>
+          <li *ngFor="let condition of selectedVoucher.conditions">
+            {{ condition }}
+          </li>
+        </ul>
+      </div>
+
+      <div class="modal-section">
+        <h3>Thời gian áp dụng</h3>
+        <p>Từ: {{ selectedVoucher.startDate }}</p>
+        <p>Đến: {{ getExpiryDate(selectedVoucher) }}</p>
+      </div>
+
+      <div class="modal-section">
+        <h3>Lượt sử dụng</h3>
+        <p>{{ selectedVoucher.usageLimit }}</p>
+      </div>
+
+      <div class="modal-section">
+        <h3>Trạng thái</h3>
+        <p>{{ selectedVoucher.statusText }}</p>
+      </div>
+    </div>
   </div>
 </section>
