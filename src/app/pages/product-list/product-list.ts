@@ -220,7 +220,7 @@ export class ProductList implements OnInit {
   }
 
   getCategoryName(): string {
-    if (this.filters.isFlashSale === 'true') return 'Flash Sale';
+    if (this.filters.isFlashSale === 'true') return 'Ưu đãi';
     if (this.filters.isAI === 'true') return 'AI Gợi ý cho bạn';
     if (this.filters.isNew === 'true') return 'Sản phẩm mới nhất';
     if (!this.filters.category) return 'Tất cả sản phẩm';

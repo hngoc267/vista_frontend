@@ -1,0 +1,92 @@
+<section class="voucher-page">
+  <div class="voucher-container">
+    <h1>Mã giảm giá của tôi</h1>
+
+    <div class="voucher-tabs">
+      <button
+        *ngFor="let tab of tabs"
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab === tab.key"
+        (click)="setTab(tab.key)"
+      >
+        {{ tab.label }}
+      </button>
+    </div>
+
+    <div class="voucher-list" *ngIf="filteredVouchers.length > 0; else emptyVoucher">
+      <article
+        *ngFor="let voucher of filteredVouchers"
+        class="voucher-card"
+        [class.used]="voucher.status === 'used'"
+      >
+        <div class="voucher-left" [class.shipping]="voucher.type === 'shipping'">
+          <div class="stamp-edge"></div>
+
+          <div class="voucher-icon">
+            <i *ngIf="voucher.type === 'percent'" class="ph ph-percent"></i>
+            <i *ngIf="voucher.type === 'shipping'" class="ph ph-truck"></i>
+          </div>
+
+          <div class="voucher-info">
+            <h2>{{ voucher.title }}</h2>
+            <p>{{ voucher.condition }}</p>
+          </div>
+        </div>
+
+        <div class="voucher-right">
+          <span
+            *ngIf="voucher.status === 'expiring'"
+            class="expiry-badge"
+          >
+            Còn {{ voucher.daysLeft }} ngày
+          </span>
+
+          <span
+            *ngIf="voucher.status === 'used'"
+            class="used-badge"
+          >
+            Đã sử dụng
+          </span>
+
+          <div class="voucher-code-row">
+            <span class="code-label">Mã</span>
+
+            <div class="code-box">
+              <span>{{ voucher.code }}</span>
+
+              <button
+                type="button"
+                class="copy-btn"
+                (click)="copyCode(voucher.code)"
+                title="Sao chép mã"
+              >
+                <i class="ph ph-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <span class="voucher-type">Toàn bộ sản phẩm</span>
+
+          <div class="voucher-date">
+            <i class="ph ph-calendar-blank"></i>
+            <span>HSD: {{ voucher.expiry }}</span>
+          </div>
+
+          <button type="button" class="detail-btn">Chi tiết</button>
+        </div>
+      </article>
+    </div>
+
+    <ng-template #emptyVoucher>
+      <div class="empty-voucher">
+        <i class="ph ph-ticket"></i>
+        <p>Không có voucher phù hợp</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <div class="copy-toast" *ngIf="copyMessage">
+    {{ copyMessage }}
+  </div>
+</section>
