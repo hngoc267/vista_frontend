@@ -35,7 +35,7 @@
         </div>
 
         <div class="voucher-right">
-          <span *ngIf="voucher.status === 'expiring'" class="expiry-badge">
+          <span *ngIf="voucher.status === 'expiring' && getDaysLeft(voucher) > 0" class="expiry-badge">
             Còn {{ getDaysLeft(voucher) }} ngày
           </span>
 
@@ -64,7 +64,7 @@
 
           <div class="voucher-date">
             <i class="ph ph-calendar-blank"></i>
-            <span>HSD: {{ getExpiryDate(voucher) }}</span>
+            <span>HSD: {{ getExpiryDate(voucher) || 'Chưa cập nhật' }}</span>
           </div>
 
           <button
