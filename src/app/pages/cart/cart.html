@@ -142,7 +142,12 @@
             <strong>{{ formatPrice(grandTotal) }}</strong>
           </div>
 
-          <button class="checkout-btn" type="button" [disabled]="selectedItemsCount === 0">
+          <button
+            class="checkout-btn"
+            type="button"
+            (click)="checkout()"
+            [disabled]="selectedItemsCount === 0"
+          >
             Đặt mua
           </button>
 

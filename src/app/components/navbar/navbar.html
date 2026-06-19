@@ -13,12 +13,11 @@
           <i class="ph ph-caret-down arrow-icon"></i>
         </div>
         <ul class="dropdown-menu">
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_001'}">Laptop</a></li>
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_002'}">Smartphone</a></li>
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_003'}">Tablet</a></li>
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_004'}">Thiết bị âm thanh</a></li>
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_005'}">Phụ kiện công nghệ</a></li>
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_006'}">Thiết bị Gaming</a></li>
+          <li *ngFor="let category of categories">
+            <a routerLink="/products" [queryParams]="{category: category.Category_id}">
+              {{ category.Category_name }}
+            </a>
+          </li>
         </ul>
       </div>
     </div>
@@ -61,10 +60,22 @@
 
         <ul class="profile-menu">
           <li>
-            <a routerLink="/profile">Hồ sơ cá nhân</a>
+            <a routerLink="/profile">
+              <i class="ph ph-user-circle"></i>
+              <span>Hồ sơ cá nhân</span>
+            </a>
           </li>
           <li>
-            <a routerLink="/voucher">Mã giảm giá của tôi</a>
+            <a routerLink="/order">
+              <i class="ph ph-receipt"></i>
+              <span>Đơn hàng của tôi</span>
+            </a>
+          </li>
+          <li>
+            <a routerLink="/voucher">
+              <i class="ph ph-ticket"></i>
+              <span>Mã giảm giá của tôi</span>
+            </a>
           </li>
           
           </ul>

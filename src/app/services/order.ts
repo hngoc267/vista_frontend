@@ -1,0 +1,157 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+
+export interface AddressItem {
+  Address_id: string;
+  User_id: string;
+  Receiver_name: string;
+  Receiver_phone: string;
+  Province: string;
+  District: string;
+  Ward: string;
+  Specific_address: string;
+  Is_default: boolean;
+  Email?: string;
+}
+
+export interface VietnamWard {
+  code: number;
+  name: string;
+}
+
+export interface VietnamDistrict {
+  code: number;
+  name: string;
+  wards: VietnamWard[];
+}
+
+export interface VietnamProvince {
+  code: number;
+  name: string;
+  districts: VietnamDistrict[];
+}
+
+export interface VoucherItem {
+  code?: string;
+  title?: string;
+  condition?: string;
+  type?: 'percent' | 'shipping' | 'fixed' | string;
+  category?: string;
+  status?: string;
+  expiry?: string;
+  daysLeft?: number | null;
+  description?: string;
+  benefits?: string[];
+  conditions?: string[];
+  minOrderValue?: number;
+  maxDiscountAmount?: number;
+  discountValue?: number;
+  startDate?: string;
+  endDate?: string;
+  usageLimit?: number;
+  statusText?: string;
+}
+
+export interface VoucherListResponse {
+  success: boolean;
+  data: VoucherItem[];
+}
+
+export interface ApplyVoucherResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    voucherId?: string;
+    discountAmount?: number;
+    shippingDiscount?: number;
+  };
+}
+
+export interface CreateOrderPayload {
+  order: {
+    Order_id: string;
+    User_id: string;
+    Voucher_id: string | null;
+    Total_items_price: number;
+    Discount_amount: number;
+    Total_amount: number;
+    Order_notes: string;
+    Created_at: string;
+  };
+  orderDetails: {
+    Order_detail_id: string;
+    Product_variant_id: string;
+    Order_id: string;
+    Variant_name: string;
+    Price: number;
+    Quantity: number;
+    Total_price: number;
+  }[];
+  address: AddressItem;
+  delivery: {
+    Delivery_id: string;
+    Order_id: string;
+    Shipping_partner: string;
+    Tracking_number: string;
+    Shipping_fee: number;
+    Estimated_delivery_date: string;
+    Status: 'pending' | 'shipping' | 'delivered' | 'failed';
+  };
+  payment: {
+    Payment_id: string;
+    Order_id: string;
+    Payment_type: 'BankTransfer' | 'COD';
+    Payment_status: 'pending' | 'paid' | 'failed';
+  };
+  cartItemIds: string[];
+}
+
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
+
+@Injectable({
+  providedIn: 'root',
+})
+export class OrderService {
+  private readonly apiUrl = environment.apiUrl;
+  private readonly provincesUrl = 'https://provinces.open-api.vn/api/?depth=3';
+
+  constructor(private http: HttpClient) {}
+
+  getVietnamLocations(): Observable<VietnamProvince[]> {
+    return this.http.get<VietnamProvince[]>(this.provincesUrl);
+  }
+
+  getUserAddresses(userId: string): Observable<ApiResponse<AddressItem[]>> {
+    return this.http.get<ApiResponse<AddressItem[]>>(
+      `${this.apiUrl}/addresses/${encodeURIComponent(userId)}`
+    );
+  }
+
+  getAvailableVouchers(): Observable<VoucherListResponse> {
+    return this.http.get<VoucherListResponse>(`${this.apiUrl}/vouchers/my-vouchers`);
+  }
+
+  applyVoucher(payload: {
+    voucherCode: string;
+    totalItemsPrice: number;
+    shippingFee: number;
+  }): Observable<ApplyVoucherResponse> {
+    return this.http.post<ApplyVoucherResponse>(`${this.apiUrl}/vouchers/apply`, payload);
+  }
+
+  createOrder(payload: CreateOrderPayload): Observable<ApiResponse<{ orderId: string }>> {
+    return this.http.post<ApiResponse<{ orderId: string }>>(`${this.apiUrl}/orders`, payload);
+  }
+
+  checkPaymentStatus(paymentId: string): Observable<ApiResponse<{ paymentStatus: 'pending' | 'paid' | 'failed' }>> {
+    return this.http.get<ApiResponse<{ paymentStatus: 'pending' | 'paid' | 'failed' }>>(
+      `${this.apiUrl}/payments/${encodeURIComponent(paymentId)}/status`
+    );
+  }
+}

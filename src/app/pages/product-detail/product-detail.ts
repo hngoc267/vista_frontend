@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../services/product';
 import { CartService } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
@@ -33,6 +33,7 @@ export class ProductDetail implements OnInit {
     private cartService: CartService,
     private cartState: CartStateService,
     private route: ActivatedRoute,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -134,6 +135,52 @@ export class ProductDetail implements OnInit {
         });
       }
     });
+  }
+
+  buyNow(): void {
+    const userId = this.cartService.getCurrentUserId();
+    if (!userId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Vui lòng đăng nhập',
+        text: 'Bạn cần đăng nhập để đặt mua sản phẩm.',
+        confirmButtonColor: '#2563B0'
+      });
+      return;
+    }
+
+    const variant = this.selectedVariant || this.variants[0];
+    if (!variant?.Product_variant_id) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Chưa chọn phiên bản',
+        text: 'Vui lòng chọn một phiên bản sản phẩm trước khi mua.',
+        confirmButtonColor: '#2563B0'
+      });
+      return;
+    }
+
+    const checkoutItem = {
+      cartItemId: '',
+      productVariantId: variant.Product_variant_id,
+      productId: this.product?.Product_id || null,
+      name: this.product?.Product_name || 'Sản phẩm VISTA',
+      variantName: variant.Variant_name || '',
+      specs: variant.Variant_name || '',
+      image: this.product?.Images?.[0] || '',
+      price: this.getFinalPrice(Number(variant.Price) || 0, Number(this.product?.Discount) || 0),
+      quantity: this.quantity,
+      stock: Number(variant.Stock_quantity) || 0,
+      variantOptions: this.variants.map((item) => ({
+        productVariantId: item.Product_variant_id,
+        variantName: item.Variant_name,
+        price: this.getFinalPrice(Number(item.Price) || 0, Number(this.product?.Discount) || 0),
+        stock: Number(item.Stock_quantity) || 0,
+      })),
+    };
+
+    sessionStorage.setItem('vista_checkout_items', JSON.stringify([checkoutItem]));
+    this.router.navigate(['/order']);
   }
 
   setTab(tab: string) {

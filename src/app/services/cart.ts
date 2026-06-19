@@ -10,6 +10,13 @@ export interface CartApiSummary {
   Total_price: number;
 }
 
+export interface CartApiVariantOption {
+  productVariantId: string;
+  variantName: string;
+  price: number;
+  stock: number;
+}
+
 export interface CartApiItem {
   cartItemId: string;
   cartId: string;
@@ -23,6 +30,7 @@ export interface CartApiItem {
   quantity: number;
   stockQuantity: number;
   lineTotal: number;
+  variantOptions: CartApiVariantOption[];
 }
 
 export interface CartApiResponse {

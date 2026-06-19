@@ -12,11 +12,13 @@ import { ResetPassword } from './pages/reset-password/reset-password'; // <-- Th
 import { AuthGuard } from './guards/auth-guard';
 import {Cart} from "./pages/cart/cart";
 import { Voucher } from './pages/voucher/voucher';
+import { Order } from './pages/order/order';
 
 export const routes: Routes = [
   { path: 'profile', component: Profile, canActivate: [AuthGuard] },
   { path: 'cart', component: Cart },
   { path: 'voucher', component: Voucher },
+  { path: 'order', component: Order },
   { path: '', component: Home },
   { path: 'products', component: ProductList },
   { path: 'products/:id', component: ProductDetail },
