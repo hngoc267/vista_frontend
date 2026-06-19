@@ -1,0 +1,495 @@
+<div class="order-page">
+  <div class="breadcrumb-bar">
+    <div class="section-container">
+      <a routerLink="/">Trang chủ</a>
+      <span class="sep">›</span>
+      <a routerLink="/cart">Giỏ hàng</a>
+      <span class="sep">›</span>
+      <span class="current">Đặt hàng</span>
+    </div>
+  </div>
+
+  <div class="order-shell" *ngIf="step === 'checkout'">
+    <section class="checkout-card">
+      <div class="card-head">
+        <h2>Thông tin nhận hàng</h2>
+      </div>
+
+      <div class="receiver-summary" [class.is-empty]="!hasReceiverInfo">
+        <i class="ph ph-map-pin"></i>
+        <div>
+          <p>
+            <span>Người nhận: </span>
+            <strong>{{ receiverSummary }}</strong>
+          </p>
+          <p class="address-line" *ngIf="fullAddress; else noAddress">
+            <span>Địa chỉ: </span>
+            <strong>{{ fullAddress }}</strong>
+          </p>
+          <ng-template #noAddress>
+            <p class="address-line muted">Chưa chọn địa chỉ nhận hàng.</p>
+          </ng-template>
+        </div>
+        <button type="button" class="text-link" (click)="openAddressModal()">
+          {{ hasReceiverInfo ? 'Thay đổi' : 'Chọn địa chỉ' }}
+          <i class="ph ph-caret-right"></i>
+        </button>
+      </div>
+    </section>
+
+    <section class="checkout-card">
+      <div class="card-head">
+        <h2>Thông tin sản phẩm</h2>
+      </div>
+
+      <div class="loading-state" *ngIf="isLoading">Đang tải sản phẩm...</div>
+
+      <ng-container *ngIf="!isLoading && items.length > 0; else emptyCheckout">
+        <article class="product-line" *ngFor="let item of items; trackBy: trackByItemId">
+          <div class="product-media">
+            <img [src]="item.image" [alt]="item.name" />
+          </div>
+
+          <div class="product-info">
+            <h3>{{ item.name }}</h3>
+            <label class="variant-control" *ngIf="hasMultipleVariantOptions(item); else singleVariantLine">
+              <select [ngModel]="item.selectedVariantId" (ngModelChange)="changeItemVariant(item, $event)">
+                <option *ngFor="let variant of getVariantOptions(item)" [value]="variant.productVariantId">
+                  {{ variant.variantName }}
+                </option>
+              </select>
+            </label>
+            <ng-template #singleVariantLine>
+              <p class="variant-single-line">{{ displayItemColor(item) }}</p>
+            </ng-template>
+          </div>
+
+          <div class="product-side">
+            <strong>{{ formatPrice(item.price) }}</strong>
+            <div class="quantity-box">
+              <button type="button" (click)="changeQuantity(item, -1)" aria-label="Giảm số lượng">
+                <i class="ph ph-minus"></i>
+              </button>
+              <span>{{ item.quantity }}</span>
+              <button type="button" (click)="changeQuantity(item, 1)" aria-label="Tăng số lượng">
+                <i class="ph ph-plus"></i>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <div class="section-total">
+          <span>Tạm tính ({{ totalQuantity }} sản phẩm):</span>
+          <strong>{{ formatPrice(productSubtotal) }}</strong>
+        </div>
+      </ng-container>
+
+      <ng-template #emptyCheckout>
+        <div class="empty-state">
+          <span class="empty-icon">
+            <i class="ph ph-shopping-cart"></i>
+          </span>
+          <h3>Chưa có sản phẩm để đặt hàng</h3>
+          <p>Hãy thêm một vài sản phẩm để bắt đầu đặt hàng.</p>
+          <a routerLink="/cart">Về giỏ hàng</a>
+        </div>
+      </ng-template>
+    </section>
+
+    <section class="checkout-card">
+      <div class="card-head">
+        <h2>Phương thức vận chuyển</h2>
+      </div>
+
+      <div class="shipping-summary">
+        <div>
+          <p>
+            <span>Đơn vị vận chuyển: </span>
+            <strong>{{ selectedShipping.name }}</strong>
+          </p>
+          <p>
+            <i class="ph ph-truck"></i>
+            {{ shippingEstimateText }}
+          </p>
+          <small>{{ selectedShipping.note }}</small>
+        </div>
+
+        <div class="shipping-price">
+          <strong>{{ selectedShipping.fee === 0 ? 'Miễn Phí' : formatPrice(selectedShipping.fee) }}</strong>
+          <button type="button" class="text-link" (click)="openShippingModal()">
+            Thay đổi
+            <i class="ph ph-caret-right"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="checkout-card">
+      <div class="card-head">
+        <h2>Mã giảm giá</h2>
+      </div>
+
+      <div class="voucher-box">
+        <input
+          type="text"
+          placeholder="Nhập mã giảm giá..."
+          [(ngModel)]="voucherCode"
+          (keyup.enter)="applyVoucher()"
+        />
+        <button type="button" (click)="applyVoucher()" [disabled]="isApplyingVoucher || !voucherCode.trim()">
+          {{ isApplyingVoucher ? 'Đang kiểm tra' : 'Áp dụng' }}
+        </button>
+      </div>
+
+      <div class="voucher-list" *ngIf="availableVouchers.length > 0">
+        <button type="button" *ngFor="let item of availableVouchers" (click)="chooseVoucher(item)">
+          <strong>{{ voucherTitleOf(item) }}</strong>
+          <span>{{ voucherConditionOf(item) }}</span>
+        </button>
+      </div>
+
+      <p class="small-muted" *ngIf="isLoadingVouchers">Đang tải voucher của bạn...</p>
+      <p class="small-muted" *ngIf="!isLoadingVouchers && availableVouchers.length === 0">
+        Chưa có voucher khả dụng.
+      </p>
+
+      <div class="voucher-feedback success" *ngIf="voucher.message">
+        <i class="ph ph-check-circle"></i>
+        <span>{{ voucher.message }}</span>
+        <button type="button" (click)="removeVoucher()">Bỏ mã</button>
+      </div>
+
+      <div class="voucher-feedback error" *ngIf="voucher.error">
+        <i class="ph ph-warning-circle"></i>
+        <span>{{ voucher.error }}</span>
+      </div>
+
+      <div class="price-summary">
+        <div>
+          <span>Tổng tiền hàng:</span>
+          <strong>{{ formatPrice(productSubtotal) }}</strong>
+        </div>
+        <div *ngIf="productDiscount > 0">
+          <span>Giảm giá sản phẩm:</span>
+          <strong>-{{ formatPrice(productDiscount) }}</strong>
+        </div>
+        <div>
+          <span>Phí vận chuyển:</span>
+          <strong>{{ shippingFeeAfterDiscount === 0 ? 'Miễn Phí' : formatPrice(shippingFeeAfterDiscount) }}</strong>
+        </div>
+        <div class="grand-row">
+          <span>Tổng tiền:</span>
+          <strong>{{ formatPrice(grandTotal) }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="checkout-card">
+      <div class="card-head">
+        <h2>Phương thức thanh toán</h2>
+      </div>
+
+      <div class="payment-list">
+        <label class="payment-row" *ngFor="let method of paymentMethods">
+          <input
+            type="radio"
+            name="paymentMethod"
+            [value]="method.id"
+            [ngModel]="selectedPaymentId"
+            (ngModelChange)="selectPayment($event)"
+          />
+          <i [class]="'ph ' + method.icon"></i>
+          <span>
+            <strong>{{ method.label }}</strong>
+            <small>{{ method.description }}</small>
+          </span>
+        </label>
+      </div>
+
+      <label class="note-field">
+        <span>Ghi chú đơn hàng</span>
+        <textarea rows="3" placeholder="Nhập ghi chú cho người bán nếu có..." [(ngModel)]="orderNotes"></textarea>
+      </label>
+    </section>
+
+    <div class="checkout-actions">
+      <p>
+        Nhấn “Đặt mua” đồng nghĩa với việc bạn đồng ý tuân theo
+        <a routerLink="/policy">Điều khoản VISTA</a>.
+      </p>
+      <button type="button" class="primary-btn" (click)="placeOrder()" [disabled]="items.length === 0">
+        Đặt mua
+      </button>
+    </div>
+
+    <p class="form-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  </div>
+
+  <div class="order-shell" *ngIf="step === 'confirm'">
+    <section class="confirm-card">
+      <button type="button" class="close-btn" (click)="backToCheckout()" aria-label="Trở lại">
+        <i class="ph ph-x"></i>
+      </button>
+
+      <h1>Xác nhận đặt hàng</h1>
+
+      <div class="confirm-block">
+        <p>
+          <span class="confirm-label">Thông tin người nhận: </span>
+          <strong>{{ receiverSummary }}</strong>
+        </p>
+        <p>
+          <span class="confirm-label">Địa chỉ nhận hàng: </span>
+          <strong>{{ fullAddress }}</strong>
+        </p>
+      </div>
+
+      <div class="confirm-block product-confirm">
+        <h2 class="confirm-label">Thông tin sản phẩm</h2>
+        <article *ngFor="let item of items; trackBy: trackByItemId">
+          <img [src]="item.image" [alt]="item.name" />
+          <div>
+            <h3>{{ item.name }}</h3>
+            <p>{{ displayItemColor(item) }}</p>
+            <p>x {{ item.quantity }}</p>
+          </div>
+          <strong>{{ formatPrice(lineTotal(item)) }}</strong>
+        </article>
+      </div>
+
+      <div class="confirm-row">
+        <span class="confirm-label">Phương thức vận chuyển: </span>
+        <strong>{{ selectedShipping.name }}</strong>
+        <b>{{ shippingFeeAfterDiscount === 0 ? 'Miễn Phí' : formatPrice(shippingFeeAfterDiscount) }}</b>
+      </div>
+
+      <div class="confirm-row">
+        <span class="confirm-label">Phương thức thanh toán: </span>
+        <strong>{{ selectedPayment.label }}</strong>
+        <b>
+          {{
+            selectedPaymentId === 'bank_transfer'
+              ? (paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chờ thanh toán')
+              : 'Thanh toán khi nhận hàng'
+          }}
+        </b>
+      </div>
+
+      <div class="confirm-total">
+        <div>
+          <span>Tổng tiền thanh toán:</span>
+          <small>Đã gồm VAT và được làm tròn</small>
+        </div>
+        <strong>{{ formatPrice(grandTotal) }}</strong>
+      </div>
+
+      <p class="form-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <div class="confirm-actions">
+        <button type="button" class="outline-btn" (click)="backToCheckout()">Trở lại</button>
+        <button type="button" class="primary-btn" (click)="submitOrder()" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Đang tạo đơn...' : 'Xác nhận đặt hàng' }}
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop success-backdrop" *ngIf="step === 'success'">
+    <section class="success-card">
+      <i class="ph ph-check-circle success-icon"></i>
+      <h1>Đặt hàng thành công!</h1>
+      <p>Đơn hàng đã được ghi nhận.</p>
+      <small *ngIf="createdOrderId">Mã đơn: {{ createdOrderId }}</small>
+      <button type="button" class="success-ok" (click)="closeSuccess()">OK</button>
+    </section>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="isAddressModalOpen">
+  <section class="modal-panel address-modal">
+    <button type="button" class="modal-close" (click)="closeAddressModal()" aria-label="Đóng">
+      <i class="ph ph-x"></i>
+    </button>
+
+    <h1>Thông tin nhận hàng</h1>
+    <div class="modal-divider"></div>
+
+    <div class="saved-addresses" *ngIf="savedAddresses.length > 0">
+      <h2>Địa chỉ đã lưu</h2>
+      <button type="button" *ngFor="let address of savedAddresses" (click)="selectSavedAddress(address)">
+        <i class="ph ph-map-pin-line"></i>
+        <span class="saved-address-copy">
+          <strong>{{ address.Receiver_name }} - {{ address.Receiver_phone }}</strong>
+          <span>{{ addressLine(address) }}</span>
+        </span>
+      </button>
+    </div>
+
+    <div class="modal-divider section-divider" *ngIf="savedAddresses.length > 0"></div>
+
+    <h2>Thông tin người nhận</h2>
+    <div class="form-grid three-cols">
+      <label>
+        <span><i class="ph ph-user"></i>Họ và tên</span>
+        <input type="text" [(ngModel)]="tempReceiver.fullName" placeholder="Nhập họ tên người nhận" />
+      </label>
+      <label>
+        <span><i class="ph ph-phone"></i>Số điện thoại</span>
+        <input type="tel" [(ngModel)]="tempReceiver.phone" placeholder="Nhập số điện thoại" />
+      </label>
+      <label>
+        <span><i class="ph ph-envelope-simple"></i>Địa chỉ Email</span>
+        <input type="email" [(ngModel)]="tempReceiver.email" placeholder="Nhập email nếu có" />
+      </label>
+    </div>
+
+    <div class="modal-divider"></div>
+
+    <h2>Địa chỉ nhận hàng</h2>
+    <div class="form-grid three-cols">
+      <label>
+        <span><i class="ph ph-map-trifold"></i>Tỉnh / Thành phố</span>
+        <div class="custom-select" [class.open]="openLocationDropdown === 'province'" (click)="toggleLocationDropdown('province', $event)">
+          <button type="button" class="custom-select-trigger">
+            <span [class.placeholder]="!tempReceiver.province">{{ tempReceiver.province || 'Chọn tỉnh / thành phố' }}</span>
+            <i class="ph ph-caret-down"></i>
+          </button>
+          <div class="custom-select-menu" *ngIf="openLocationDropdown === 'province'" (click)="$event.stopPropagation()">
+            <button type="button" *ngFor="let province of vietnamLocations" (click)="selectProvinceOption(province)">
+              {{ province.name }}
+            </button>
+          </div>
+        </div>
+      </label>
+      <label>
+        <span><i class="ph ph-buildings"></i>Quận / Huyện / Thị xã</span>
+        <div class="custom-select" [class.open]="openLocationDropdown === 'district'" [class.disabled]="districtOptions.length === 0" (click)="toggleLocationDropdown('district', $event)">
+          <button type="button" class="custom-select-trigger" [disabled]="districtOptions.length === 0">
+            <span [class.placeholder]="!tempReceiver.district">{{ tempReceiver.district || 'Chọn quận / huyện' }}</span>
+            <i class="ph ph-caret-down"></i>
+          </button>
+          <div class="custom-select-menu" *ngIf="openLocationDropdown === 'district'" (click)="$event.stopPropagation()">
+            <button type="button" *ngFor="let district of districtOptions" (click)="selectDistrictOption(district)">
+              {{ district.name }}
+            </button>
+          </div>
+        </div>
+      </label>
+      <label>
+        <span><i class="ph ph-map-pin"></i>Phường / Xã / Thị trấn</span>
+        <div class="custom-select" [class.open]="openLocationDropdown === 'ward'" [class.disabled]="wardOptions.length === 0" (click)="toggleLocationDropdown('ward', $event)">
+          <button type="button" class="custom-select-trigger" [disabled]="wardOptions.length === 0">
+            <span [class.placeholder]="!tempReceiver.ward">{{ tempReceiver.ward || 'Chọn phường / xã' }}</span>
+            <i class="ph ph-caret-down"></i>
+          </button>
+          <div class="custom-select-menu" *ngIf="openLocationDropdown === 'ward'" (click)="$event.stopPropagation()">
+            <button type="button" *ngFor="let ward of wardOptions" (click)="selectWardOption(ward)">
+              {{ ward.name }}
+            </button>
+          </div>
+        </div>
+      </label>
+    </div>
+
+    <div class="form-grid">
+      <label class="wide-field">
+        <span><i class="ph ph-house-line"></i>Địa chỉ chi tiết</span>
+        <input type="text" [(ngModel)]="tempReceiver.specificAddress" placeholder="Số nhà, tên đường, tòa nhà..." />
+      </label>
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" [(ngModel)]="tempReceiver.saveForNext" />
+      <span>Lưu địa chỉ cho lần mua kế tiếp</span>
+    </label>
+
+    <div class="modal-actions">
+      <button type="button" class="outline-btn" (click)="closeAddressModal()">Hủy thay đổi</button>
+      <button type="button" class="primary-btn" (click)="confirmReceiverInfo()" [disabled]="!isTempReceiverComplete">Xác nhận</button>
+    </div>
+
+    <p class="form-error" *ngIf="addressFormError">{{ addressFormError }}</p>
+  </section>
+</div>
+
+<div class="modal-backdrop" *ngIf="isShippingModalOpen">
+  <section class="modal-panel shipping-modal">
+    <button type="button" class="modal-close" (click)="closeShippingModal()" aria-label="Đóng">
+      <i class="ph ph-x"></i>
+    </button>
+
+    <h1>Chọn phương thức vận chuyển</h1>
+    <div class="modal-divider"></div>
+
+    <label class="shipping-option" *ngFor="let method of shippingMethods">
+      <input type="radio" name="shippingMethod" [value]="method.id" [(ngModel)]="tempShippingId" />
+      <span class="radio-dot"></span>
+      <span class="shipping-copy">
+        <strong>
+          <span>Đơn vị vận chuyển: </span>
+          {{ method.name }}
+        </strong>
+        <small>
+          <i class="ph ph-truck"></i>
+          {{ buildShippingEstimate(method) }}
+        </small>
+      </span>
+      <b>{{ method.fee === 0 ? 'Miễn Phí' : formatPrice(method.fee) }}</b>
+    </label>
+
+    <div class="modal-actions">
+      <button type="button" class="outline-btn" (click)="closeShippingModal()">Hủy thay đổi</button>
+      <button type="button" class="primary-btn" (click)="confirmShippingMethod()">Xác nhận</button>
+    </div>
+  </section>
+</div>
+
+<div class="modal-backdrop" *ngIf="isPaymentModalOpen">
+  <section class="modal-panel payment-modal">
+    <button type="button" class="modal-close" (click)="cancelPayment()" aria-label="Đóng">
+      <i class="ph ph-x"></i>
+    </button>
+
+    <h1>Thanh toán trước</h1>
+    <div class="modal-divider"></div>
+
+    <p class="timer-line">
+      <i class="ph ph-clock"></i>
+      Giao dịch hết hạn trong {{ paymentTimerLabel }}
+    </p>
+
+    <div class="qr-card">
+      <p>Vui lòng quét mã QR bên dưới để thanh toán chuyển khoản!</p>
+      <div class="qr-box">
+        <img [src]="vietQrUrl" alt="VietQR Nam Á Bank" />
+      </div>
+      <button type="button" class="qr-download" (click)="downloadVietQr()">
+        <i class="ph ph-download-simple"></i>
+        Tải QR code
+      </button>
+    </div>
+
+    <div class="bank-box">
+      <p>
+        <span>Ngân hàng: </span>
+        <strong>{{ bankInfo.bankName }}</strong>
+      </p>
+      <p>
+        <span>Số tài khoản: </span>
+        <strong>{{ bankInfo.accountNumber }}</strong>
+      </p>
+      <p>
+        <span>Người thụ hưởng: </span>
+        <strong>{{ bankInfo.accountHolder }}</strong>
+      </p>
+      <p>
+        <span>Nội dung chuyển khoản: </span>
+        <strong>{{ transferContent }}</strong>
+      </p>
+    </div>
+
+    <div class="modal-actions single-action">
+      <button type="button" class="outline-btn" (click)="cancelPayment()">Hủy giao dịch</button>
+    </div>
+  </section>
+</div>

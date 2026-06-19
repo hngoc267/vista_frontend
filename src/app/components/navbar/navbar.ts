@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth';
 import { CartStateService } from '../../services/cart-state.service';
 import { CartService } from '../../services/cart';
+import { ProductService } from '../../services/product';
 
 @Component({
   selector: 'app-navbar',
@@ -19,17 +20,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
   searchQuery: string = ''; 
   userName: string = ''; // Khai báo biến hứng tên khách hàng để HTML không bị lỗi
   cartCount = 0;
+  categories: any[] = [];
   private subscriptions = new Subscription();
 
   constructor(
     private authService: AuthService,
     private cartState: CartStateService,
     private cartService: CartService,
+    private productService: ProductService,
     private router: Router,
     private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit() {
+    this.loadCategories();
+
     this.subscriptions.add(this.authService.currentUser$.subscribe(user => {
       this.isLoggedIn = !!user; 
       
@@ -77,5 +82,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.cartState.setCount(0);
       }
     }));
+  }
+
+  private loadCategories(): void {
+    this.productService.getAllCategories().subscribe({
+      next: (res) => {
+        this.categories = Array.isArray(res?.data) ? res.data : [];
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.categories = [];
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

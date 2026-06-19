@@ -1,20 +1,29 @@
 import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CartService, CartApiItem } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
 
+
 interface CartItem {
   id: string;
   productVariantId: string;
+  productId: string | null;
   name: string;
+  variantName: string;
   specs: string;
   price: number;
   qty: number;
   stock: number;
   img: string;
   selected: boolean;
+  variantOptions: {
+    productVariantId: string;
+    variantName: string;
+    price: number;
+    stock: number;
+  }[];
 }
 
 @Component({
@@ -28,10 +37,11 @@ export class Cart implements OnInit {
   items: CartItem[] = [];
 
   constructor(
-    private cdr: ChangeDetectorRef,
-    private cartService: CartService,
-    private cartState: CartStateService
-  ) {}
+  private cdr: ChangeDetectorRef,
+  private cartService: CartService,
+  private cartState: CartStateService,
+  private router: Router
+) {}
 
   ngOnInit(): void {
     this.loadCart();
@@ -133,6 +143,31 @@ export class Cart implements OnInit {
     });
   }
 
+  checkout(): void {
+  const selectedItems = this.items
+    .filter((item) => item.selected)
+    .map((item) => ({
+      cartItemId: item.id,
+      productVariantId: item.productVariantId,
+      productId: item.productId,
+      name: item.name,
+      variantName: item.variantName,
+      specs: item.specs,
+      image: item.img,
+      price: item.price,
+      quantity: item.qty,
+      stock: item.stock,
+      variantOptions: item.variantOptions,
+    }));
+
+  if (selectedItems.length === 0) {
+    return;
+}
+
+  sessionStorage.setItem('vista_checkout_items', JSON.stringify(selectedItems));
+  this.router.navigate(['/order']);
+  }
+
   private loadCart(preserveSelection = false, selectedIds: string[] = []): void {
     const userId = this.cartService.getCurrentUserId();
     if (!userId) {
@@ -162,13 +197,16 @@ export class Cart implements OnInit {
     return {
       id: item.cartItemId,
       productVariantId: item.productVariantId,
+      productId: item.productId,
       name: item.productName,
+      variantName: item.variantName || item.specs || '',
       specs: item.specs || item.variantName || '',
       price: Number(item.unitPrice) || 0,
       qty: Number(item.quantity) || 0,
       stock: Number(item.stockQuantity) || 0,
       img: this.resolveImageSrc(item.image),
       selected: preserveSelection ? selectedIds.has(item.cartItemId) : true,
+      variantOptions: item.variantOptions || [],
     };
   }
 
