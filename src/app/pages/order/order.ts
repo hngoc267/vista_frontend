@@ -230,7 +230,6 @@ export class Order implements OnInit, OnDestroy {
     this.paymentCode = this.generatePaymentCode();
     this.loadCheckoutItems();
     this.loadVietnamLocations();
-    this.loadAvailableVouchers();
     this.loadSavedAddresses();
   }
 
@@ -445,7 +444,6 @@ export class Order implements OnInit, OnDestroy {
 
     const code = this.voucherCodeOf(voucher);
     const status = this.normalizeText(voucher.status);
-    const statusText = this.normalizeText(voucher.statusText);
     const backendReason = this.cleanText(voucher.unavailableReason);
 
     if (!code) {
@@ -460,21 +458,12 @@ export class Order implements OnInit, OnDestroy {
       return 'Voucher không thể áp dụng cho đơn hàng hiện tại.';
     }
 
-    if (!this.isVoucherStillValid(voucher) || statusText.includes('het han')) {
+    if (!this.isVoucherStillValid(voucher) || status === 'expired') {
       return 'Mã giảm giá đã hết hạn.';
     }
 
-    if (status === 'used' || statusText.includes('da su dung')) {
-      return 'Tài khoản của bạn đã sử dụng mã giảm giá này.';
-    }
-
-    const minOrderValue = Number(voucher.minOrderValue || 0);
-    if (minOrderValue > 0 && this.productSubtotal < minOrderValue) {
-      return `Đơn hàng cần tối thiểu ${this.formatPrice(minOrderValue)} để áp dụng mã này.`;
-    }
-
-    if (this.hasComboVoucherRule(voucher) && this.totalQuantity < 2) {
-      return 'Mã combo chỉ áp dụng khi mua từ 2 sản phẩm trở lên.';
+    if (status === 'used') {
+      return 'Mã giảm giá này đã được sử dụng.';
     }
 
     return '';
@@ -577,6 +566,7 @@ export class Order implements OnInit, OnDestroy {
     item.discountPercent = Number(selectedVariant.discountPercent) || 0;
     item.stock = Number(selectedVariant.stock) || item.stock;
     this.removeVoucher();
+    this.loadAvailableVouchers();
   }
 
   changeQuantity(item: CheckoutItem, delta: number): void {
@@ -587,6 +577,7 @@ export class Order implements OnInit, OnDestroy {
 
     item.quantity = nextQuantity;
     this.removeVoucher();
+    this.loadAvailableVouchers();
   }
 
   openAddressModal(): void {
@@ -707,6 +698,7 @@ export class Order implements OnInit, OnDestroy {
   confirmShippingMethod(): void {
     this.selectedShippingId = this.tempShippingId;
     this.removeVoucher();
+    this.loadAvailableVouchers();
     this.isShippingModalOpen = false;
   }
 
@@ -798,17 +790,15 @@ export class Order implements OnInit, OnDestroy {
       price: number;
     }[];
   } {
+    const context = this.buildVoucherContext();
+
     return {
       voucherCode: code,
-      totalItemsPrice: this.productSubtotal,
-      shippingFee: this.selectedShipping.fee,
-      totalQuantity: this.totalQuantity,
+      totalItemsPrice: context.totalItemsPrice,
+      shippingFee: context.shippingFee,
+      totalQuantity: context.totalQuantity,
       userId: this.userId,
-      orderItems: this.items.map((item) => ({
-        productVariantId: item.productVariantId,
-        quantity: item.quantity,
-        price: item.price,
-      })),
+      orderItems: context.orderItems,
     };
   }
 
@@ -834,7 +824,7 @@ export class Order implements OnInit, OnDestroy {
         this.isApplyingVoucher = false;
 
         if (!res.success) {
-          this.rejectAppliedVoucherAndReturn(res.message || 'Voucher không còn đủ điều kiện áp dụng.');
+          this.rejectAppliedVoucher(res.message || 'Voucher không còn đủ điều kiện áp dụng.');
           return;
         }
 
@@ -842,7 +832,7 @@ export class Order implements OnInit, OnDestroy {
         const shippingDiscount = Number(res.data?.shippingDiscount || 0);
 
         if (discountAmount <= 0 && shippingDiscount <= 0) {
-          this.rejectAppliedVoucherAndReturn('Voucher không tạo ra ưu đãi cho đơn hàng hiện tại.');
+          this.rejectAppliedVoucher('Voucher không tạo ra ưu đãi cho đơn hàng hiện tại.');
           return;
         }
 
@@ -861,26 +851,33 @@ export class Order implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.isApplyingVoucher = false;
-        this.rejectAppliedVoucherAndReturn(
+        this.rejectAppliedVoucher(
           err?.error?.message || 'Voucher không còn đủ điều kiện áp dụng. Hệ thống đã bỏ mã này khỏi đơn hàng.'
         );
       },
     });
   }
 
-  private rejectAppliedVoucherAndReturn(message: string): void {
+  private rejectAppliedVoucher(message: string): void {
     this.resetRejectedVoucher(message);
     this.pendingBankOrder = null;
     this.paymentStatus = 'pending';
-    this.step = 'checkout';
-    this.errorMessage = '';
-    this.scrollTop();
+
+    if (this.step === 'confirm') {
+      this.errorMessage = `${message} Hệ thống đã bỏ voucher khỏi đơn hàng, vui lòng kiểm tra tổng tiền rồi xác nhận lại.`;
+    } else {
+      this.step = 'checkout';
+      this.errorMessage = '';
+      this.scrollTop();
+    }
+
+    this.loadAvailableVouchers();
     this.cdr.detectChanges();
   }
 
   private handleOrderCreateError(message: string): void {
     if (this.hasAppliedVoucher && this.isVoucherRejectionMessage(message)) {
-      this.rejectAppliedVoucherAndReturn(message);
+      this.rejectAppliedVoucher(message);
       return;
     }
 
@@ -1085,6 +1082,7 @@ export class Order implements OnInit, OnDestroy {
     const itemsFromStorage = this.readCheckoutItemsFromSession();
     if (itemsFromStorage.length > 0) {
       this.items = itemsFromStorage;
+      this.loadAvailableVouchers();
       this.applyPendingVoucherFromSession();
       return;
     }
@@ -1104,6 +1102,7 @@ export class Order implements OnInit, OnDestroy {
       next: (res) => {
         this.items = (res.data?.items || []).map((item) => this.mapApiItem(item));
         this.isLoading = false;
+        this.loadAvailableVouchers();
         this.applyPendingVoucherFromSession();
         this.cdr.detectChanges();
       },
@@ -1134,11 +1133,11 @@ export class Order implements OnInit, OnDestroy {
 
   private loadAvailableVouchers(): void {
     this.isLoadingVouchers = true;
-    this.orderService.getAvailableVouchers(this.userId).subscribe({
+    this.orderService.getAvailableVouchers().subscribe({
       next: (res) => {
-        this.availableVouchers = (res.data || []).sort((a, b) => {
-          return Number(this.canApplyVoucher(b)) - Number(this.canApplyVoucher(a));
-        });
+        this.availableVouchers = (res.data || [])
+          .filter((voucher) => this.isVoucherStillValid(voucher))
+          .filter((voucher) => this.normalizeText(voucher.status) !== 'used');
         this.isLoadingVouchers = false;
         this.cdr.detectChanges();
       },
@@ -1148,6 +1147,28 @@ export class Order implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  private buildVoucherContext(): {
+    totalItemsPrice: number;
+    shippingFee: number;
+    totalQuantity: number;
+    orderItems: {
+      productVariantId: string;
+      quantity: number;
+      price: number;
+    }[];
+  } {
+    return {
+      totalItemsPrice: this.productSubtotal,
+      shippingFee: this.selectedShipping.fee,
+      totalQuantity: this.totalQuantity,
+      orderItems: this.items.map((item) => ({
+        productVariantId: item.productVariantId,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+    };
   }
 
   private loadSavedAddresses(): void {
@@ -1370,17 +1391,43 @@ export class Order implements OnInit, OnDestroy {
   }
 
   private isVoucherStillValid(voucher: VoucherItem): boolean {
-    if (!voucher.expiry) {
+    const expiryNumber = this.getVoucherExpiryDateNumber(voucher.expiry);
+    if (!expiryNumber) {
       return true;
     }
 
-    const [day, month, year] = String(voucher.expiry).split('/').map((part) => Number(part));
-    if (!day || !month || !year) {
-      return true;
+    return expiryNumber >= this.getVietnamDateNumber();
+  }
+
+  private getVoucherExpiryDateNumber(expiry?: string): number | null {
+    if (!expiry) {
+      return null;
     }
 
-    const expiry = new Date(year, month - 1, day, 23, 59, 59, 999);
-    return expiry >= new Date();
+    const raw = String(expiry).trim();
+    const parts = raw.split('/');
+    if (parts.length === 3) {
+      const [day, month, year] = parts.map((part) => Number(part));
+      if (day && month && year) {
+        return year * 10000 + month * 100 + day;
+      }
+    }
+
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) {
+      return null;
+    }
+
+    return this.getVietnamDateNumber(parsed);
+  }
+
+  private getVietnamDateNumber(date = new Date()): number {
+    const vietnamTime = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+    const year = vietnamTime.getUTCFullYear();
+    const month = vietnamTime.getUTCMonth() + 1;
+    const day = vietnamTime.getUTCDate();
+
+    return year * 10000 + month * 100 + day;
   }
 
   private applyPendingVoucherFromSession(): void {

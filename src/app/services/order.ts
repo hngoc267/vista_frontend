@@ -50,7 +50,7 @@ export interface VoucherItem {
   discountValue?: number;
   startDate?: string;
   endDate?: string;
-  usageLimit?: number;
+  usageLimit?: string | number;
   statusText?: string;
   canApply?: boolean;
   unavailableReason?: string;
@@ -149,9 +149,8 @@ export class OrderService {
     );
   }
 
-  getAvailableVouchers(userId = ''): Observable<VoucherListResponse> {
-    const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
-    return this.http.get<VoucherListResponse>(`${this.apiUrl}/vouchers/my-vouchers${query}`);
+  getAvailableVouchers(): Observable<VoucherListResponse> {
+    return this.http.get<VoucherListResponse>(`${this.apiUrl}/vouchers/my-vouchers`);
   }
 
   applyVoucher(payload: {
