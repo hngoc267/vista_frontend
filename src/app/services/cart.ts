@@ -14,6 +14,8 @@ export interface CartApiVariantOption {
   productVariantId: string;
   variantName: string;
   price: number;
+  originalPrice?: number;
+  discountPercent?: number;
   stock: number;
 }
 
@@ -27,9 +29,12 @@ export interface CartApiItem {
   specs: string;
   image: string;
   unitPrice: number;
+  originalUnitPrice?: number;
+  discountPercent?: number;
   quantity: number;
   stockQuantity: number;
   lineTotal: number;
+  originalLineTotal?: number;
   variantOptions: CartApiVariantOption[];
 }
 

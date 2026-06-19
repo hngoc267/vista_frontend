@@ -65,7 +65,10 @@
           </div>
 
           <div class="product-side">
-            <strong>{{ formatPrice(item.price) }}</strong>
+            <div class="product-price-stack">
+              <strong>{{ formatPrice(item.price) }}</strong>
+              <del *ngIf="hasItemDiscount(item)">{{ formatPrice(item.originalPrice) }}</del>
+            </div>
             <div class="quantity-box">
               <button type="button" (click)="changeQuantity(item, -1)" aria-label="Giảm số lượng">
                 <i class="ph ph-minus"></i>
@@ -126,14 +129,37 @@
 
     <section class="checkout-card">
       <div class="card-head">
-        <h2>Mã giảm giá</h2>
+        <h2>Voucher giảm giá</h2>
+      </div>
+
+      <div class="voucher-summary" [class.has-error]="voucher.error || voucherWarning" [class.has-success]="voucher.message">
+        <div>
+          <p>
+            <span>Voucher giảm giá: </span>
+            <strong>{{ appliedVoucherTitle() }}</strong>
+          </p>
+          <p>
+            <i class="ph ph-ticket"></i>
+            {{ appliedVoucherDescription() }}
+          </p>
+        </div>
+
+        <div class="shipping-price">
+          <strong *ngIf="totalDiscount > 0">-{{ formatPrice(totalDiscount) }}</strong>
+          <strong *ngIf="totalDiscount === 0">Chưa áp dụng</strong>
+          <button type="button" class="text-link" (click)="removeVoucher()" *ngIf="voucher.message">
+            Bỏ mã
+            <i class="ph ph-x"></i>
+          </button>
+        </div>
       </div>
 
       <div class="voucher-box">
         <input
           type="text"
           placeholder="Nhập mã giảm giá..."
-          [(ngModel)]="voucherCode"
+          [ngModel]="voucherCode"
+          (ngModelChange)="onVoucherCodeChange($event)"
           (keyup.enter)="applyVoucher()"
         />
         <button type="button" (click)="applyVoucher()" [disabled]="isApplyingVoucher || !voucherCode.trim()">
@@ -142,9 +168,16 @@
       </div>
 
       <div class="voucher-list" *ngIf="availableVouchers.length > 0">
-        <button type="button" *ngFor="let item of availableVouchers" (click)="chooseVoucher(item)">
+        <button
+          type="button"
+          *ngFor="let item of availableVouchers"
+          (click)="chooseVoucher(item)"
+          [class.active]="hasAppliedVoucher && voucher.code === voucherCodeOf(item)"
+          [class.unavailable]="!canApplyVoucher(item)"
+        >
           <strong>{{ voucherTitleOf(item) }}</strong>
           <span>{{ voucherConditionOf(item) }}</span>
+          <small *ngIf="!canApplyVoucher(item)">{{ voucherUnavailableReason(item) }}</small>
         </button>
       </div>
 
@@ -159,9 +192,9 @@
         <button type="button" (click)="removeVoucher()">Bỏ mã</button>
       </div>
 
-      <div class="voucher-feedback error" *ngIf="voucher.error">
+      <div class="voucher-feedback error" *ngIf="voucher.error || voucherWarning">
         <i class="ph ph-warning-circle"></i>
-        <span>{{ voucher.error }}</span>
+        <span>{{ voucher.error || voucherWarning }}</span>
       </div>
 
       <div class="price-summary">
@@ -217,8 +250,8 @@
         Nhấn “Đặt mua” đồng nghĩa với việc bạn đồng ý tuân theo
         <a routerLink="/policy">Điều khoản VISTA</a>.
       </p>
-      <button type="button" class="primary-btn" (click)="placeOrder()" [disabled]="items.length === 0">
-        Đặt mua
+      <button type="button" class="primary-btn" (click)="placeOrder()" [disabled]="items.length === 0 || isApplyingVoucher || isSubmitting">
+        {{ isApplyingVoucher ? 'Đang kiểm tra voucher...' : 'Đặt mua' }}
       </button>
     </div>
 
@@ -253,7 +286,10 @@
             <p>{{ displayItemColor(item) }}</p>
             <p>x {{ item.quantity }}</p>
           </div>
-          <strong>{{ formatPrice(lineTotal(item)) }}</strong>
+          <div class="confirm-price-stack">
+            <strong>{{ formatPrice(lineTotal(item)) }}</strong>
+            <del *ngIf="hasItemDiscount(item)">{{ formatPrice(originalLineTotal(item)) }}</del>
+          </div>
         </article>
       </div>
 
@@ -261,6 +297,12 @@
         <span class="confirm-label">Phương thức vận chuyển: </span>
         <strong>{{ selectedShipping.name }}</strong>
         <b>{{ shippingFeeAfterDiscount === 0 ? 'Miễn Phí' : formatPrice(shippingFeeAfterDiscount) }}</b>
+      </div>
+
+      <div class="confirm-row">
+        <span class="confirm-label">Voucher giảm giá: </span>
+        <strong>{{ voucher.code ? (voucher.title || voucher.code) : 'Không áp dụng' }}</strong>
+        <b>{{ totalDiscount > 0 ? '-' + formatPrice(totalDiscount) : '0đ' }}</b>
       </div>
 
       <div class="confirm-row">
@@ -287,8 +329,12 @@
 
       <div class="confirm-actions">
         <button type="button" class="outline-btn" (click)="backToCheckout()">Trở lại</button>
-        <button type="button" class="primary-btn" (click)="submitOrder()" [disabled]="isSubmitting">
-          {{ isSubmitting ? 'Đang tạo đơn...' : 'Xác nhận đặt hàng' }}
+        <button type="button" class="primary-btn" (click)="submitOrder()" [disabled]="isSubmitting || isApplyingVoucher">
+          {{
+            isApplyingVoucher
+              ? 'Đang kiểm tra voucher...'
+              : (isSubmitting ? 'Đang tạo đơn...' : 'Xác nhận đặt hàng')
+          }}
         </button>
       </div>
     </section>
@@ -444,6 +490,68 @@
   </section>
 </div>
 
+<div class="modal-backdrop" *ngIf="selectedVoucherDetail">
+  <section class="modal-panel voucher-detail-modal">
+    <button type="button" class="modal-close" (click)="closeVoucherDetail()" aria-label="Đóng">
+      <i class="ph ph-x"></i>
+    </button>
+
+    <h1>{{ selectedVoucherDetail.title }}</h1>
+    <p class="voucher-modal-description">{{ selectedVoucherDetail.description }}</p>
+
+    <div class="modal-code">
+      <span>Mã voucher:</span>
+      <strong>{{ selectedVoucherDetail.code }}</strong>
+    </div>
+
+    <div class="voucher-modal-section">
+      <h2>Ưu đãi</h2>
+      <ul>
+        <li *ngFor="let benefit of selectedVoucherDetail.benefits">{{ benefit }}</li>
+      </ul>
+    </div>
+
+    <div class="voucher-modal-section">
+      <h2>Điều kiện áp dụng</h2>
+      <ul>
+        <li *ngFor="let condition of selectedVoucherDetail.conditions">{{ condition }}</li>
+      </ul>
+    </div>
+
+    <div class="voucher-modal-section">
+      <h2>Thời gian áp dụng</h2>
+      <p>Từ: {{ selectedVoucherDetail.startDate || 'Chưa cập nhật' }}</p>
+      <p>Đến: {{ selectedVoucherDetail.expiry || 'Chưa cập nhật' }}</p>
+    </div>
+
+    <div class="voucher-modal-section">
+      <h2>Lượt sử dụng</h2>
+      <p>{{ selectedVoucherDetail.usageLimit || 'Mỗi tài khoản sử dụng 1 lần.' }}</p>
+    </div>
+
+    <div class="voucher-modal-section">
+      <h2>Trạng thái</h2>
+      <p>{{ voucherStatusText(selectedVoucherDetail) }}</p>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="outline-btn" (click)="closeVoucherDetail()">Đóng</button>
+      <button
+        type="button"
+        class="primary-btn"
+        (click)="applyVoucherFromDetail(selectedVoucherDetail)"
+        [disabled]="isApplyingVoucher || !canApplyVoucher(selectedVoucherDetail)"
+      >
+        {{
+          !canApplyVoucher(selectedVoucherDetail)
+            ? 'Không thể áp dụng'
+            : (isApplyingVoucher ? 'Đang áp dụng...' : 'Áp dụng')
+        }}
+      </button>
+    </div>
+  </section>
+</div>
+
 <div class="modal-backdrop" *ngIf="isPaymentModalOpen">
   <section class="modal-panel payment-modal">
     <button type="button" class="modal-close" (click)="cancelPayment()" aria-label="Đóng">
@@ -461,7 +569,7 @@
     <div class="qr-card">
       <p>Vui lòng quét mã QR bên dưới để thanh toán chuyển khoản!</p>
       <div class="qr-box">
-        <img [src]="vietQrUrl" alt="VietQR Nam Á Bank" />
+        <img [src]="vietQrUrl" alt="VietQR VietinBank" />
       </div>
       <button type="button" class="qr-download" (click)="downloadVietQr()">
         <i class="ph ph-download-simple"></i>
@@ -479,6 +587,10 @@
         <strong>{{ bankInfo.accountNumber }}</strong>
       </p>
       <p>
+        <span>Alias: </span>
+        <strong>{{ bankInfo.alias }}</strong>
+      </p>
+      <p>
         <span>Người thụ hưởng: </span>
         <strong>{{ bankInfo.accountHolder }}</strong>
       </p>
@@ -488,8 +600,13 @@
       </p>
     </div>
 
-    <div class="modal-actions single-action">
+    <p class="form-error payment-error" *ngIf="paymentError">{{ paymentError }}</p>
+
+    <div class="modal-actions">
       <button type="button" class="outline-btn" (click)="cancelPayment()">Hủy giao dịch</button>
+      <button type="button" class="primary-btn" (click)="confirmScannedPayment()" [disabled]="isProcessingPayment">
+        {{ isProcessingPayment ? 'Đang xác nhận...' : 'Tôi đã quét và thanh toán' }}
+      </button>
     </div>
   </section>
 </div>

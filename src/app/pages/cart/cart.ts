@@ -14,6 +14,8 @@ interface CartItem {
   variantName: string;
   specs: string;
   price: number;
+  originalPrice: number;
+  discountPercent: number;
   qty: number;
   stock: number;
   img: string;
@@ -22,6 +24,8 @@ interface CartItem {
     productVariantId: string;
     variantName: string;
     price: number;
+    originalPrice?: number;
+    discountPercent?: number;
     stock: number;
   }[];
 }
@@ -111,6 +115,14 @@ export class Cart implements OnInit {
     return item.price * item.qty;
   }
 
+  originalLineTotal(item: CartItem): number {
+    return (item.originalPrice || item.price) * item.qty;
+  }
+
+  hasItemDiscount(item: CartItem): boolean {
+    return Number(item.originalPrice || 0) > Number(item.price || 0);
+  }
+
   subtotal(): number {
     return this.items.reduce((sum, item) => (item.selected ? sum + this.lineTotal(item) : sum), 0);
   }
@@ -155,6 +167,8 @@ export class Cart implements OnInit {
       specs: item.specs,
       image: item.img,
       price: item.price,
+      originalPrice: item.originalPrice,
+      discountPercent: item.discountPercent,
       quantity: item.qty,
       stock: item.stock,
       variantOptions: item.variantOptions,
@@ -202,6 +216,8 @@ export class Cart implements OnInit {
       variantName: item.variantName || item.specs || '',
       specs: item.specs || item.variantName || '',
       price: Number(item.unitPrice) || 0,
+      originalPrice: Number(item.originalUnitPrice || item.unitPrice) || 0,
+      discountPercent: Number(item.discountPercent) || 0,
       qty: Number(item.quantity) || 0,
       stock: Number(item.stockQuantity) || 0,
       img: this.resolveImageSrc(item.image),

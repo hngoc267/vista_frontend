@@ -169,12 +169,16 @@ export class ProductDetail implements OnInit {
       specs: variant.Variant_name || '',
       image: this.product?.Images?.[0] || '',
       price: this.getFinalPrice(Number(variant.Price) || 0, Number(this.product?.Discount) || 0),
+      originalPrice: Number(variant.Price) || 0,
+      discountPercent: Number(this.product?.Discount) || 0,
       quantity: this.quantity,
       stock: Number(variant.Stock_quantity) || 0,
       variantOptions: this.variants.map((item) => ({
         productVariantId: item.Product_variant_id,
         variantName: item.Variant_name,
         price: this.getFinalPrice(Number(item.Price) || 0, Number(this.product?.Discount) || 0),
+        originalPrice: Number(item.Price) || 0,
+        discountPercent: Number(this.product?.Discount) || 0,
         stock: Number(item.Stock_quantity) || 0,
       })),
     };

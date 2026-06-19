@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { VoucherService } from '../../services/voucher';
 
 type VoucherTab = 'all' | 'freeship' | 'discount' | 'used' | 'expiring';
@@ -50,7 +51,8 @@ export class Voucher implements OnInit {
 
   constructor(
     private voucherService: VoucherService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -63,7 +65,7 @@ export class Voucher implements OnInit {
 
     this.voucherService.getMyVouchers().subscribe({
       next: (res: VoucherResponse) => {
-        this.vouchers = [...(res.data || [])];
+        this.vouchers = [...(res.data || [])].filter((voucher) => this.isVoucherStillValid(voucher));
         this.activeTab = 'all';
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -79,7 +81,7 @@ export class Voucher implements OnInit {
 
   get filteredVouchers(): VoucherItem[] {
     if (this.activeTab === 'all') {
-      return this.vouchers;
+      return this.vouchers.filter((voucher: VoucherItem) => voucher.status !== 'used');
     }
 
     if (this.activeTab === 'used') {
@@ -122,5 +124,28 @@ export class Voucher implements OnInit {
 
   closeVoucherDetail(): void {
     this.selectedVoucher = null;
+  }
+
+  applyVoucher(voucher: VoucherItem): void {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('vista_pending_voucher_code', voucher.code);
+    }
+
+    this.selectedVoucher = null;
+    this.router.navigate(['/order']);
+  }
+
+  private isVoucherStillValid(voucher: VoucherItem): boolean {
+    if (!voucher.expiry) {
+      return true;
+    }
+
+    const [day, month, year] = String(voucher.expiry).split('/').map((part) => Number(part));
+    if (!day || !month || !year) {
+      return true;
+    }
+
+    const expiry = new Date(year, month - 1, day, 23, 59, 59, 999);
+    return expiry >= new Date();
   }
 }

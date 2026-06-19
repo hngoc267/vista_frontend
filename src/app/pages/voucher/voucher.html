@@ -19,6 +19,7 @@
         *ngFor="let voucher of filteredVouchers"
         class="voucher-card"
         [class.used]="voucher.status === 'used'"
+        (click)="openVoucherDetail(voucher)"
       >
         <div class="voucher-left" [class.shipping]="voucher.type === 'shipping'">
           <div class="stamp-edge"></div>
@@ -52,7 +53,7 @@
               <button
                 type="button"
                 class="copy-btn"
-                (click)="copyCode(voucher.code)"
+                (click)="copyCode(voucher.code); $event.stopPropagation()"
                 title="Sao chép mã"
               >
                 <i class="ph ph-copy"></i>
@@ -70,7 +71,7 @@
           <button
             type="button"
             class="detail-btn"
-            (click)="openVoucherDetail(voucher)"
+            (click)="openVoucherDetail(voucher); $event.stopPropagation()"
           >
             Chi tiết
           </button>
@@ -145,6 +146,12 @@
       <div class="modal-section">
         <h3>Trạng thái</h3>
         <p>{{ selectedVoucher.statusText }}</p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="apply-btn" (click)="applyVoucher(selectedVoucher)">
+          Áp dụng
+        </button>
       </div>
     </div>
   </div>
