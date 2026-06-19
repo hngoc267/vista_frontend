@@ -86,7 +86,8 @@
 }
 
 .receiver-summary,
-.shipping-summary {
+.shipping-summary,
+.voucher-summary {
   display: flex;
   align-items: flex-start;
   gap: 14px;
@@ -117,6 +118,24 @@
   strong {
     color: #172033;
     font-weight: 800;
+  }
+}
+
+.voucher-summary {
+  margin-bottom: 16px;
+
+  &.has-success {
+    p i,
+    .shipping-price strong {
+      color: #15803d;
+    }
+  }
+
+  &.has-error {
+    p i,
+    .shipping-price strong {
+      color: #dc2626;
+    }
   }
 }
 
@@ -221,6 +240,27 @@
     font-size: 18px;
     font-weight: 900;
     white-space: nowrap;
+  }
+}
+
+.product-price-stack,
+.confirm-price-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  white-space: nowrap;
+
+  strong {
+    color: #2563b0;
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  del {
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 700;
   }
 }
 
@@ -345,6 +385,18 @@
       border-color: #2563b0;
       background: #f5f9ff;
     }
+
+    &.active {
+      border-color: #2563b0;
+      background: #eef5ff;
+      box-shadow: 0 0 0 1px rgba(37, 99, 176, 0.08);
+    }
+
+    &.unavailable {
+      opacity: 0.48;
+      background: #f4f7fb;
+      border-color: #e2e8f0;
+    }
   }
 
   strong,
@@ -361,6 +413,15 @@
     margin-top: 4px;
     color: #64748b;
     font-size: 12px;
+    line-height: 1.4;
+  }
+
+  small {
+    display: block;
+    margin-top: 8px;
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 700;
     line-height: 1.4;
   }
 }
@@ -929,6 +990,15 @@
   overflow-y: auto;
 }
 
+.modal-backdrop.success-backdrop {
+  z-index: 999999;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.42);
+}
+
 .modal-panel {
   position: relative;
   width: min(1120px, 100%);
@@ -1196,6 +1266,64 @@
   width: min(820px, 100%);
 }
 
+.voucher-detail-modal {
+  width: min(700px, 100%);
+
+  h1 {
+    margin-right: 42px;
+    color: #2563b0;
+    text-align: left;
+    text-transform: none;
+  }
+}
+
+.voucher-modal-description {
+  margin: 10px 0 24px;
+  color: #334155;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.modal-code {
+  margin-bottom: 26px;
+  padding: 16px 18px;
+  background: #eaf4ff;
+  color: #2563b0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+
+  strong {
+    font-size: 20px;
+    font-weight: 900;
+  }
+}
+
+.voucher-modal-section {
+  margin-top: 18px;
+
+  h2 {
+    margin: 0 0 10px;
+    color: #172033;
+    font-size: 17px;
+    font-weight: 900;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+
+  li,
+  p {
+    margin: 7px 0;
+    color: #334155;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+}
+
 .timer-line {
   margin: 0 0 18px;
   display: flex;
@@ -1271,6 +1399,11 @@
     color: #172033;
     font-weight: 900;
   }
+}
+
+.payment-error {
+  width: min(650px, 100%);
+  margin: 0 auto 16px;
 }
 
 .qr-download {
@@ -1351,12 +1484,15 @@
   .confirm-total,
   .modal-actions,
   .receiver-summary,
-  .shipping-summary {
+  .shipping-summary,
+  .voucher-summary {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .shipping-price {
+  .shipping-price,
+  .product-price-stack,
+  .confirm-price-stack {
     align-items: flex-start;
   }
 

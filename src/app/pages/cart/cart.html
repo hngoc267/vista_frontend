@@ -66,7 +66,8 @@
             </div>
 
             <div class="item-price unit-price">
-              {{ formatPrice(item.price) }}
+              <strong>{{ formatPrice(item.price) }}</strong>
+              <del *ngIf="hasItemDiscount(item)">{{ formatPrice(item.originalPrice) }}</del>
             </div>
 
             <div class="qty-control">
@@ -90,7 +91,7 @@
             </div>
 
             <div class="item-price line-total">
-              {{ formatPrice(lineTotal(item)) }}
+              <strong>{{ formatPrice(lineTotal(item)) }}</strong>
             </div>
 
             <button
