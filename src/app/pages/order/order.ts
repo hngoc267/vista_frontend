@@ -451,7 +451,9 @@ export class Order implements OnInit, OnDestroy {
       status === 'used' ||
       combined.includes('da su dung') ||
       combined.includes('da duoc su dung') ||
-      combined.includes('tai khoan cua ban da su dung')
+      combined.includes('tai khoan cua ban da su dung') ||
+      combined.includes('don hang dau tien') ||
+      combined.includes('tai khoan moi')
     );
   }
 
