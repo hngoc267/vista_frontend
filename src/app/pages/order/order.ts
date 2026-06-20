@@ -437,6 +437,26 @@ export class Order implements OnInit, OnDestroy {
     return !this.voucherUnavailableReason(voucher);
   }
 
+  isUsedVoucher(voucher: VoucherItem | null): boolean {
+    if (!voucher) {
+      return false;
+    }
+
+    const status = this.normalizeText(voucher.status);
+    const statusText = this.normalizeText(voucher.statusText);
+    const backendReason = this.normalizeText(voucher.unavailableReason);
+    const combined = `${statusText} ${backendReason}`;
+
+    return (
+      status === 'used' ||
+      combined.includes('da su dung') ||
+      combined.includes('da duoc su dung') ||
+      combined.includes('tai khoan cua ban da su dung') ||
+      combined.includes('don hang dau tien') ||
+      combined.includes('tai khoan moi')
+    );
+  }
+
   voucherUnavailableReason(voucher: VoucherItem | null): string {
     if (!voucher) {
       return 'Voucher không hợp lệ.';
@@ -466,6 +486,19 @@ export class Order implements OnInit, OnDestroy {
       return 'Mã giảm giá này đã được sử dụng.';
     }
 
+    const minOrderValue = Number(voucher.minOrderValue || 0);
+    if (minOrderValue > 0 && this.productSubtotal < minOrderValue) {
+      return `Đơn hàng cần tối thiểu ${this.formatPrice(minOrderValue)} để áp dụng mã này.`;
+    }
+
+    if (this.hasComboVoucherRule(voucher) && this.totalQuantity < 2) {
+      return 'Mã combo chỉ áp dụng khi mua từ 2 sản phẩm trở lên.';
+    }
+
+    if ((voucher.type === 'shipping' || voucher.category === 'freeship') && this.selectedShipping.fee <= 0) {
+      return 'Phương thức vận chuyển hiện tại đã miễn phí.';
+    }
+
     return '';
   }
 
@@ -479,6 +512,20 @@ export class Order implements OnInit, OnDestroy {
 
   closeVoucherDetail(): void {
     this.selectedVoucherDetail = null;
+  }
+
+  applyVoucherFromList(voucher: VoucherItem, event?: Event): void {
+    event?.stopPropagation();
+
+    const reason = this.voucherUnavailableReason(voucher);
+    if (reason) {
+      this.resetRejectedVoucher(reason);
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.voucherCode = this.voucherCodeOf(voucher);
+    this.applyVoucher();
   }
 
   onVoucherCodeChange(value: string): void {
@@ -876,11 +923,6 @@ export class Order implements OnInit, OnDestroy {
   }
 
   private handleOrderCreateError(message: string): void {
-    if (this.hasAppliedVoucher && this.isVoucherRejectionMessage(message)) {
-      this.rejectAppliedVoucher(message);
-      return;
-    }
-
     this.errorMessage = message;
   }
 
@@ -902,14 +944,12 @@ export class Order implements OnInit, OnDestroy {
       return;
     }
 
-    this.validateAppliedVoucherBeforeContinue(() => {
-      if (this.selectedPaymentId === 'bank_transfer' && this.paymentStatus !== 'paid') {
-        this.prepareBankTransferOrder();
-        return;
-      }
+    if (this.selectedPaymentId === 'bank_transfer' && this.paymentStatus !== 'paid') {
+      this.prepareBankTransferOrder();
+      return;
+    }
 
-      this.goToConfirm();
-    });
+    this.goToConfirm();
   }
 
   goToConfirm(): void {
@@ -1037,7 +1077,7 @@ export class Order implements OnInit, OnDestroy {
       return;
     }
 
-    this.validateAppliedVoucherBeforeContinue(() => this.submitValidatedOrder());
+    this.submitValidatedOrder();
   }
 
   private submitValidatedOrder(): void {
@@ -1133,11 +1173,11 @@ export class Order implements OnInit, OnDestroy {
 
   private loadAvailableVouchers(): void {
     this.isLoadingVouchers = true;
-    this.orderService.getAvailableVouchers().subscribe({
+    this.orderService.getAvailableVouchers(this.userId, this.buildVoucherContext()).subscribe({
       next: (res) => {
         this.availableVouchers = (res.data || [])
           .filter((voucher) => this.isVoucherStillValid(voucher))
-          .filter((voucher) => this.normalizeText(voucher.status) !== 'used');
+          .filter((voucher) => !this.isUsedVoucher(voucher));
         this.isLoadingVouchers = false;
         this.cdr.detectChanges();
       },
