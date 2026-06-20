@@ -168,17 +168,37 @@
       </div>
 
       <div class="voucher-list" *ngIf="availableVouchers.length > 0">
-        <button
-          type="button"
+        <div
+          class="voucher-option"
           *ngFor="let item of availableVouchers"
-          (click)="chooseVoucher(item)"
+          role="button"
+          tabindex="0"
+          (click)="applyVoucherFromList(item, $event)"
+          (keydown.enter)="applyVoucherFromList(item, $event)"
           [class.active]="hasAppliedVoucher && voucher.code === voucherCodeOf(item)"
           [class.unavailable]="!canApplyVoucher(item)"
         >
-          <strong>{{ voucherTitleOf(item) }}</strong>
-          <span>{{ voucherConditionOf(item) }}</span>
+          <input
+            type="radio"
+            name="voucherSelect"
+            [checked]="hasAppliedVoucher && voucher.code === voucherCodeOf(item)"
+            [disabled]="!canApplyVoucher(item)"
+            tabindex="-1"
+          />
+          <span class="radio-mark"></span>
+          <span class="voucher-option-copy">
+            <strong>{{ voucherTitleOf(item) }}</strong>
+            <span>{{ voucherConditionOf(item) }}</span>
+          </span>
           <small *ngIf="!canApplyVoucher(item)">{{ voucherUnavailableReason(item) }}</small>
-        </button>
+          <button
+            type="button"
+            class="voucher-detail-link"
+            (click)="chooseVoucher(item); $event.stopPropagation()"
+          >
+            Chi tiết
+          </button>
+        </div>
       </div>
 
       <p class="small-muted" *ngIf="isLoadingVouchers">Đang tải voucher của bạn...</p>
@@ -536,18 +556,6 @@
 
     <div class="modal-actions">
       <button type="button" class="outline-btn" (click)="closeVoucherDetail()">Đóng</button>
-      <button
-        type="button"
-        class="primary-btn"
-        (click)="applyVoucherFromDetail(selectedVoucherDetail)"
-        [disabled]="isApplyingVoucher || !canApplyVoucher(selectedVoucherDetail)"
-      >
-        {{
-          !canApplyVoucher(selectedVoucherDetail)
-            ? 'Không thể áp dụng'
-            : (isApplyingVoucher ? 'Đang áp dụng...' : 'Áp dụng')
-        }}
-      </button>
     </div>
   </section>
 </div>

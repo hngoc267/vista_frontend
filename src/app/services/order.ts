@@ -149,8 +149,31 @@ export class OrderService {
     );
   }
 
-  getAvailableVouchers(): Observable<VoucherListResponse> {
-    return this.http.get<VoucherListResponse>(`${this.apiUrl}/vouchers/my-vouchers`);
+  getAvailableVouchers(userId = '', context?: {
+    totalItemsPrice: number;
+    shippingFee: number;
+    totalQuantity: number;
+    orderItems: {
+      productVariantId: string;
+      quantity: number;
+      price: number;
+    }[];
+  }): Observable<VoucherListResponse> {
+    const params = new URLSearchParams();
+
+    if (userId) {
+      params.set('userId', userId);
+    }
+
+    if (context) {
+      params.set('totalItemsPrice', String(context.totalItemsPrice));
+      params.set('shippingFee', String(context.shippingFee));
+      params.set('totalQuantity', String(context.totalQuantity));
+      params.set('orderItems', JSON.stringify(context.orderItems));
+    }
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.http.get<VoucherListResponse>(`${this.apiUrl}/vouchers/my-vouchers${query}`);
   }
 
   applyVoucher(payload: {
