@@ -1,0 +1,834 @@
+$primary-dark: #1A3A6B;
+$primary: #2563B0;
+$primary-hover: #1E4D8C;
+$cyan: #00C2D4;
+$text-main: #0F172A;
+$text-muted: #64748B;
+$text-light: #94A3B8;
+$bg-page: #F8FAFC;
+$border: #E2E8F0;
+$white: #FFFFFF;
+
+.order-history-page {
+  background: $bg-page;
+  padding: 40px 0 120px;
+  min-height: 520px;
+}
+
+.section-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 120px;
+}
+
+.history-box {
+  background: $white;
+  border: 1px solid $border;
+  border-radius: 16px;
+  padding: 28px;
+  min-height: 420px;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+
+  h2 {
+    margin: 0 0 24px;
+    font-size: 22px;
+    font-weight: 600;
+    color: $text-main;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    &::before {
+      content: '';
+      width: 6px;
+      height: 24px;
+      border-radius: 999px;
+      background: $cyan;
+      display: inline-block;
+    }
+  }
+}
+
+.history-toolbar {
+  display: flex;
+  align-items: flex-start; /* Đổi thành flex-start để lỡ màn hình nhỏ quá bị rớt dòng thì ô search không bị xô lệch */
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.search-box {
+  width: 300px; /* Thu nhỏ từ 430px xuống 300px để nhường chỗ cho các tab */
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: $white;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 0 14px;
+  transition: 0.2s ease;
+  flex-shrink: 0; /* Giữ ô search không bị bóp méo */
+
+  &:focus-within {
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(37, 99, 176, 0.1);
+  }
+
+  i {
+    font-size: 18px;
+    color: $text-light;
+  }
+
+  input {
+    width: 100%;
+    border: none;
+    outline: none;
+    color: $text-main;
+    font-size: 13px;
+    font-family: 'Be Vietnam Pro', sans-serif;
+
+    &::placeholder {
+      color: $text-light;
+    }
+  }
+}
+
+.status-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Thu hẹp khoảng cách các tab từ 8px xuống 6px */
+  flex-wrap: wrap;
+  justify-content: flex-end;
+
+  button {
+    min-width: unset; /* Bỏ min-width để nút co giãn tự nhiên */
+    height: 38px;
+    padding: 0 12px; /* Dùng 12px vừa đủ đẹp, 16px hơi to */
+    white-space: nowrap; 
+    background: $white;
+    border: 1px solid $border;
+    color: $text-muted;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
+
+  button:hover {
+    background: #EFF6FF;
+    color: $primary;
+    border-color: $primary;
+    transform: translateY(-1px);
+  }
+
+  button.active {
+    background: $primary;
+    color: $white;
+    border-color: $primary;
+    box-shadow: 0 6px 14px rgba(37, 99, 176, 0.18);
+  }
+}
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.order-card {
+  border: 1px solid $border;
+  background: $white;
+  border-radius: 14px;
+  padding: 16px;
+  transition: 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+.order-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #F1F5F9;
+
+  h3 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    color: $text-main;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    color: $text-muted;
+
+    span {
+      color: $text-light;
+      margin: 0 6px;
+    }
+  }
+}
+
+.order-status {
+  min-width: 96px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: $primary;
+  color: $white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+
+.status-processing,
+.status-pending-payment,
+.status-shipping,
+.status-returning,
+.status-cancelled,
+.status-review {
+  background: $primary;
+  color: $white;
+}
+
+.product-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.product-card {
+  height: 126px;
+  display: flex;
+  gap: 12px;
+  border: 1px solid $border;
+  background: $white;
+  border-radius: 12px;
+  padding: 8px;
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  transition: 0.2s ease;
+
+  &:hover {
+    border-color: #BFDBFE;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  }
+}
+
+.product-img {
+  width: 116px;
+  height: 108px;
+  flex: 0 0 116px;
+  border-radius: 10px;
+  background: $bg-page;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+}
+
+.product-info {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  padding-top: 2px;
+
+  h4 {
+    margin: 0 0 4px;
+    color: $text-main;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    max-width: 180px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  p {
+    margin: 0 0 10px;
+    color: $text-light;
+    font-size: 11px;
+  }
+
+  strong {
+    display: block;
+    color: $primary;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  span {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    color: $text-muted;
+    font-size: 11px;
+    font-weight: 500;
+  }
+}
+
+.order-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #F1F5F9;
+
+  p {
+    margin: 0;
+    color: $text-main;
+    font-size: 13px;
+  }
+
+  strong {
+    color: $primary;
+    font-size: 19px;
+    font-weight: 800;
+  }
+}
+
+.order-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-outline,
+.btn-primary {
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  cursor: pointer;
+  transition: 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.btn-outline {
+  background: $white;
+  color: $primary;
+  border: 1px solid $primary;
+
+  &:hover {
+    background: #EFF6FF;
+    transform: translateY(-1px);
+  }
+}
+
+.btn-primary {
+  background: $primary;
+  color: $white;
+  border: 1px solid $primary;
+
+  &:hover {
+    background: $primary-hover;
+    border-color: $primary-hover;
+    transform: translateY(-1px);
+  }
+}
+
+.empty-order {
+  padding: 88px 20px;
+  text-align: center;
+  color: $text-muted;
+
+  i {
+    font-size: 48px;
+    color: $primary;
+  }
+
+  h3 {
+    margin: 14px 0 6px;
+    color: $text-main;
+    font-size: 18px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+  }
+}
+
+.show-more-products {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+
+  button {
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid #BFDBFE;
+    background: #EFF6FF;
+    color: $primary;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Be Vietnam Pro', sans-serif;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: 0.2s ease;
+
+    &:hover {
+      background: #DBEAFE;
+      transform: translateY(-1px);
+    }
+
+    i {
+      font-size: 14px;
+    }
+  }
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.page-btn,
+.page-number {
+  min-width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid $border;
+  background: $white;
+  color: $primary;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.page-number.active,
+.page-btn:hover,
+.page-number:hover {
+  background: $primary;
+  color: $white;
+  border-color: $primary;
+}
+
+.page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+
+  &:hover {
+    background: $white;
+    color: $primary;
+    border-color: $border;
+  }
+}
+
+.order-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(15, 23, 42, 0.52);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.order-detail-modal {
+  width: min(860px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: $white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.35);
+}
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid $border;
+
+  span {
+    color: $primary;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  h2 {
+    margin: 5px 0;
+    color: $text-main;
+    font-size: 22px;
+  }
+
+  p {
+    margin: 0;
+    color: $text-muted;
+    font-size: 13px;
+  }
+}
+
+.detail-close {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: $bg-page;
+  color: $text-main;
+  cursor: pointer;
+  transition: 0.2s ease;
+
+  i {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: #E2E8F0;
+  }
+}
+
+.detail-status-box {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.status-line {
+  position: relative;
+  background: $bg-page;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 12px;
+
+  .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #CBD5E1;
+    margin-bottom: 8px;
+  }
+
+  h4 {
+    margin: 0 0 4px;
+    color: $text-muted;
+    font-size: 12px;
+  }
+
+  p {
+    margin: 0;
+    color: $text-light;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  &.active {
+    border-color: #BFDBFE;
+    background: #EFF6FF;
+
+    .status-dot {
+      background: $primary;
+    }
+
+    h4 {
+      color: $primary;
+    }
+
+    p {
+      color: #475569;
+    }
+  }
+}
+
+.detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.detail-info-card {
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 14px;
+  background: $white;
+
+  h3 {
+    margin: 0 0 10px;
+    color: $text-main;
+    font-size: 14px;
+  }
+
+  p {
+    margin: 0 0 6px;
+    color: $text-muted;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.detail-product-section {
+  margin-top: 18px;
+
+  h3 {
+    margin: 0 0 12px;
+    color: $text-main;
+    font-size: 15px;
+  }
+}
+
+.detail-product-list {
+  border: 1px solid $border;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.detail-product-item {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #F1F5F9;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  > strong {
+    color: $primary;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+}
+
+.detail-product-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background: $bg-page;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 7px;
+    box-sizing: border-box;
+  }
+}
+
+.detail-product-content {
+  h4 {
+    margin: 0 0 4px;
+    color: $text-main;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  p {
+    margin: 0 0 6px;
+    color: $text-muted;
+    font-size: 12px;
+  }
+
+  span {
+    color: $text-muted;
+    font-size: 12px;
+  }
+}
+
+.detail-summary {
+  margin-top: 16px;
+  margin-left: auto;
+  width: min(360px, 100%);
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 12px;
+  background: $bg-page;
+
+  div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    color: $text-muted;
+    font-size: 13px;
+  }
+
+  strong {
+    color: $text-main;
+  }
+
+  .summary-total {
+    border-top: 1px solid $border;
+    margin-top: 6px;
+    padding-top: 12px;
+
+    span {
+      color: $text-main;
+      font-weight: 700;
+    }
+
+    strong {
+      color: $primary;
+      font-size: 18px;
+    }
+  }
+}
+
+.detail-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid $border;
+}
+
+@media (max-width: 1180px) {
+  .section-container {
+    padding: 0 48px;
+  }
+
+  .history-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .status-tabs {
+    justify-content: flex-start;
+  }
+
+  .product-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .order-history-page {
+    padding: 24px 0 70px;
+  }
+
+  .section-container {
+    padding: 0 18px;
+  }
+
+  .history-box {
+    padding: 18px 14px;
+    border-radius: 14px;
+
+    h2 {
+      font-size: 19px;
+    }
+  }
+
+  .product-row {
+    grid-template-columns: 1fr;
+  }
+
+  .product-card {
+    height: auto;
+  }
+
+  .order-head,
+  .order-foot {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .order-status {
+    align-self: flex-start;
+  }
+
+  .order-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .btn-outline,
+  .btn-primary {
+    flex: 1;
+  }
+
+  .order-detail-backdrop {
+    padding: 14px;
+  }
+
+  .order-detail-modal {
+    padding: 16px;
+  }
+
+  .detail-status-box,
+  .detail-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-product-item {
+    grid-template-columns: 58px 1fr;
+  }
+
+  .detail-product-img {
+    width: 58px;
+    height: 58px;
+  }
+
+  .detail-product-item > strong {
+    grid-column: 2;
+  }
+
+  .detail-actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+}
