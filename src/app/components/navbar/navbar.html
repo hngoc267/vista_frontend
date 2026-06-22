@@ -13,12 +13,11 @@
           <i class="ph ph-caret-down arrow-icon"></i>
         </div>
         <ul class="dropdown-menu">
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_001'}">Laptop</a></li>
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_002'}">Smartphone</a></li>
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_003'}">Tablet</a></li>
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_004'}">Thiết bị âm thanh</a></li>
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_005'}">Phụ kiện công nghệ</a></li>
-          <li><a routerLink="/products" [queryParams]="{category: 'CAT_006'}">Thiết bị Gaming</a></li>
+          <li *ngFor="let category of categories">
+            <a routerLink="/products" [queryParams]="{category: category.Category_id}">
+              {{ category.Category_name }}
+            </a>
+          </li>
         </ul>
       </div>
     </div>
@@ -26,7 +25,7 @@
     <div class="nav-center greeting-wrapper">
       <div class="greeting-text">
         <span *ngIf="isLoggedIn">
-          ✨ Xin chào <strong>{{ userName }}</strong>, hãy khám phá thiết bị hoàn hảo dành cho bạn cùng VISTA nhé! ✨
+          ✨ <strong>{{ userName }}</strong> ơi, khám phá thiết bị hoàn hảo cùng VISTA nhé! ✨
         </span>
       </div>
       
@@ -52,10 +51,41 @@
         <span>Đăng nhập</span>
       </a>
       
-      <a *ngIf="isLoggedIn" routerLink="/profile" class="action-btn">
-        <i class="ph ph-user"></i>
-        <span>Hồ sơ</span>
-      </a>
+      <div *ngIf="isLoggedIn" class="profile-dropdown">
+        <a class="action-btn profile-trigger" style="cursor: pointer;">
+          <i class="ph ph-user"></i>
+          <span>{{ userName || 'Tài khoản' }}</span>
+          <i class="ph ph-caret-down" style="font-size: 12px; margin-left: 2px;"></i>
+        </a>
+
+        <ul class="profile-menu">
+          <li>
+            <a routerLink="/profile">
+              <i class="ph ph-user-circle"></i>
+              <span>Hồ sơ cá nhân</span>
+            </a>
+          </li>
+          <li>
+            <a routerLink="/order">
+              <i class="ph ph-receipt"></i>
+              <span>Đơn hàng của tôi</span>
+            </a>
+          </li>
+          <li>
+            <a routerLink="/order-history">
+              <i class="ph ph-clock-counter-clockwise"></i>
+              <span>Lịch sử đơn hàng</span>
+            </a>
+          </li>
+          <li>
+            <a routerLink="/voucher">
+              <i class="ph ph-ticket"></i>
+              <span>Mã giảm giá của tôi</span>
+            </a>
+          </li>
+          
+          </ul>
+      </div>
 
       <a href="#" class="action-btn">
         <i class="ph ph-robot"></i>
