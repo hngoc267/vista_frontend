@@ -40,69 +40,108 @@
           </button>
         </div>
 
-        <div class="item-list" *ngIf="items.length > 0; else emptyState">
-          <article
-            class="item-card"
-            *ngFor="let item of items; trackBy: trackByItemId"
-            [class.is-selected]="item.selected"
-          >
-            <label class="item-check">
-              <input
-                #itemCheckbox
-                type="checkbox"
-                [checked]="item.selected"
-                (change)="toggleItem(item, itemCheckbox.checked)"
-              />
-            </label>
+        <div class="item-list-wrapper" *ngIf="items.length > 0; else emptyState">
+          <div class="item-header">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span class="header-label">Đơn giá</span>
+            <span></span>
+            <span class="header-label">Thành tiền</span>
+            <span></span>
+          </div>
 
-            <div class="item-media">
-              <img [src]="item.img" [alt]="item.name" />
-            </div>
-
-            <div class="item-content">
-              <h2 class="item-name">{{ item.name }}</h2>
-              <p class="item-specs">{{ item.specs }}</p>
-              <span class="stock-pill">Còn {{ item.stock }} sp</span>
-            </div>
-
-            <div class="item-price unit-price">
-              <strong>{{ formatPrice(item.price) }}</strong>
-              <del *ngIf="hasItemDiscount(item)">{{ formatPrice(item.originalPrice) }}</del>
-            </div>
-
-            <div class="qty-control">
-              <button
-                type="button"
-                class="qty-btn"
-                (click)="changeQuantity(item, -1)"
-                [attr.aria-label]="'Giảm số lượng ' + item.name"
-              >
-                <i class="ph ph-minus"></i>
-              </button>
-              <span class="qty-value">{{ item.qty }}</span>
-              <button
-                type="button"
-                class="qty-btn"
-                (click)="changeQuantity(item, 1)"
-                [attr.aria-label]="'Tăng số lượng ' + item.name"
-              >
-                <i class="ph ph-plus"></i>
-              </button>
-            </div>
-
-            <div class="item-price line-total">
-              <strong>{{ formatPrice(lineTotal(item)) }}</strong>
-            </div>
-
-            <button
-              class="remove-btn"
-              type="button"
-              (click)="removeItem(item)"
-              aria-label="Xóa sản phẩm"
+          <div class="item-list">
+            <article
+              class="item-card"
+              *ngFor="let item of items; trackBy: trackByItemId"
+              [class.is-selected]="item.selected"
             >
-              <i class="ph ph-trash"></i>
-            </button>
-          </article>
+              <label class="item-check">
+                <input
+                  #itemCheckbox
+                  type="checkbox"
+                  [checked]="item.selected"
+                  (change)="toggleItem(item, itemCheckbox.checked)"
+                />
+              </label>
+
+              <div class="item-media">
+                <a *ngIf="item.productId; else imagePlain" [routerLink]="['/products', item.productId]">
+                  <img [src]="item.img" [alt]="item.name" />
+                </a>
+                <ng-template #imagePlain>
+                  <img [src]="item.img" [alt]="item.name" />
+                </ng-template>
+              </div>
+
+              <div class="item-content">
+                <h2 class="item-name">
+                  <a *ngIf="item.productId; else namePlain" [routerLink]="['/products', item.productId]">
+                    {{ item.name }}
+                  </a>
+                  <ng-template #namePlain>{{ item.name }}</ng-template>
+                </h2>
+                <p class="item-specs">{{ item.specs }}</p>
+                <span class="stock-pill">Còn {{ item.stock }} sản phẩm</span>
+              </div>
+
+              <div class="item-price unit-price">
+                <span class="price-main">{{ formatPrice(item.price) }}</span>
+                <span class="price-old" *ngIf="hasItemDiscount(item)">
+                  {{ formatPrice(item.originalPrice) }}
+                </span>
+              </div>
+
+              <div class="qty-control">
+                <button
+                  type="button"
+                  class="qty-btn"
+                  (click)="changeQuantity(item, -1)"
+                  [attr.aria-label]="'Giảm số lượng ' + item.name"
+                >
+                  <i class="ph ph-minus"></i>
+                </button>
+                
+                <input
+                  class="qty-input"
+                  type="number"
+                  min="1"
+                  [attr.max]="item.stock > 0 ? item.stock : null"
+                  [(ngModel)]="item.qty"
+                  (blur)="onQuantityBlur(item)"
+                  (keydown.enter)="onQuantityBlur(item)"
+                  inputmode="numeric"
+                  aria-label="Số lượng {{ item.name }}"
+                />
+
+                <button
+                  type="button"
+                  class="qty-btn"
+                  (click)="changeQuantity(item, 1)"
+                  [attr.aria-label]="'Tăng số lượng ' + item.name"
+                >
+                  <i class="ph ph-plus"></i>
+                </button>
+              </div>
+
+              <div class="item-price line-total">
+                <span class="price-main">{{ formatPrice(lineTotal(item)) }}</span>
+                <span class="price-old" *ngIf="hasItemDiscount(item)">
+                  {{ formatPrice(originalLineTotal(item)) }}
+                </span>
+              </div>
+
+              <button
+                class="remove-btn"
+                type="button"
+                (click)="removeItem(item)"
+                aria-label="Xóa sản phẩm"
+              >
+                <i class="ph ph-trash"></i>
+              </button>
+            </article>
+          </div>
         </div>
 
         <ng-template #emptyState>

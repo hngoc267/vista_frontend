@@ -1,0 +1,428 @@
+<section class="order-history-page">
+  <div class="section-container">
+    <div class="history-box">
+      <h2>Lịch sử đơn hàng</h2>
+
+      <div class="history-toolbar">
+        <div class="search-box">
+          <i class="ph ph-magnifying-glass"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchKeyword"
+            (ngModelChange)="onSearchChange()"
+            placeholder="Nhập mã đơn hàng..."
+          />
+        </div>
+
+        <div class="status-tabs">
+          <button
+            *ngFor="let tab of tabs"
+            type="button"
+            [class.active]="selectedStatus === tab?.value"
+            (click)="setStatus(tab!.value)"
+          >
+            {{ tab?.label }}
+          </button>
+        </div>
+      </div>
+
+      <div class="loading-order" *ngIf="isLoading">
+        <div class="loading-spinner"></div>
+        <p>Đang tải lịch sử đơn hàng...</p>
+      </div>
+
+      <div class="empty-order error-order" *ngIf="!isLoading && loadError">
+        <i class="ph ph-warning-circle"></i>
+        <h3>Không thể tải lịch sử đơn hàng</h3>
+        <p>{{ loadError }}</p>
+        <button type="button" class="btn-outline retry-btn" (click)="loadOrders()">
+          Tải lại
+        </button>
+      </div>
+
+      <div class="order-list" *ngIf="!isLoading && !loadError && paginatedOrders.length > 0; else emptyOrder">
+        <article class="order-card" *ngFor="let order of paginatedOrders">
+          <div class="order-head">
+            <div>
+              <h3>#{{ order.Order_code }}</h3>
+              <p>
+                Đặt ngày: {{ order.Created_at | date:'dd/MM/yyyy' }}
+                <span>·</span>
+                {{ getTotalQuantity(order) }} sản phẩm
+              </p>
+            </div>
+
+            <span
+              class="order-status"
+              [ngClass]="{
+                'status-pending-payment': order.Status === 'pending_payment',
+                'status-processing': order.Status === 'processing',
+                'status-shipping': isShippingOrder(order),
+                'status-review': isReviewOrder(order),
+                'status-returning': order.Status === 'returning',
+                'status-cancelled': order.Status === 'cancelled',
+              }"
+            >
+              {{ getStatusLabel(order) }}
+            </span>
+          </div>
+
+          <div class="product-row">
+            <a
+              class="product-card"
+              *ngFor="let item of getVisibleItems(order)"
+              [routerLink]="['/products', item.Product_id]"
+            >
+              <div class="product-img">
+                <img
+                  *ngIf="item.Image"
+                  [src]="item.Image"
+                  [alt]="item.Product_name"
+                  (error)="hideBrokenImage($event)"
+                />
+              </div>
+
+              <div class="product-info">
+                <h4>{{ item.Product_name }}</h4>
+                <p>{{ item.Variant_name }}</p>
+                
+                <div class="price-row">
+                  <strong>{{ formatPrice(item.Price) }}</strong>
+                  <span>x{{ item.Quantity }}</span>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <div class="show-more-products" *ngIf="order.Items.length > productPreviewLimit">
+            <button type="button" (click)="toggleProducts(order)">
+              <span *ngIf="!isExpanded(order)">
+                Xem thêm {{ getHiddenItemCount(order) }} sản phẩm
+              </span>
+
+              <span *ngIf="isExpanded(order)">
+                Thu gọn
+              </span>
+
+              <i
+                class="ph"
+                [ngClass]="isExpanded(order) ? 'ph-caret-up' : 'ph-caret-down'"
+              ></i>
+            </button>
+          </div>
+
+          <div class="order-foot">
+            <p>
+              Tổng tiền:
+              <strong>{{ formatPrice(order.Total_amount || getTotal(order)) }}</strong>
+            </p>
+
+            <div class="order-actions">
+              <button
+                *ngIf="isPendingQrOrder(order)"
+                class="btn-outline"
+                type="button"
+                (click)="openPaymentModal(order)"
+              >
+                Thanh toán
+              </button>
+
+              <button
+                *ngIf="isPendingPaymentOrder(order) || isProcessingOrder(order) || isShippingOrder(order)"
+                class="btn-outline"
+                type="button"
+                (click)="handleCancelOrder(order)"
+              >
+                Hủy đơn hàng
+              </button>
+
+              <button
+                *ngIf="selectedStatus === 'review' && isReviewOrder(order) && !isReviewedOrder(order)"
+                class="btn-outline"
+                type="button"
+                (click)="handleReviewNow(order)"
+              >
+                Đánh giá ngay
+              </button>
+              <!-- THÊM NÚT HOÀN HÀNG VÀO ĐÂY -->
+              <button
+                *ngIf="selectedStatus === 'review' && isReviewOrder(order) && !isReviewedOrder(order)"
+                class="btn-outline"
+                type="button"
+                (click)="handleReturnOrder(order)" 
+              >
+                Hoàn hàng
+              </button>
+
+              <button
+                *ngIf="(selectedStatus === 'cancelled' && isCancelledOrder(order)) || (selectedStatus === 'returning' && isReturningOrder(order))"
+                class="btn-outline"
+                type="button"
+                (click)="handleBuyAgain(order)"
+              >
+                Mua lại
+              </button>
+
+              <button
+                *ngIf="isShippingOrder(order)"
+                class="btn-outline"
+                type="button"
+                (click)="markOrderReceived(order)"
+              >
+                Đã nhận được hàng
+              </button>
+
+              <button
+                class="btn-outline"
+                type="button"
+                (click)="openOrderDetail(order)"
+              >
+                Xem chi tiết
+              </button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="pagination" *ngIf="filteredOrders.length > pageSize">
+        <button
+          type="button"
+          class="page-btn"
+          [disabled]="currentPage === 1"
+          (click)="goToPage(currentPage - 1)"
+        >
+          <i class="ph ph-caret-left"></i>
+        </button>
+
+        <button
+          type="button"
+          class="page-number"
+          *ngFor="let page of pageNumbers"
+          [class.active]="currentPage === page"
+          (click)="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+
+        <button
+          type="button"
+          class="page-btn"
+          [disabled]="currentPage === totalPages"
+          (click)="goToPage(currentPage + 1)"
+        >
+          <i class="ph ph-caret-right"></i>
+        </button>
+      </div>
+
+      <ng-template #emptyOrder>
+        <div class="empty-order">
+          <i class="ph ph-package"></i>
+          <h3>Không tìm thấy đơn hàng</h3>
+          <p>Thử chọn trạng thái khác hoặc nhập lại mã đơn hàng.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</section>
+
+<div
+  class="order-detail-backdrop"
+  *ngIf="selectedOrder as detailOrder"
+  (click)="closeOrderDetail()"
+>
+  <div class="order-detail-modal" (click)="$event.stopPropagation()">
+    <div class="detail-header">
+      <div>
+        <span>Chi tiết đơn hàng</span>
+        <h2>#{{ detailOrder.Order_code }}</h2>
+        <p>Ngày đặt: {{ detailOrder.Created_at | date:'dd/MM/yyyy' }}</p>
+      </div>
+
+      <button type="button" class="detail-close" (click)="closeOrderDetail()">
+        <i class="ph ph-x"></i>
+      </button>
+    </div>
+
+    <div
+      class="detail-status-box"
+      [ngClass]="{
+        'timeline-cols-1': isReturningOrder(detailOrder) || isCancelledOrder(detailOrder),
+        'timeline-cols-5': isBankTransferOrder(detailOrder) && !isReturningOrder(detailOrder) && !isCancelledOrder(detailOrder),
+        'timeline-cols-4': !isBankTransferOrder(detailOrder) && !isReturningOrder(detailOrder) && !isCancelledOrder(detailOrder)
+      }"
+    >
+      <div
+        class="status-line"
+        *ngFor="let step of getDetailTimeline(detailOrder)"
+        [class.active]="step.active"
+      >
+        <div class="status-dot"></div>
+        <div>
+          <h4>{{ step.title }}</h4>
+          <p>{{ step.description }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-info-grid">
+      <div class="detail-info-card">
+        <h3>Thông tin nhận hàng</h3>
+        <p><strong>{{ detailOrder.Customer_name || 'Chưa có thông tin' }}</strong></p>
+        <p>SĐT: {{ detailOrder.Phone_number || 'Chưa có thông tin' }}</p>
+        <p>Email: {{ detailOrder.Email || 'Chưa có thông tin' }}</p>
+        <p>Địa chỉ: {{ detailOrder.Address || 'Chưa có thông tin địa chỉ' }}</p>
+      </div>
+
+      <div class="detail-info-card">
+        <h3>Thanh toán</h3>
+        <p>Phương thức: {{ detailOrder.Payment_type === 'BankTransfer' ? 'Chuyển khoản / QR' : 'Tiền mặt / COD' }}</p>
+        <p>Trạng thái: {{
+          detailOrder.Payment_status === 'paid'
+            ? 'Đã thanh toán'
+            : detailOrder.Payment_status === 'failed'
+              ? 'Thanh toán thất bại'
+              : 'Chưa thanh toán'
+        }}</p>
+        <ng-container *ngIf="!isPendingPaymentDetail(detailOrder)">
+          <p>Vận chuyển: {{ detailOrder.Delivery_status === 'shipping' ? 'Đang giao' : detailOrder.Delivery_status === 'delivered' ? 'Đã giao' : detailOrder.Delivery_status === 'failed' ? 'Giao thất bại' : 'Đang xử lý' }}</p>
+          <p>
+            Ngày giao thực tế:
+            {{ detailOrder.Delivered_at ? (detailOrder.Delivered_at | date:'dd/MM/yyyy') : 'Chưa có thông tin' }}
+          </p>
+          <p *ngIf="detailOrder.Tracking_number">Mã vận đơn: {{ detailOrder.Tracking_number }}</p>
+          <p *ngIf="detailOrder.Estimated_delivery_date">Dự kiến giao: {{ detailOrder.Estimated_delivery_date | date:'dd/MM/yyyy' }}</p>
+        </ng-container>
+        <p *ngIf="detailOrder.Voucher_code || detailOrder.Voucher_title">
+          Voucher: {{ detailOrder.Voucher_code || detailOrder.Voucher_title }}
+        </p>
+        <p>Ghi chú: {{ detailOrder.Order_notes || 'Không có' }}</p>
+      </div>
+    </div>
+
+    <div class="detail-product-section">
+      <h3>Sản phẩm trong đơn</h3>
+
+      <div class="detail-product-list">
+        <div class="detail-product-item" *ngFor="let item of detailOrder.Items">
+          <div class="detail-product-img">
+            <img
+              *ngIf="item.Image"
+              [src]="item.Image"
+              [alt]="item.Product_name"
+              (error)="hideBrokenImage($event)"
+            />
+          </div>
+
+          <div class="detail-product-content">
+            <h4>{{ item.Product_name }}</h4>
+            <p>{{ item.Variant_name }}</p>
+            <span>{{ formatPrice(item.Price) }} x{{ item.Quantity }}</span>
+          </div>
+
+          <strong>{{ formatPrice(item.Price * item.Quantity) }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-summary">
+      <div>
+        <span>Tổng số lượng</span>
+        <strong>{{ getTotalQuantity(detailOrder) }} sản phẩm</strong>
+      </div>
+
+      <div>
+        <span>Tạm tính</span>
+        <strong>{{ formatPrice(detailOrder.Total_items_price) }}</strong>
+      </div>
+
+      <div *ngIf="detailOrder.Discount_amount > 0">
+        <span>Giảm giá (Voucher)</span>
+        <strong>- {{ formatPrice(detailOrder.Discount_amount) }}</strong>
+      </div>
+
+      <div>
+        <span>Phí vận chuyển</span>
+        <strong>{{ detailOrder.Shipping_fee !== undefined ? formatPrice(detailOrder.Shipping_fee) : 'Đang cập nhật...' }}</strong>
+      </div>
+
+      <div class="summary-total">
+        <span>Tổng thanh toán</span>
+        <strong>{{ formatPrice(detailOrder.Total_amount) }}</strong>
+      </div>
+    </div>
+
+    <div class="detail-actions">
+      <button
+        *ngIf="isShippingOrder(detailOrder)"
+        type="button"
+        class="btn-outline"
+        (click)="markOrderReceived(detailOrder)"
+      >
+        Đã nhận được hàng
+      </button>
+
+      <button type="button" class="btn-outline" (click)="closeOrderDetail()">
+        Đóng
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" *ngIf="isPaymentModalOpen">
+  <section class="modal-panel payment-modal">
+    <button type="button" class="modal-close" (click)="cancelPayment()" aria-label="Đóng">
+      <i class="ph ph-x"></i>
+    </button>
+
+    <h1>Thanh toán trước</h1>
+    <div class="modal-divider"></div>
+
+    <p class="timer-line">
+      <i class="ph ph-clock"></i>
+      Giao dịch hết hạn trong {{ paymentTimerLabel }}
+    </p>
+
+    <div class="qr-card">
+      <p>Vui lòng quét mã QR bên dưới để thanh toán chuyển khoản!</p>
+      <div class="qr-box">
+        <img [src]="vietQrUrl" alt="VietQR VietinBank" />
+      </div>
+      <button type="button" class="qr-download" (click)="downloadVietQr()">
+        <i class="ph ph-download-simple"></i>
+        Tải QR code
+      </button>
+    </div>
+
+    <div class="bank-box">
+      <p>
+        <span>Ngân hàng: </span>
+        <strong>{{ bankInfo.bankName }}</strong>
+      </p>
+      <p>
+        <span>Số tài khoản: </span>
+        <strong>{{ bankInfo.accountNumber }}</strong>
+      </p>
+      <p>
+        <span>Alias: </span>
+        <strong>{{ bankInfo.alias }}</strong>
+      </p>
+      <p>
+        <span>Người thụ hưởng: </span>
+        <strong>{{ bankInfo.accountHolder }}</strong>
+      </p>
+      <p>
+        <span>Nội dung chuyển khoản: </span>
+        <strong>{{ transferContent }}</strong>
+      </p>
+    </div>
+
+    <p class="form-error payment-error" *ngIf="paymentError">{{ paymentError }}</p>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-outline" (click)="cancelPayment()">Hủy giao dịch</button>
+      <button type="button" class="btn-primary" (click)="confirmScannedPayment()" [disabled]="isProcessingPayment">
+        {{ isProcessingPayment ? 'Đang xác nhận...' : 'Tôi đã quét và thanh toán' }}
+      </button>
+    </div>
+  </section>
+</div>

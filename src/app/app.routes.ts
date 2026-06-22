@@ -13,6 +13,7 @@ import { AuthGuard } from './guards/auth-guard';
 import {Cart} from "./pages/cart/cart";
 import { Voucher } from './pages/voucher/voucher';
 import { Order } from './pages/order/order';
+import { OrderHistory } from './pages/order-history/order-history';
 
 export const routes: Routes = [
   { path: 'profile', component: Profile, canActivate: [AuthGuard] },
@@ -29,5 +30,6 @@ export const routes: Routes = [
   { path: 'reset-password', component: ResetPassword }, // <-- Thêm dòng này
   { path: 'profile', component: Profile },
   { path: 'policy', component: Policy },
+  { path: 'order-history', component: OrderHistory, canActivate: [AuthGuard] },
   { path: '**', redirectTo: '' }
 ];
