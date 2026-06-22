@@ -40,9 +40,13 @@ export class OrderHistoryService {
       userId = "USR_002"; 
     }
     
-    // Nối ID vào URL thành dạng: http://localhost:5000/api/order-history/USR_003
-    const url = `${this.apiUrl}/${userId}`;
-    
-    return this.http.get<any>(url, { params });
+  // Nối ID vào URL thành dạng: http://localhost:5000/api/order-history/USR_003
+  const url = `${this.apiUrl}/${userId}`;
+  
+  return this.http.get<any>(url, { params });
+  }
+
+  markOrderReceived(orderId: string): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/${encodeURIComponent(orderId)}/received`, {});
   }
 }

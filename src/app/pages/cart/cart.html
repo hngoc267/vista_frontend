@@ -87,7 +87,6 @@
               </div>
 
               <div class="item-price unit-price">
-                <span class="price-spacer price-spacer-top" *ngIf="!hasItemDiscount(item)" aria-hidden="true">&nbsp;</span>
                 <span class="price-main">{{ formatPrice(item.price) }}</span>
                 <span class="price-old" *ngIf="hasItemDiscount(item)">
                   {{ formatPrice(item.originalPrice) }}
@@ -127,7 +126,6 @@
               </div>
 
               <div class="item-price line-total">
-                <span class="price-spacer price-spacer-top" *ngIf="!hasItemDiscount(item)" aria-hidden="true">&nbsp;</span>
                 <span class="price-main">{{ formatPrice(lineTotal(item)) }}</span>
                 <span class="price-old" *ngIf="hasItemDiscount(item)">
                   {{ formatPrice(originalLineTotal(item)) }}

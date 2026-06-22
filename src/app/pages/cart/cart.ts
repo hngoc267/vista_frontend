@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CartService, CartApiItem } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
+import { NotificationService } from '../../components/notification/notification.service';
 
 interface CartItem {
   id: string;
@@ -43,6 +44,7 @@ export class Cart implements OnInit {
     private cdr: ChangeDetectorRef,
     private cartService: CartService,
     private cartState: CartStateService,
+    private notificationService: NotificationService,
     private router: Router
   ) {}
 
@@ -98,7 +100,10 @@ export class Cart implements OnInit {
         this.loadCart(true, selectedIds);
         this.cartState.updateCountFromItems(this.items as any);
       },
-      error: () => this.loadCart(true, selectedIds),
+      error: () => {
+        this.notificationService.error('Không thể cập nhật số lượng sản phẩm');
+        this.loadCart(true, selectedIds);
+      },
     });
   }
 
@@ -115,7 +120,10 @@ export class Cart implements OnInit {
         this.loadCart(true, selectedIds);
         this.cartState.updateCountFromItems(this.items as any);
       },
-      error: () => this.loadCart(true, selectedIds),
+      error: () => {
+        this.notificationService.error('Không thể cập nhật số lượng sản phẩm');
+        this.loadCart(true, selectedIds);
+      },
     });
   }
 
@@ -145,8 +153,12 @@ export class Cart implements OnInit {
       next: () => {
         this.loadCart(true, selectedIds);
         this.cartState.updateCountFromItems(this.items as any);
+        this.notificationService.success('Đã xóa sản phẩm khỏi giỏ hàng');
       },
-      error: () => this.loadCart(true, selectedIds),
+      error: () => {
+        this.notificationService.error('Không thể xóa sản phẩm khỏi giỏ hàng');
+        this.loadCart(true, selectedIds);
+      },
     });
   }
 
@@ -165,8 +177,12 @@ export class Cart implements OnInit {
       next: () => {
         this.loadCart(true, selectedIds);
         this.cartState.updateCountFromItems(this.items as any);
+        this.notificationService.success('Đã xóa sản phẩm đã chọn');
       },
-      error: () => this.loadCart(true, selectedIds),
+      error: () => {
+        this.notificationService.error('Không thể xóa các sản phẩm đã chọn');
+        this.loadCart(true, selectedIds);
+      },
     });
   }
 
@@ -196,6 +212,7 @@ export class Cart implements OnInit {
       error: () => {
         this.items = [];
         this.cartState.setCount(0);
+        this.notificationService.error('Không thể tải giỏ hàng');
       },
     });
   }
