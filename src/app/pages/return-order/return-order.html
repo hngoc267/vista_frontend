@@ -1,0 +1,406 @@
+<div class="order-page return-order-page">
+  <div class="breadcrumb-bar">
+    <div class="section-container">
+      <a routerLink="/">Trang chủ</a>
+      <span class="sep">›</span>
+      <a routerLink="/order-history">Lịch sử đơn hàng</a>
+      <span class="sep">›</span>
+      <span class="current">Yêu cầu hoàn trả</span>
+    </div>
+  </div>
+
+  <div class="order-shell">
+    <div class="loading-state checkout-card" *ngIf="isLoadingOrder">
+      <div class="loading-spinner"></div>
+      <p>Đang tải thông tin hoàn trả...</p>
+    </div>
+
+    <div class="empty-state checkout-card" *ngIf="!isLoadingOrder && loadError">
+      <span class="empty-icon">
+        <i class="ph ph-warning-circle"></i>
+      </span>
+      <h3>Không thể mở yêu cầu hoàn trả</h3>
+      <p>{{ loadError }}</p>
+      <button type="button" class="outline-btn" (click)="cancelRequest()">Quay lại lịch sử đơn hàng</button>
+    </div>
+
+    <ng-container *ngIf="!isLoadingOrder && !loadError && order">
+      <section class="checkout-card">
+        <div class="card-head">
+          <h2>Thông tin trả hàng</h2>
+        </div>
+
+        <div class="receiver-summary" [class.is-empty]="!isReturnInfoComplete">
+          <i class="ph ph-map-pin"></i>
+          <div>
+            <p>
+              <span>Người trả: </span>
+              <strong>{{ returnInfoSummary }}</strong>
+            </p>
+            <p class="address-line" *ngIf="returnAddressLine; else noReturnAddress">
+              <span>Địa chỉ: </span>
+              <strong>{{ returnAddressLine }}</strong>
+            </p>
+            <ng-template #noReturnAddress>
+              <p class="address-line muted">Chưa chọn địa chỉ trả hàng.</p>
+            </ng-template>
+          </div>
+          <button type="button" class="text-link" (click)="openReturnInfoModal()">
+            {{ isReturnInfoComplete ? 'Thay đổi' : 'Chọn địa chỉ' }}
+            <i class="ph ph-caret-right"></i>
+          </button>
+        </div>
+      </section>
+
+      <section class="checkout-card">
+        <div class="card-head">
+          <h2>Thông tin sản phẩm hoàn trả</h2>
+        </div>
+
+        <article class="product-line" *ngFor="let item of items">
+          <div class="product-media">
+            <img [src]="getProductImage(item)" [alt]="item.Product_name" (error)="hideBrokenImage($event)" />
+          </div>
+
+          <div class="product-info">
+            <h3>{{ item.Product_name }}</h3>
+            <p class="variant-single-line">{{ item.Variant_name }}</p>
+            <p>Đã mua x {{ getPurchasedQuantity(item) }}</p>
+            <div class="return-quantity-control" *ngIf="shouldShowReturnQuantityControl(item)">
+              <span>Số lượng hoàn</span>
+              <div class="quantity-stepper">
+                <button type="button" (click)="changeReturnQuantity(item, -1)" [disabled]="!canDecreaseReturnQuantity(item)">−</button>
+                <strong>{{ getItemReturnQuantity(item) }}</strong>
+                <button type="button" (click)="changeReturnQuantity(item, 1)" [disabled]="!canIncreaseReturnQuantity(item)">+</button>
+              </div>
+            </div>
+            <p *ngIf="!shouldShowReturnQuantityControl(item)">Hoàn x {{ getItemReturnQuantity(item) }}</p>
+          </div>
+
+          <div class="product-side">
+            <div class="product-price-stack">
+              <strong>{{ formatPrice(getReturnLineTotal(item)) }}</strong>
+              <del *ngIf="item.Original_price && item.Original_price > item.Price">
+                {{ formatPrice(item.Original_price * getItemReturnQuantity(item)) }}
+              </del>
+            </div>
+          </div>
+        </article>
+
+        <div class="section-total">
+          <span>Tổng tiền được hoàn trả:</span>
+          <strong>{{ formatPrice(getRefundAmount()) }}</strong>
+        </div>
+      </section>
+
+      <section class="checkout-card">
+        <div class="card-head">
+          <h2>Lý do hoàn trả <span class="required-star">*</span></h2>
+        </div>
+
+        <div class="reason-list">
+          <label class="reason-item" *ngFor="let reason of returnReasons">
+            <input
+              type="checkbox"
+              [checked]="isReasonSelected(reason.value)"
+              (change)="toggleReason(reason.value)"
+            />
+            <span>{{ reason.label }}</span>
+          </label>
+        </div>
+
+        <input
+          class="other-reason-input"
+          type="text"
+          [(ngModel)]="otherReasonText"
+          [disabled]="!isReasonSelected('other')"
+          placeholder="Lý do khác..."
+        />
+      </section>
+
+      <section class="checkout-card">
+        <div class="card-head card-head-inline">
+          <h2>Mô tả <span class="required-star">*</span></h2>
+          <span>{{ description.length }}/2000</span>
+        </div>
+
+        <label class="note-field return-note-field">
+          <span>Ghi chú thêm</span>
+          <textarea
+            rows="3"
+            maxlength="2000"
+            [(ngModel)]="description"
+            placeholder="Mô tả tình trạng sản phẩm, lỗi gặp phải hoặc thông tin cần VISTA kiểm tra..."
+          ></textarea>
+        </label>
+
+        <div class="evidence-upload-row">
+          <label class="upload-tile" [class.disabled]="imageCount >= maxImageCount">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              [disabled]="imageCount >= maxImageCount"
+              (change)="onEvidenceSelected($event, 'image')"
+            />
+            <i class="ph ph-camera"></i>
+            <span>Thêm Hình ảnh</span>
+            <small>{{ imageCount }}/{{ maxImageCount }}</small>
+          </label>
+
+          <label class="upload-tile" [class.disabled]="videoCount >= maxVideoCount">
+            <input
+              type="file"
+              accept="video/*"
+              [disabled]="videoCount >= maxVideoCount"
+              (change)="onEvidenceSelected($event, 'video')"
+            />
+            <i class="ph ph-video-camera"></i>
+            <span>Thêm Video</span>
+            <small>{{ videoCount }}/{{ maxVideoCount }}</small>
+          </label>
+        </div>
+        <p class="field-requirement">Bằng chứng <span class="required-star">*</span> - cần ít nhất 1 hình ảnh hoặc 1 video.</p>
+
+        <div class="evidence-list" *ngIf="evidenceFiles.length">
+          <button
+            type="button"
+            class="evidence-chip"
+            *ngFor="let file of evidenceFiles; let i = index"
+            (click)="removeEvidence(i)"
+          >
+            <span class="evidence-thumb" *ngIf="isEvidenceImage(file)">
+              <img [src]="file.preview" [alt]="file.name" />
+            </span>
+            <span class="evidence-thumb" *ngIf="isEvidenceVideo(file)">
+              <video [src]="file.preview" muted></video>
+            </span>
+            <i class="ph" [ngClass]="file.type === 'image' ? 'ph-image' : 'ph-video'" *ngIf="!file.preview"></i>
+            <span>{{ file.name }}</span>
+            <i class="ph ph-x"></i>
+          </button>
+        </div>
+
+        <p class="small-muted">
+          Cần thêm ít nhất một hình ảnh hoặc một video bằng chứng để gửi yêu cầu hoàn trả.
+        </p>
+      </section>
+
+      <div class="checkout-actions">
+        <p>
+          Quá trình đổi trả sẽ được thực hiện theo
+          <a routerLink="/policy">Điều khoản VISTA</a>.
+        </p>
+        <div class="return-action-buttons">
+          <button type="button" class="outline-btn" (click)="cancelRequest()">Hủy yêu cầu</button>
+          <button
+            type="button"
+            class="primary-btn"
+            (click)="openConfirmModal()"
+            [disabled]="isSubmitting"
+          >
+            Yêu cầu hoàn trả
+          </button>
+        </div>
+      </div>
+
+      <p class="form-error" *ngIf="submitError">{{ submitError }}</p>
+    </ng-container>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="isReturnInfoModalOpen">
+    <section class="modal-panel address-modal">
+      <button type="button" class="modal-close" (click)="closeReturnInfoModal()" aria-label="Đóng">
+        <i class="ph ph-x"></i>
+      </button>
+
+      <h1>Thông tin trả hàng</h1>
+      <div class="modal-divider"></div>
+
+      <div class="saved-addresses" *ngIf="savedReturnAddresses.length > 0">
+        <h2>Địa chỉ đã lưu</h2>
+        <div class="saved-address-card" *ngFor="let address of savedReturnAddresses">
+          <button type="button" class="saved-address-select" (click)="selectSavedReturnAddress(address)">
+            <i class="ph ph-map-pin-line"></i>
+            <span class="saved-address-copy">
+              <strong>{{ address.fullName }} - {{ address.phone }}</strong>
+              <span>{{ address.specificAddress }}, {{ address.ward }}, {{ address.district }}, {{ address.province }}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="saved-address-delete"
+            aria-label="Xóa địa chỉ đã lưu"
+            title="Xóa địa chỉ"
+            (click)="deleteSavedReturnAddress(address, $event)"
+          >
+            <i class="ph ph-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-divider section-divider" *ngIf="savedReturnAddresses.length > 0"></div>
+
+      <h2>Thông tin người trả</h2>
+      <div class="form-grid three-cols">
+        <label class="required-field">
+          <span><i class="ph ph-user"></i>Họ và tên</span>
+          <input type="text" [(ngModel)]="returnInfoDraft.fullName" placeholder="Nhập họ tên người trả" />
+        </label>
+        <label class="required-field">
+          <span><i class="ph ph-phone"></i>Số điện thoại</span>
+          <input type="tel" [(ngModel)]="returnInfoDraft.phone" placeholder="Nhập số điện thoại" />
+        </label>
+        <label class="required-field">
+          <span><i class="ph ph-envelope-simple"></i>Địa chỉ Email</span>
+          <input type="email" [(ngModel)]="returnInfoDraft.email" placeholder="Nhập email" />
+        </label>
+      </div>
+
+      <div class="modal-divider"></div>
+
+      <h2>Địa chỉ trả hàng</h2>
+      <div class="form-grid three-cols">
+        <label class="required-field">
+          <span><i class="ph ph-map-trifold"></i>Tỉnh / Thành phố</span>
+          <div class="custom-select" [class.open]="openLocationDropdown === 'province'" (click)="toggleLocationDropdown('province', $event)">
+            <button type="button" class="custom-select-trigger">
+              <span [class.placeholder]="!returnInfoDraft.province">{{ returnInfoDraft.province || 'Chọn tỉnh / thành phố' }}</span>
+              <i class="ph ph-caret-down"></i>
+            </button>
+            <div class="custom-select-menu" *ngIf="openLocationDropdown === 'province'" (click)="$event.stopPropagation()">
+              <button type="button" *ngFor="let province of provinces" (click)="selectProvinceOption(province)">
+                {{ province.name }}
+              </button>
+            </div>
+          </div>
+        </label>
+
+        <label class="required-field">
+          <span><i class="ph ph-buildings"></i>Quận / Huyện / Thị xã</span>
+          <div class="custom-select" [class.open]="openLocationDropdown === 'district'" [class.disabled]="districts.length === 0" (click)="toggleLocationDropdown('district', $event)">
+            <button type="button" class="custom-select-trigger" [disabled]="districts.length === 0">
+              <span [class.placeholder]="!returnInfoDraft.district">{{ returnInfoDraft.district || 'Chọn quận / huyện' }}</span>
+              <i class="ph ph-caret-down"></i>
+            </button>
+            <div class="custom-select-menu" *ngIf="openLocationDropdown === 'district'" (click)="$event.stopPropagation()">
+              <button type="button" *ngFor="let district of districts" (click)="selectDistrictOption(district)">
+                {{ district.name }}
+              </button>
+            </div>
+          </div>
+        </label>
+
+        <label class="required-field">
+          <span><i class="ph ph-map-pin"></i>Phường / Xã / Thị trấn</span>
+          <div class="custom-select" [class.open]="openLocationDropdown === 'ward'" [class.disabled]="wards.length === 0" (click)="toggleLocationDropdown('ward', $event)">
+            <button type="button" class="custom-select-trigger" [disabled]="wards.length === 0">
+              <span [class.placeholder]="!returnInfoDraft.ward">{{ returnInfoDraft.ward || 'Chọn phường / xã' }}</span>
+              <i class="ph ph-caret-down"></i>
+            </button>
+            <div class="custom-select-menu" *ngIf="openLocationDropdown === 'ward'" (click)="$event.stopPropagation()">
+              <button type="button" *ngFor="let ward of wards" (click)="selectWardOption(ward)">
+                {{ ward.name }}
+              </button>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label class="wide-field required-field">
+          <span><i class="ph ph-house-line"></i>Địa chỉ chi tiết</span>
+          <input type="text" [(ngModel)]="returnInfoDraft.specificAddress" placeholder="Số nhà, tên đường/ấp/hẻm/tòa nhà..." />
+        </label>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" [(ngModel)]="returnInfoDraft.saveForNext" />
+        <span>Lưu địa chỉ cho lần trả kế tiếp</span>
+      </label>
+
+      <p class="form-error" *ngIf="addressFormError">{{ addressFormError }}</p>
+
+      <div class="modal-actions">
+        <button type="button" class="outline-btn" (click)="closeReturnInfoModal()">Hủy thay đổi</button>
+        <button type="button" class="primary-btn" (click)="confirmReturnInfo()" [disabled]="!isReturnInfoDraftComplete">
+          Xác nhận
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="isConfirmModalOpen">
+    <section class="modal-panel return-confirm-modal">
+      <button type="button" class="modal-close" (click)="closeConfirmModal()" aria-label="Đóng">
+        <i class="ph ph-x"></i>
+      </button>
+
+      <h1>Xác nhận hoàn trả</h1>
+      <div class="modal-divider"></div>
+
+      <div class="confirm-block">
+        <p>
+          <span class="confirm-label">Thông tin người trả: </span>
+          <strong>{{ returnInfoSummary }}</strong>
+        </p>
+        <p>
+          <span class="confirm-label">Địa chỉ trả hàng: </span>
+          <strong>{{ returnAddressLine }}</strong>
+        </p>
+      </div>
+
+      <div class="confirm-block product-confirm">
+        <h2 class="confirm-label">Thông tin sản phẩm hoàn trả</h2>
+        <article *ngFor="let item of items">
+          <img [src]="getProductImage(item)" [alt]="item.Product_name" (error)="hideBrokenImage($event)" />
+          <div>
+            <h3>{{ item.Product_name }}</h3>
+            <p>{{ item.Variant_name }}</p>
+            <p>x {{ getItemReturnQuantity(item) }}</p>
+          </div>
+          <div class="confirm-price-stack">
+            <strong>{{ formatPrice(getReturnLineTotal(item)) }}</strong>
+          </div>
+        </article>
+      </div>
+
+      <div class="confirm-row">
+        <span class="confirm-label">Lý do hoàn trả: </span>
+        <strong>{{ selectedReasonLabel }}</strong>
+      </div>
+
+      <div class="confirm-row confirm-row-tall">
+        <span class="confirm-label">Mô tả: </span>
+        <strong>{{ description }}</strong>
+      </div>
+
+      <div class="confirm-total">
+        <div>
+          <span>Tổng tiền được hoàn trả:</span>
+          <small>Tính theo tổng thanh toán của sản phẩm hoàn trả tại thời điểm mua</small>
+        </div>
+        <strong>{{ formatPrice(getRefundAmount()) }}</strong>
+      </div>
+
+      <p class="form-error" *ngIf="submitError">{{ submitError }}</p>
+
+      <div class="confirm-actions">
+        <button type="button" class="outline-btn" (click)="closeConfirmModal()" [disabled]="isSubmitting">Trở lại</button>
+        <button type="button" class="primary-btn" (click)="submitReturnOrder()" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Đang gửi...' : 'Xác nhận trả hàng' }}
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop success-backdrop" *ngIf="isSuccessModalOpen">
+    <section class="success-card">
+      <i class="ph ph-check-circle success-icon"></i>
+      <h1>Yêu cầu hoàn trả thành công!</h1>
+      <p>VISTA đã ghi nhận yêu cầu hoàn trả của bạn.</p>
+      <small *ngIf="createdReturnRequestId">Mã yêu cầu: {{ createdReturnRequestId }}</small>
+      <button type="button" class="success-ok" (click)="goToReturningHistory()">Xem mục Hoàn hàng</button>
+    </section>
+  </div>
+</div>
