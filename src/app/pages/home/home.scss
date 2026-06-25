@@ -1,4 +1,3 @@
-// ── HERO ──────────────────────────────────────
 .hero {
   background: linear-gradient(135deg, #1A3A6B, #1E3A5F);
   padding: 80px 0;
@@ -43,7 +42,6 @@
   }
 }
 
-// ── SEARCH BAR ────────────────────────────────
 .search-bar {
   display: flex;
   align-items: center;
@@ -109,7 +107,6 @@
   }
 }
 
-// ── SHARED SECTION ────────────────────────────
 .section-container {
   max-width: 1440px;
   margin: 0 auto;
@@ -155,7 +152,6 @@
   }
 }
 
-// ── CATEGORIES ────────────────────────────────
 .categories {
   padding: 48px 0;
   background: #FFFFFF;
@@ -199,7 +195,7 @@
       justify-content: center;
       background: #FFFFFF;
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
       i {
         font-size: 28px;
@@ -209,7 +205,6 @@
   }
 }
 
-// ── PRODUCT GRID ──────────────────────────────
 .product-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -229,28 +224,28 @@
   height: 100%;
 
   &:hover {
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
   }
 
   .product-image {
-  position: relative;
-  width: 100%;
-  height: 200px; /* Ép cứng chiều cao khung ảnh là 200px */
-  background: #f8fafc; /* Lót nền xám nhạt cho đẹp */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 8px 8px 0 0;
-
-  img {
+    position: relative;
     width: 100%;
-    height: 100%;
-    object-fit: contain; /* Dùng contain để ảnh thu vừa vặn vào khung, không bị cắt xén */
-    padding: 0px; /* Cách lề một chút cho thoáng */
-    box-sizing: border-box;
-  }
+    height: 200px;
+    background: #F8FAFC;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     .badge {
       position: absolute;
@@ -282,7 +277,7 @@
     padding: 12px;
     display: flex;
     flex-direction: column;
-    flex-grow: 1; /* Giãn khung này ra */
+    flex-grow: 1;
 
     .product-name {
       font-size: 13px;
@@ -294,27 +289,30 @@
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      min-height: 36px; 
+      min-height: 36px;
     }
 
     .product-spec {
       font-size: 11px;
       color: #94A3B8;
-      margin-bottom: 4px; /* Giảm margin để nhường chỗ cho giá */
+      margin-bottom: 4px;
     }
 
-    // ── PHẦN GIÁ ÉP XUỐNG ĐÁY ──
     .price-wrap {
-      margin-top: auto; /* Vẫn giữ margin-top: auto để đẩy cả cụm giá xuống sát nút */
-      height: 48px; /* Khóa cứng chiều cao luôn, không dùng min-height nữa */
+      margin-top: auto;
+      height: 48px;
       margin-bottom: 12px;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start; /* SỬA Ở ĐÂY: Ép giá xanh luôn dính sát mép trên của khung 48px */
+      justify-content: flex-start;
       gap: 2px;
 
+      &.price-wrap-tall {
+        height: 64px;
+      }
+
       .product-price {
-        color: #1e50b5; 
+        color: #1E50B5;
         font-size: 1.125rem;
         font-weight: 700;
         margin: 0;
@@ -324,12 +322,21 @@
       .product-original-price {
         margin: 0;
         line-height: 1;
+
         del {
-          color: #94a3b8;
+          color: #94A3B8;
           font-size: 0.875rem;
           font-weight: 500;
           text-decoration: line-through;
         }
+      }
+
+      .product-save {
+        margin: 0;
+        color: #EF4444;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.2;
       }
     }
 
@@ -345,7 +352,6 @@
       cursor: pointer;
       font-family: 'Be Vietnam Pro', sans-serif;
       transition: background 0.2s;
-      /* Không cần margin-top: auto nữa vì price-wrap đã tự giãn */
 
       &:hover {
         background: #1E4D8C;
@@ -354,60 +360,405 @@
   }
 }
 
-// ── FEATURED ──────────────────────────────────
 .featured {
   padding: 48px 0;
   background: #F8FAFC;
 }
 
-// ── FLASH SALE ────────────────────────────────
 .flash-sale {
+  padding: 48px 0;
+  background: #F8FAFC;
+
+  .flash-hero {
+    min-height: 260px;
+    background:
+      radial-gradient(circle at 82% 30%, rgba(255, 230, 0, 0.12), transparent 24%),
+      linear-gradient(135deg, #1A3A6B, #1F436F);
+    border-radius: 18px;
+    padding: 44px 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #FFFFFF;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .flash-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 0%, rgba(255, 255, 255, 0.12) 45%, transparent 72%);
+    transform: translateX(-120%);
+    animation: flashSweep 3s ease-in-out infinite;
+  }
+
+  .flash-copy {
+    position: relative;
+    z-index: 2;
+
+    h2 {
+      font-size: 36px;
+      font-weight: 800;
+      font-style: italic;
+      margin: 0 0 4px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      font-size: 30px;
+      font-weight: 800;
+      font-style: italic;
+      color: #00C2D4;
+      margin: 0 0 12px;
+      letter-spacing: 0;
+    }
+
+    p {
+      font-size: 14px;
+      color: #E2E8F0;
+      margin: 0 0 28px;
+
+      strong {
+        color: #00C2D4;
+        font-size: 42px;
+        font-weight: 500;
+        margin: 0 6px;
+      }
+    }
+  }
+
+  .flash-lightning {
+    position: relative;
+    z-index: 2;
+    width: 132px;
+    height: 132px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bolt {
+    position: relative;
+    z-index: 2;
+    color: #FFE600;
+    font-size: 98px;
+    line-height: 1;
+    filter: drop-shadow(0 0 18px rgba(255, 230, 0, 0.65));
+    animation: boltPulse 1.35s ease-in-out infinite;
+  }
+
+  .spark {
+    position: absolute;
+    width: 42px;
+    height: 4px;
+    border-radius: 999px;
+    background: #FFE600;
+    box-shadow: 0 0 16px rgba(255, 230, 0, 0.85);
+    opacity: 0;
+    transform-origin: center;
+    animation: sparkFlash 1.35s ease-in-out infinite;
+  }
+
+  .spark-1 {
+    top: 24px;
+    right: 6px;
+    transform: rotate(-24deg);
+  }
+
+  .spark-2 {
+    right: 0;
+    bottom: 34px;
+    transform: rotate(22deg);
+    animation-delay: 0.18s;
+  }
+
+  .spark-3 {
+    left: 0;
+    top: 56px;
+    transform: rotate(12deg);
+    animation-delay: 0.32s;
+  }
+
+  .flash-main-countdown {
+    display: flex;
+    gap: 24px;
+  }
+
+  .flash-time-box {
+    width: 78px;
+    height: 74px;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    strong {
+      font-size: 34px;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    span {
+      font-size: 13px;
+      margin-top: 8px;
+    }
+  }
+
+  .flash-products {
+    padding-top: 40px;
+  }
+
+  .flash-slot-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    margin-bottom: 36px;
+  }
+
+  .flash-slot {
+    width: 160px;
+    height: 58px;
+    border: 1px solid #94A3B8;
+    border-radius: 8px;
+    background: #FFFFFF;
+    color: #1A3A6B;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    span {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    strong {
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    &.active {
+      background: #1A3A6B;
+      border-color: #1A3A6B;
+      color: #FFFFFF;
+    }
+
+    &.ended {
+      background: #E5E7EB;
+      border-color: #CBD5E1;
+      color: #64748B;
+    }
+  }
+
+  .flash-product-grid {
+    margin-top: 0;
+  }
+}
+
+.monthly-promo {
   padding: 48px 0;
   background: #FFFFFF;
 
-  .flash-sale-banner {
+  .monthly-promo-banner {
     background: linear-gradient(90deg, #1A3A6B, #00C2D4);
     border-radius: 16px;
     padding: 32px 48px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 24px;
+  }
 
-    .flash-sale-text {
-      h3 {
-        font-size: 20px;
-        font-weight: 700;
-        color: #FFFFFF;
-        margin-bottom: 8px;
-      }
-
-      p {
-        font-size: 13px;
-        color: #CBD5E1;
-      }
+  .monthly-promo-text {
+    h3 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin: 0 0 8px;
     }
 
-    .btn-flash-sale {
-      background: #FFFFFF;
-      color: #1A3A6B;
-      padding: 12px 28px;
-      border-radius: 8px;
+    p {
       font-size: 14px;
-      font-weight: 600;
-      text-decoration: none;
-      white-space: nowrap;
-      transition: opacity 0.2s;
+      color: #E2E8F0;
+      margin: 0;
+    }
+  }
 
-      &:hover {
-        opacity: 0.9;
-      }
+  .btn-monthly-promo {
+    background: #FFFFFF;
+    color: #1A3A6B;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #F8FAFC;
+      transform: translateY(-1px);
     }
   }
 }
 
-// ── AI SUGGEST ────────────────────────────────
 .ai-suggest {
   padding: 48px 0;
   background: #F8FAFC;
 }
 
+@keyframes boltPulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 12px rgba(255, 230, 0, 0.5));
+  }
+
+  45% {
+    transform: scale(1.1) rotate(-4deg);
+    filter: drop-shadow(0 0 28px rgba(255, 230, 0, 0.95));
+  }
+
+  55% {
+    transform: scale(0.98) rotate(3deg);
+  }
+}
+
+@keyframes sparkFlash {
+  0%, 100% {
+    opacity: 0;
+    transform: scaleX(0.25) translateX(0);
+  }
+
+  45% {
+    opacity: 1;
+    transform: scaleX(1) translateX(8px);
+  }
+
+  70% {
+    opacity: 0;
+    transform: scaleX(0.35) translateX(16px);
+  }
+}
+
+@keyframes flashSweep {
+  0%, 35% {
+    transform: translateX(-120%);
+  }
+
+  65%, 100% {
+    transform: translateX(120%);
+  }
+}
+
+@media (max-width: 1024px) {
+  .section-container,
+  .hero .hero-container {
+    padding: 0 32px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .categories .category-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 56px 0;
+
+    .hero-container {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .hero-title {
+      font-size: 34px;
+    }
+  }
+
+  .search-bar {
+    width: 100%;
+    flex-wrap: wrap;
+
+    input {
+      min-width: 0;
+    }
+
+    .search-btn {
+      width: 100%;
+    }
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .flash-sale {
+    .flash-hero {
+      padding: 32px 24px;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .flash-copy {
+      h2 {
+        font-size: 28px;
+      }
+
+      h3 {
+        font-size: 24px;
+      }
+    }
+
+    .flash-main-countdown {
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .flash-slot-tabs {
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+  }
+
+  .monthly-promo {
+    .monthly-promo-banner {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+}
+
+@media (max-width: 520px) {
+  .section-container,
+  .hero .hero-container {
+    padding: 0 18px;
+  }
+
+  .product-grid,
+  .categories .category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .flash-sale {
+    .flash-time-box {
+      width: 68px;
+      height: 68px;
+
+      strong {
+        font-size: 28px;
+      }
+    }
+
+    .flash-slot {
+      width: 140px;
+    }
+  }
+}

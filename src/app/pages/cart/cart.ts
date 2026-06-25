@@ -190,6 +190,7 @@ export class Cart implements OnInit {
     const selectedItems = this.items.filter((item) => item.selected);
     if (selectedItems.length === 0) return;
     sessionStorage.setItem('vista_checkout_items', JSON.stringify(selectedItems));
+    sessionStorage.setItem('vista_checkout_source', JSON.stringify({ type: 'cart' }));
     this.router.navigate(['/order']);
   }
 

@@ -173,6 +173,10 @@ export class ProductDetail implements OnInit {
       discountPercent: Number(this.product?.Discount) || 0,
       quantity: this.quantity,
       stock: Number(variant.Stock_quantity) || 0,
+      categoryId: this.category?.Category_id || this.product?.Category_id || '',
+      categoryName: this.category?.Category_name || '',
+      categorySlug: this.category?.Category_slug || '',
+      checkoutSource: 'buy_now',
       variantOptions: this.variants.map((item) => ({
         productVariantId: item.Product_variant_id,
         variantName: item.Variant_name,
@@ -184,6 +188,12 @@ export class ProductDetail implements OnInit {
     };
 
     sessionStorage.setItem('vista_checkout_items', JSON.stringify([checkoutItem]));
+    sessionStorage.setItem('vista_checkout_source', JSON.stringify({
+      type: 'buy_now',
+      categoryId: checkoutItem.categoryId,
+      categoryName: checkoutItem.categoryName,
+      categorySlug: checkoutItem.categorySlug,
+    }));
     this.router.navigate(['/order']);
   }
 

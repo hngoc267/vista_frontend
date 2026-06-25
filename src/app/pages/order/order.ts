@@ -42,6 +42,10 @@ interface CheckoutItem {
   discountPercent: number;
   quantity: number;
   stock: number;
+  categoryId: string;
+  categoryName: string;
+  categorySlug: string;
+  checkoutSource: 'cart' | 'buy_now' | 'repurchase';
 }
 
 interface ReceiverInfo {
@@ -101,7 +105,10 @@ interface StoredUser {
 }
 
 const CHECKOUT_ITEMS_KEY = 'vista_checkout_items';
+const CHECKOUT_SOURCE_KEY = 'vista_checkout_source';
 const PENDING_VOUCHER_KEY = 'vista_pending_voucher_code';
+const REPURCHASE_PREFILL_KEY = 'vista_repurchase_order_prefill';
+const SAVED_CHECKOUT_ADDRESSES_KEY = 'vista_saved_checkout_addresses';
 
 @Component({
   selector: 'app-order',
@@ -113,11 +120,16 @@ const PENDING_VOUCHER_KEY = 'vista_pending_voucher_code';
 export class Order implements OnInit, OnDestroy {
   step: CheckoutStep = 'checkout';
   items: CheckoutItem[] = [];
+  checkoutSource: 'cart' | 'buy_now' | 'repurchase' = 'cart';
+  checkoutCategoryId = '';
+  checkoutCategoryName = '';
+  checkoutCategorySlug = '';
 
   receiver: ReceiverInfo = this.createEmptyReceiver();
   tempReceiver: ReceiverInfo = this.createEmptyReceiver();
 
   savedAddresses: AddressItem[] = [];
+  localSavedAddresses: AddressItem[] = [];
   vietnamLocations: VietnamProvince[] = [];
   districtOptions: VietnamDistrict[] = [];
   wardOptions: VietnamWard[] = [];
@@ -227,6 +239,8 @@ export class Order implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.receiver = this.loadReceiverInfo();
     this.tempReceiver = { ...this.receiver };
+    this.loadLocalSavedAddresses();
+    this.applyRepurchasePrefillFromSession();
     this.paymentCode = this.generatePaymentCode();
     this.loadCheckoutItems();
     this.loadVietnamLocations();
@@ -360,6 +374,30 @@ export class Order implements OnInit, OnDestroy {
 
   get createdOrderId(): string {
     return this.createdOrder?.order.Order_id || '';
+  }
+
+  get breadcrumbMiddleLabel(): string {
+    if (this.checkoutSource === 'buy_now') {
+      return this.checkoutCategoryName || this.items[0]?.categoryName || 'Danh mục sản phẩm';
+    }
+
+    return 'Giỏ hàng';
+  }
+
+  get breadcrumbMiddleLink(): string {
+    return this.checkoutSource === 'buy_now' ? '/products' : '/cart';
+  }
+
+  get breadcrumbMiddleQueryParams(): Record<string, string> | null {
+    if (this.checkoutSource !== 'buy_now' || !this.checkoutCategoryId) {
+      return null;
+    }
+
+    return { category: this.checkoutCategoryId };
+  }
+
+  get visibleSavedAddresses(): AddressItem[] {
+    return this.dedupeAddresses([...this.localSavedAddresses, ...this.savedAddresses]);
   }
 
   formatPrice(value: number): string {
@@ -656,6 +694,26 @@ export class Order implements OnInit, OnDestroy {
     this.syncLocationSelectsFromReceiver(this.tempReceiver);
   }
 
+  deleteSavedAddress(address: AddressItem, event: Event): void {
+    event.stopPropagation();
+    const deleteKey = this.buildAddressKey(address);
+    this.localSavedAddresses = this.localSavedAddresses.filter(
+      (item) => this.buildAddressKey(item) !== deleteKey
+    );
+    this.savedAddresses = this.savedAddresses.filter(
+      (item) => this.buildAddressKey(item) !== deleteKey
+    );
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(SAVED_CHECKOUT_ADDRESSES_KEY, JSON.stringify(this.localSavedAddresses));
+    }
+
+    if (this.tempReceiver.addressId === address.Address_id) {
+      this.tempReceiver = { ...this.receiver };
+      this.syncLocationSelectsFromReceiver(this.tempReceiver);
+    }
+  }
+
   confirmReceiverInfo(): void {
     this.addressFormError = '';
     if (!this.isTempReceiverComplete) {
@@ -669,6 +727,10 @@ export class Order implements OnInit, OnDestroy {
     }
 
     this.receiver = { ...this.tempReceiver };
+    if (this.receiver.saveForNext) {
+      this.saveCheckoutAddress(this.receiver);
+    }
+
     this.isAddressModalOpen = false;
     this.openLocationDropdown = null;
   }
@@ -1118,16 +1180,106 @@ export class Order implements OnInit, OnDestroy {
     this.router.navigate(['/']);
   }
 
+  private applyRepurchasePrefillFromSession(): void {
+    const raw = typeof sessionStorage !== 'undefined'
+      ? sessionStorage.getItem(REPURCHASE_PREFILL_KEY)
+      : null;
+
+    if (!raw) {
+      return;
+    }
+
+    sessionStorage.removeItem(REPURCHASE_PREFILL_KEY);
+
+    try {
+      const prefill = JSON.parse(raw);
+      const receiver = prefill?.receiver || {};
+
+      this.receiver = {
+        ...this.receiver,
+        fullName: this.cleanText(receiver.fullName) || this.receiver.fullName,
+        phone: this.cleanText(receiver.phone) || this.receiver.phone,
+        email: this.cleanText(receiver.email) || this.receiver.email,
+        province: this.cleanText(receiver.province),
+        district: this.cleanText(receiver.district),
+        ward: this.cleanText(receiver.ward),
+        specificAddress: this.cleanText(receiver.specificAddress),
+      };
+
+      this.tempReceiver = { ...this.receiver };
+
+      const paymentId = String(prefill?.paymentId || '');
+      if (paymentId === 'cod' || paymentId === 'bank_transfer') {
+        this.selectedPaymentId = paymentId as PaymentMethodId;
+      }
+
+      const shippingId = String(prefill?.shippingId || '');
+      if (this.shippingMethods.some((method) => method.id === shippingId)) {
+        this.selectedShippingId = shippingId;
+        this.tempShippingId = shippingId;
+      }
+
+      this.orderNotes = this.cleanText(prefill?.orderNotes);
+      this.syncLocationSelectsFromReceiver(this.receiver);
+    } catch {
+      // Bỏ qua dữ liệu mua lại lỗi để trang order vẫn hoạt động bình thường.
+    }
+  }
+
   private loadCheckoutItems(): void {
     const itemsFromStorage = this.readCheckoutItemsFromSession();
     if (itemsFromStorage.length > 0) {
       this.items = itemsFromStorage;
       this.loadAvailableVouchers();
       this.applyPendingVoucherFromSession();
+      this.resolveCheckoutBreadcrumb();
       return;
     }
 
     this.loadCartFallback();
+  }
+
+  private resolveCheckoutBreadcrumb(): void {
+    const source = this.readCheckoutSourceFromSession();
+    const directItem = this.items.find((item) => item.checkoutSource === 'buy_now') || null;
+
+    if (directItem || (source?.type === 'buy_now' && this.items.length === 1)) {
+      this.checkoutSource = 'buy_now';
+      this.checkoutCategoryId = directItem?.categoryId || source?.categoryId || '';
+      this.checkoutCategoryName = directItem?.categoryName || source?.categoryName || 'Danh mục sản phẩm';
+      this.checkoutCategorySlug = directItem?.categorySlug || source?.categorySlug || '';
+      return;
+    }
+
+    if (this.items.some((item) => item.checkoutSource === 'repurchase')) {
+      this.checkoutSource = 'repurchase';
+      this.checkoutCategoryId = '';
+      this.checkoutCategoryName = '';
+      this.checkoutCategorySlug = '';
+      return;
+    }
+
+    this.checkoutSource = 'cart';
+    this.checkoutCategoryId = '';
+    this.checkoutCategoryName = '';
+    this.checkoutCategorySlug = '';
+  }
+
+  private readCheckoutSourceFromSession(): { type?: string; categoryId?: string; categoryName?: string; categorySlug?: string } | null {
+    if (typeof sessionStorage === 'undefined') {
+      return null;
+    }
+
+    const raw = sessionStorage.getItem(CHECKOUT_SOURCE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   }
 
   private loadCartFallback(): void {
@@ -1141,6 +1293,7 @@ export class Order implements OnInit, OnDestroy {
     this.cartService.getCart(userId).subscribe({
       next: (res) => {
         this.items = (res.data?.items || []).map((item) => this.mapApiItem(item));
+        this.resolveCheckoutBreadcrumb();
         this.isLoading = false;
         this.loadAvailableVouchers();
         this.applyPendingVoucherFromSession();
@@ -1219,8 +1372,9 @@ export class Order implements OnInit, OnDestroy {
     this.isLoadingAddresses = true;
     this.orderService.getUserAddresses(this.userId).subscribe({
       next: (res) => {
-        this.savedAddresses = res.data || [];
-        const defaultAddress = this.savedAddresses.find((item) => item.Is_default) || this.savedAddresses[0];
+        this.savedAddresses = this.dedupeAddresses(res.data || []);
+        const addresses = this.visibleSavedAddresses;
+        const defaultAddress = addresses.find((item) => item.Is_default) || addresses[0];
 
         if (defaultAddress && !this.hasReceiverInfo) {
           this.selectSavedAddress(defaultAddress);
@@ -1236,6 +1390,76 @@ export class Order implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  private loadLocalSavedAddresses(): void {
+    if (typeof localStorage === 'undefined') {
+      this.localSavedAddresses = [];
+      return;
+    }
+
+    const raw = localStorage.getItem(SAVED_CHECKOUT_ADDRESSES_KEY);
+    if (!raw) {
+      this.localSavedAddresses = [];
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw);
+      this.localSavedAddresses = this.dedupeAddresses(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      this.localSavedAddresses = [];
+    }
+  }
+
+  private saveCheckoutAddress(receiver: ReceiverInfo): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    const address: AddressItem = {
+      Address_id: receiver.addressId || this.buildId('ADDR'),
+      User_id: this.userId,
+      Receiver_name: this.cleanText(receiver.fullName),
+      Receiver_phone: this.cleanText(receiver.phone),
+      Email: this.cleanText(receiver.email),
+      Province: this.cleanText(receiver.province),
+      District: this.cleanText(receiver.district),
+      Ward: this.cleanText(receiver.ward),
+      Specific_address: this.cleanText(receiver.specificAddress),
+      Is_default: true,
+      ...( { Saved_at: Date.now() } as any ),
+    };
+
+    this.localSavedAddresses = this.dedupeAddresses([address, ...this.localSavedAddresses]);
+    localStorage.setItem(SAVED_CHECKOUT_ADDRESSES_KEY, JSON.stringify(this.localSavedAddresses));
+  }
+
+  private dedupeAddresses(addresses: AddressItem[]): AddressItem[] {
+    const result = new Map<string, AddressItem>();
+
+    addresses
+      .filter((address) => this.addressLine(address) && this.cleanText(address.Receiver_name) && this.cleanText(address.Receiver_phone))
+      .forEach((address) => {
+        const key = this.buildAddressKey(address);
+        if (!result.has(key)) {
+          result.set(key, address);
+        }
+      });
+
+    return Array.from(result.values());
+  }
+
+  private buildAddressKey(address: AddressItem): string {
+    return [
+      address.Receiver_name,
+      address.Receiver_phone,
+      address.Email,
+      address.Specific_address,
+      address.Ward,
+      address.District,
+      address.Province,
+    ].map((part) => this.normalizeText(part)).join('|');
   }
 
   private syncLocationSelectsFromReceiver(receiver: ReceiverInfo): void {
@@ -1302,6 +1526,12 @@ export class Order implements OnInit, OnDestroy {
       discountPercent,
       quantity: Math.max(1, Number(item.quantity ?? item.qty ?? item.Quantity ?? 1)),
       stock,
+      categoryId: item.categoryId || item.Category_id || item.category?.Category_id || '',
+      categoryName: item.categoryName || item.Category_name || item.category?.Category_name || '',
+      categorySlug: item.categorySlug || item.Category_slug || item.category?.Category_slug || '',
+      checkoutSource: item.checkoutSource === 'buy_now' || item.checkoutSource === 'repurchase'
+        ? item.checkoutSource
+        : 'cart',
     };
   }
 
@@ -1338,6 +1568,10 @@ export class Order implements OnInit, OnDestroy {
       discountPercent,
       quantity: Math.max(1, Number(item.quantity) || 1),
       stock,
+      categoryId: (item as any).categoryId || (item as any).Category_id || '',
+      categoryName: (item as any).categoryName || (item as any).Category_name || '',
+      categorySlug: (item as any).categorySlug || (item as any).Category_slug || '',
+      checkoutSource: 'cart',
     };
   }
 
@@ -1402,8 +1636,9 @@ export class Order implements OnInit, OnDestroy {
   private isSpecificAddressRealistic(value?: string | null): boolean {
     const text = this.cleanText(value);
     const normalized = this.normalizeText(text);
+    const compact = normalized.replace(/[,.#-]/g, ' ').replace(/\s+/g, ' ').trim();
 
-    if (text.length < 5 || /^\d+$/.test(text)) {
+    if (text.length < 5 || /^\d+$/.test(text) || /^(so\s*)?\d+[a-z]?(\/\d+[a-z]?)?$/.test(compact)) {
       return false;
     }
 
@@ -1414,20 +1649,22 @@ export class Order implements OnInit, OnDestroy {
       'pho',
       'hem',
       'ngo',
-      'so',
       'thon',
       'xom',
       'ap',
       'ban',
-      'to',
       'khu',
       'toa',
       'chung cu',
       'quoc lo',
       'tinh lo',
-    ].some((keyword) => normalized.includes(keyword));
+    ].some((keyword) => compact.includes(keyword));
+    const namedPart = compact
+      .replace(/^(so\s*)?\d+[a-z]?(\/\d+[a-z]?)?\s*/, '')
+      .split(' ')
+      .filter((part) => part.length >= 2 && !/^\d+$/.test(part));
 
-    return hasNumber && hasLetter && hasAddressKeyword;
+    return hasNumber && hasLetter && (hasAddressKeyword || namedPart.length >= 2);
   }
 
   private isVoucherStillValid(voucher: VoucherItem): boolean {
@@ -1643,6 +1880,7 @@ export class Order implements OnInit, OnDestroy {
 
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.removeItem(CHECKOUT_ITEMS_KEY);
+      sessionStorage.removeItem(CHECKOUT_SOURCE_KEY);
     }
 
     this.removeOrderedCartItems(payload.cartItemIds);

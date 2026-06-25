@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 import { OrderHistory } from './order-history';
 
@@ -6,7 +7,9 @@ describe('OrderHistory', () => {
   let service: OrderHistory;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+    });
     service = TestBed.inject(OrderHistory);
   });
 
@@ -14,3 +17,4 @@ describe('OrderHistory', () => {
     expect(service).toBeTruthy();
   });
 });
+

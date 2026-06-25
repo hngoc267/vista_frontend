@@ -3,9 +3,9 @@
     <div class="section-container">
       <a routerLink="/">Trang chủ</a>
       <span class="sep">›</span>
-      <a routerLink="/cart">Giỏ hàng</a>
+      <a [routerLink]="breadcrumbMiddleLink" [queryParams]="breadcrumbMiddleQueryParams">{{ breadcrumbMiddleLabel }}</a>
       <span class="sep">›</span>
-      <span class="current">Đặt hàng</span>
+      <span class="current">Đơn hàng</span>
     </div>
   </div>
 
@@ -380,30 +380,41 @@
     <h1>Thông tin nhận hàng</h1>
     <div class="modal-divider"></div>
 
-    <div class="saved-addresses" *ngIf="savedAddresses.length > 0">
+    <div class="saved-addresses" *ngIf="visibleSavedAddresses.length > 0">
       <h2>Địa chỉ đã lưu</h2>
-      <button type="button" *ngFor="let address of savedAddresses" (click)="selectSavedAddress(address)">
-        <i class="ph ph-map-pin-line"></i>
-        <span class="saved-address-copy">
-          <strong>{{ address.Receiver_name }} - {{ address.Receiver_phone }}</strong>
-          <span>{{ addressLine(address) }}</span>
-        </span>
-      </button>
+      <div class="saved-address-card" *ngFor="let address of visibleSavedAddresses">
+        <button type="button" class="saved-address-select" (click)="selectSavedAddress(address)">
+          <i class="ph ph-map-pin-line"></i>
+          <span class="saved-address-copy">
+            <strong>{{ address.Receiver_name }} - {{ address.Receiver_phone }}</strong>
+            <span>{{ addressLine(address) }}</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          class="saved-address-delete"
+          aria-label="Xóa địa chỉ đã lưu"
+          title="Xóa địa chỉ"
+          (click)="deleteSavedAddress(address, $event)"
+        >
+          <i class="ph ph-trash"></i>
+        </button>
+      </div>
     </div>
 
-    <div class="modal-divider section-divider" *ngIf="savedAddresses.length > 0"></div>
+    <div class="modal-divider section-divider" *ngIf="visibleSavedAddresses.length > 0"></div>
 
     <h2>Thông tin người nhận</h2>
     <div class="form-grid three-cols">
-      <label>
+      <label class="required-field">
         <span><i class="ph ph-user"></i>Họ và tên</span>
         <input type="text" [(ngModel)]="tempReceiver.fullName" placeholder="Nhập họ tên người nhận" />
       </label>
-      <label>
+      <label class="required-field">
         <span><i class="ph ph-phone"></i>Số điện thoại</span>
         <input type="tel" [(ngModel)]="tempReceiver.phone" placeholder="Nhập số điện thoại" />
       </label>
-      <label>
+      <label class="required-field">
         <span><i class="ph ph-envelope-simple"></i>Địa chỉ Email</span>
         <input type="email" [(ngModel)]="tempReceiver.email" placeholder="Nhập email nếu có" />
       </label>
@@ -413,7 +424,7 @@
 
     <h2>Địa chỉ nhận hàng</h2>
     <div class="form-grid three-cols">
-      <label>
+      <label class="required-field">
         <span><i class="ph ph-map-trifold"></i>Tỉnh / Thành phố</span>
         <div class="custom-select" [class.open]="openLocationDropdown === 'province'" (click)="toggleLocationDropdown('province', $event)">
           <button type="button" class="custom-select-trigger">
@@ -427,7 +438,7 @@
           </div>
         </div>
       </label>
-      <label>
+      <label class="required-field">
         <span><i class="ph ph-buildings"></i>Quận / Huyện / Thị xã</span>
         <div class="custom-select" [class.open]="openLocationDropdown === 'district'" [class.disabled]="districtOptions.length === 0" (click)="toggleLocationDropdown('district', $event)">
           <button type="button" class="custom-select-trigger" [disabled]="districtOptions.length === 0">
@@ -441,7 +452,7 @@
           </div>
         </div>
       </label>
-      <label>
+      <label class="required-field">
         <span><i class="ph ph-map-pin"></i>Phường / Xã / Thị trấn</span>
         <div class="custom-select" [class.open]="openLocationDropdown === 'ward'" [class.disabled]="wardOptions.length === 0" (click)="toggleLocationDropdown('ward', $event)">
           <button type="button" class="custom-select-trigger" [disabled]="wardOptions.length === 0">
@@ -458,9 +469,9 @@
     </div>
 
     <div class="form-grid">
-      <label class="wide-field">
+      <label class="wide-field required-field">
         <span><i class="ph ph-house-line"></i>Địa chỉ chi tiết</span>
-        <input type="text" [(ngModel)]="tempReceiver.specificAddress" placeholder="Số nhà, tên đường, tòa nhà..." />
+        <input type="text" [(ngModel)]="tempReceiver.specificAddress" placeholder="Số nhà, tên đường/ấp/hẻm/tòa nhà..." />
       </label>
     </div>
 

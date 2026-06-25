@@ -3,51 +3,49 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
-export class OrderHistoryService {
-  // Thay đổi domain và cổng nếu backend của bạn chạy ở link khác
-  private apiUrl = 'http://localhost:5000/api/order-history'; 
+export class OrderHistory {
+  private apiUrl = 'http://localhost:5000/api/order-history';
 
   constructor(private http: HttpClient) {}
 
-  // Truyền userId trực tiếp vào đường dẫn URL
   getOrderHistory(status: string = 'all'): Observable<any> {
     let params = new HttpParams();
     if (status && status !== 'all') {
       params = params.set('status', status);
     }
-    
-    // 1. Cố gắng lấy userId trực tiếp nếu bạn lưu là 'userId'
-    let userId = localStorage.getItem('userId'); 
-    
-    // 2. Nếu không có, tìm trong object 'user' (dành cho trường hợp bạn lưu cả cục data user)
+
+    let userId = localStorage.getItem('userId');
+
     if (!userId) {
       const userRaw = localStorage.getItem('user');
       if (userRaw) {
         try {
           const userObj = JSON.parse(userRaw);
-          // Quét các tên biến Id thông dụng
-          userId = userObj.User_id || userObj.id || userObj._id; 
+          userId = userObj.User_id || userObj.id || userObj._id;
         } catch (error) {
-          console.error('Lỗi khi đọc thông tin user từ localStorage', error);
+          console.error('Loi khi doc thong tin user tu localStorage', error);
         }
       }
     }
 
-    // 3. Cơ chế dự phòng: Nếu chưa đăng nhập hoặc lỗi, tạm lấy USR_002 để API không bị crash
     if (!userId) {
-      userId = "USR_002"; 
+      userId = 'USR_002';
     }
-    
-  // Nối ID vào URL thành dạng: http://localhost:5000/api/order-history/USR_003
-  const url = `${this.apiUrl}/${userId}`;
-  
-  return this.http.get<any>(url, { params });
+
+    return this.http.get<any>(`${this.apiUrl}/${userId}`, { params });
   }
 
   markOrderReceived(orderId: string): Observable<any> {
     return this.http.patch<any>(`${this.apiUrl}/${encodeURIComponent(orderId)}/received`, {});
+  }
+
+  cancelOrder(orderId: string, reason: string): Observable<any> {
+    return this.http.patch<any>(
+      `${this.apiUrl}/${encodeURIComponent(orderId)}/cancel`,
+      { reason }
+    );
   }
   // --- THÊM HÀM NÀY ĐỂ GỌI API ĐÁNH GIÁ ---
   markOrderReviewed(orderCode: string): Observable<any> {
