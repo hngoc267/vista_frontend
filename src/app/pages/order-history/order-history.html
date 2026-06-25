@@ -137,16 +137,16 @@
               </button>
 
               <button
-                *ngIf="selectedStatus === 'review' && isReviewOrder(order) && !isReviewedOrder(order)"
+                *ngIf="isReviewOrder(order) && !isReviewedOrder(order)"
                 class="btn-outline"
                 type="button"
                 (click)="handleReviewNow(order)"
               >
                 Đánh giá ngay
               </button>
-              <!-- THÊM NÚT HOÀN HÀNG VÀO ĐÂY -->
+
               <button
-                *ngIf="selectedStatus === 'review' && isReviewOrder(order) && !isReviewedOrder(order)"
+                *ngIf="isReviewOrder(order) && !isReviewedOrder(order)"
                 class="btn-outline"
                 type="button"
                 (click)="handleReturnOrder(order)" 
@@ -155,7 +155,7 @@
               </button>
 
               <button
-                *ngIf="(selectedStatus === 'cancelled' && isCancelledOrder(order)) || (selectedStatus === 'returning' && isReturningOrder(order))"
+                *ngIf="isCancelledOrder(order) || isReturningOrder(order)"
                 class="btn-outline"
                 type="button"
                 (click)="handleBuyAgain(order)"

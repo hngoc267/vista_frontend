@@ -49,4 +49,8 @@ export class OrderHistoryService {
   markOrderReceived(orderId: string): Observable<any> {
     return this.http.patch<any>(`${this.apiUrl}/${encodeURIComponent(orderId)}/received`, {});
   }
+  // --- THÊM HÀM NÀY ĐỂ GỌI API ĐÁNH GIÁ ---
+  markOrderReviewed(orderCode: string): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/mark-reviewed`, { Order_code: orderCode });
+  }
 }

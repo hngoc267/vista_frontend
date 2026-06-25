@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-// Nhớ chỉnh lại đường dẫn service cho khớp với thư mục của bạn
 import { OrderHistoryService } from '../../services/order-history';
 import { OrderService } from '../../services/order';
 import { CartService } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
 import { NotificationService } from '../../components/notification/notification.service';
 import Swal from 'sweetalert2';
+
+// 1. IMPORT AUTHO SERVICE VÀO ĐÂY
+import { AuthService } from '../../services/auth';
 
 interface BuyAgainOrderItem {
   productVariantId?: string;
@@ -75,7 +77,9 @@ export class OrderHistory implements OnInit, OnDestroy {
     private cartService: CartService,
     private cartState: CartStateService,
     private notificationService: NotificationService,
-    private cdr: ChangeDetectorRef // Tiêm công cụ ép vẽ lại giao diện
+    private cdr: ChangeDetectorRef,
+    // 2. TIÊM AUTHO SERVICE VÀO CONSTRUCTOR
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
@@ -188,7 +192,6 @@ export class OrderHistory implements OnInit, OnDestroy {
     }
   }
 
-  // --- CÁC HÀM TIỆN ÍCH HIỂN THỊ HTML ---
   getTotalQuantity(order: any): number {
     return order.Items ? order.Items.reduce((sum: number, item: any) => sum + (item.Quantity || 0), 0) : 0;
   }
@@ -203,18 +206,15 @@ export class OrderHistory implements OnInit, OnDestroy {
 
   getStatusLabel(order: any): string {
     const status = this.normalizeStatus(order.Status);
-    if (this.selectedStatus === 'review' && (status === 'delivered' || status === 'review')) {
+    
+    // Dù ở Tab "Tất cả" hay Tab "Đánh giá", cứ hễ nhận hàng xong là biến thành Đánh Giá hết!
+    if (status === 'review' || status === 'delivered') {
       return this.isReviewedOrder(order) ? 'Đã đánh giá' : 'Chưa đánh giá';
-    }
-
-    if (status === 'delivered') {
-      return 'Đã giao';
     }
 
     const tab = this.tabs.find(t => t?.value === status);
     return tab ? tab.label : 'Không xác định';
   }
-
   isShippingOrder(order: any): boolean {
     const status = this.normalizeStatus(order.Status);
     return status === 'shipping' || status === 'delivering';
@@ -252,6 +252,7 @@ export class OrderHistory implements OnInit, OnDestroy {
   isCancelledOrder(order: any): boolean {
     return this.normalizeStatus(order.Status) === 'cancelled';
   }
+  
   isReturningOrder(order: any): boolean {
     return this.normalizeStatus(order?.Status) === 'returning';
   }
@@ -456,7 +457,6 @@ export class OrderHistory implements OnInit, OnDestroy {
     }));
   }
 
-  // --- NÚT BẤM VÀ MODAL ---
   openOrderDetail(order: any): void { this.selectedOrder = order; }
   closeOrderDetail(): void { this.selectedOrder = null; }
 
@@ -468,8 +468,46 @@ export class OrderHistory implements OnInit, OnDestroy {
     this.notificationService.info('Chức năng trả hàng sẽ được cập nhật sau');
   }
 
-  handleReviewNow(_order: any): void {
-    this.notificationService.info('Chức năng đánh giá sẽ được cập nhật sau');
+  // 3. THAY ĐỔI LOGIC NÚT ĐÁNH GIÁ (DÙNG SWEETALERT2 ĐỂ CỘNG ĐIỂM)
+  async handleReviewNow(order: any): Promise<void> {
+    const { isConfirmed } = await Swal.fire({
+      title: 'Đánh giá đơn hàng',
+      html: `
+        <p style="font-size: 14px; color: #64748B; margin-bottom: 12px;">Cảm nhận của bạn về đơn hàng <strong>#${order.Order_code}</strong>?</p>
+        <div style="color: #F59E0B; font-size: 32px; margin-bottom: 12px; cursor: pointer;">
+          ★ ★ ★ ★ ★
+        </div>
+        <textarea id="swal-review-input" class="swal2-textarea" placeholder="Sản phẩm rất tuyệt vời..." style="margin: 0; width: 100%; box-sizing: border-box;"></textarea>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Gửi đánh giá',
+      cancelButtonText: 'Hủy',
+      confirmButtonColor: '#2563B0',
+      preConfirm: () => {
+        return (document.getElementById('swal-review-input') as HTMLTextAreaElement).value;
+      }
+    });
+
+    if (isConfirmed) {
+      // Đổi trạng thái hiển thị của UI sang Đã đánh giá
+      order.Review_status = 'reviewed'; 
+      
+      // Tính tiền ra điểm
+      const amountToPoints = Number(order.Total_amount) || this.getTotal(order);
+      
+      // Gọi service để cộng vào tổng chi tiêu
+      this.authService.addPoints(amountToPoints);
+
+      // Thông báo thành công
+      Swal.fire({
+        icon: 'success',
+        title: 'Đánh giá thành công!',
+        text: `Bạn đã được cộng ${new Intl.NumberFormat('vi-VN').format(amountToPoints)} điểm vào thẻ Thành Viên.`,
+        confirmButtonColor: '#2563B0'
+      });
+
+      this.cdr.detectChanges();
+    }
   }
 
   async handleBuyAgain(order: any): Promise<void> {
