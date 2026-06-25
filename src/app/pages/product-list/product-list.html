@@ -50,9 +50,11 @@
         </ul>
       </div>
 
-      <div class="divider" *ngIf="filters.category && availableBrands.length > 0"></div>
+      <!-- Đã xóa *ngIf ở thẻ divider -->
+      <div class="divider"></div>
 
-      <div class="filter-group" *ngIf="filters.brand">
+      <!-- Đã xóa *ngIf ở filter-group -->
+      <div class="filter-group">
         <h4>Nhãn sản phẩm</h4>
         <ul>
           <li
@@ -79,6 +81,11 @@
       <div class="filter-group">
         <h4>Mức giá</h4>
         <ul>
+          <li
+            [class.active]="selectedPriceRange === ''"
+            (click)="selectPriceRange({ label: '', min: '', max: '' })"
+          >Tất cả mức giá</li>
+          
           <li
             *ngFor="let range of priceRanges"
             [class.active]="selectedPriceRange === range.label"

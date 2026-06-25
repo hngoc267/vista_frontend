@@ -158,13 +158,9 @@ export class ProductList implements OnInit {
   // Hàm xử lý khi bấm chọn Thương hiệu
   selectBrand(brandName: string) {
     if (this.filters.brand === brandName || brandName === '') {
-      // Nếu click lại hãng cũ hoặc click "Tất cả thương hiệu" -> Hủy hãng và ẩn nhãn sp
+      // Nếu click lại hãng cũ hoặc "Tất cả thương hiệu" -> Chỉ hủy hãng
       this.filters.brand = '';
-      this.filters.isAI = '';
-      this.filters.isFlashSale = '';
-      this.filters.isNew = '';
     } else {
-      // Chọn hãng mới -> Bật khối nhãn sp lên
       this.filters.brand = brandName;
     }
     this.applyFilter();
