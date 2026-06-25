@@ -15,6 +15,7 @@ import { Voucher } from './pages/voucher/voucher';
 import { Order } from './pages/order/order';
 import { OrderHistory } from './pages/order-history/order-history';
 import { ReturnOrder } from './pages/return-order/return-order';
+import { FlashSale } from './pages/flash-sale/flash-sale';
 
 export const routes: Routes = [
   { path: 'profile', component: Profile, canActivate: [AuthGuard] },
@@ -33,5 +34,7 @@ export const routes: Routes = [
   { path: 'policy', component: Policy },
   { path: 'order-history', component: OrderHistory, canActivate: [AuthGuard] },
   { path: 'return-order', component: ReturnOrder },
-  { path: '**', redirectTo: '' }
+  { path: 'flash-sale', component: FlashSale },
+  { path: '**', redirectTo: '' },
+
 ];
