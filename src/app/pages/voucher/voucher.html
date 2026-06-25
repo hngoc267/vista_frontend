@@ -25,10 +25,10 @@
           <div class="stamp-edge"></div>
 
           <div class="voucher-icon">
-            <i *ngIf="voucher.type === 'percent'" class="ph ph-percent"></i>
-            <i *ngIf="voucher.type === 'shipping'" class="ph ph-truck"></i>
+            <i *ngIf="voucher.category === 'discount'" class="ph ph-percent"></i>
+            <i *ngIf="voucher.category === 'freeship' || voucher.type === 'shipping'" class="ph ph-truck"></i>
           </div>
-
+          
           <div class="voucher-info">
             <h2>{{ voucher.title }}</h2>
             <p>{{ voucher.condition }}</p>
