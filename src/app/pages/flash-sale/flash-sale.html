@@ -2,7 +2,7 @@
   <div class="section-container">
     <span><a [routerLink]="['/']">Trang chủ</a></span>
     <span class="sep">›</span>
-    <span class="current">Flash sale</span>
+    <span class="current">Flash Sale</span>
   </div>
 </div>
 
@@ -64,7 +64,7 @@
     </div>
 
     <div class="flash-header">
-      <h2>Flash sale hôm nay</h2>
+      <h2>Flash Sale hôm nay</h2>
       <span>Tìm thấy {{ totalProducts }} sản phẩm</span>
     </div>
 
@@ -113,7 +113,7 @@
 
     <div class="empty-state" *ngIf="!isLoading && products.length === 0">
       <i class="ph ph-lightning"></i>
-      <p>Chưa có sản phẩm flash sale phù hợp</p>
+      <p>Chưa có sản phẩm flash Sale phù hợp</p>
     </div>
 
     <div class="pagination" *ngIf="totalPages > 1">
