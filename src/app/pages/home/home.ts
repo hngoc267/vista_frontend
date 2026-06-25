@@ -28,9 +28,9 @@ export class Home implements OnInit, OnDestroy {
   };
 
   flashSlots = [
-    { hour: 12, label: '12:00', status: 'upcoming', countdown: '' },
+    { hour: 9, label: '09:00', status: 'upcoming', countdown: '' },
     { hour: 15, label: '15:00', status: 'upcoming', countdown: '' },
-    { hour: 18, label: '18:00', status: 'upcoming', countdown: '' }
+    { hour: 21, label: '21:00', status: 'upcoming', countdown: '' }
   ];
 
   private flashMainSeconds = (3 * 24 * 60 * 60) + (15 * 60 * 60) + (55 * 60) + 37;

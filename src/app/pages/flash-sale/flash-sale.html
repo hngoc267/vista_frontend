@@ -1,0 +1,146 @@
+<div class="breadcrumb-bar">
+  <div class="section-container">
+    <span><a [routerLink]="['/']">Trang chủ</a></span>
+    <span class="sep">›</span>
+    <span class="current">Flash sale</span>
+  </div>
+</div>
+
+<section class="flash-sale-page">
+  <div class="section-container">
+    <div class="flash-hero">
+      <div class="flash-copy">
+  <h2>SIÊU HỘI FLASH SALE</h2>
+  <h3>GIẢM SỐC ĐẾN 35%</h3>
+
+  <div class="flash-main-countdown">
+    <div class="flash-time-box">
+      <strong>{{ flashMainTime.days }}</strong>
+      <span>Ngày</span>
+    </div>
+
+    <div class="flash-time-box">
+      <strong>{{ flashMainTime.hours }}</strong>
+      <span>Giờ</span>
+    </div>
+
+    <div class="flash-time-box">
+      <strong>{{ flashMainTime.minutes }}</strong>
+      <span>Phút</span>
+    </div>
+
+    <div class="flash-time-box">
+      <strong>{{ flashMainTime.seconds }}</strong>
+      <span>Giây</span>
+    </div>
+  </div>
+</div>
+
+      <div class="flash-lightning">
+        <span class="bolt">⚡</span>
+        <span class="spark spark-1"></span>
+        <span class="spark spark-2"></span>
+        <span class="spark spark-3"></span>
+      </div>
+    </div>
+
+    <div class="flash-slot-tabs">
+      <div
+        class="flash-slot"
+        *ngFor="let slot of flashSlots"
+        [class.active]="slot.status === 'active'"
+        [class.ended]="slot.status === 'ended'"
+      >
+        <ng-container *ngIf="slot.status === 'active'; else inactiveSlot">
+          <span>Chỉ còn</span>
+          <strong>{{ slot.countdown }}</strong>
+        </ng-container>
+
+        <ng-template #inactiveSlot>
+          <span>{{ slot.status === 'ended' ? 'Đã diễn ra' : 'Sắp diễn ra' }}</span>
+          <strong>{{ slot.label }}</strong>
+        </ng-template>
+      </div>
+    </div>
+
+    <div class="flash-header">
+      <h2>Flash sale hôm nay</h2>
+      <span>Tìm thấy {{ totalProducts }} sản phẩm</span>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      Đang tải sản phẩm...
+    </div>
+
+    <div class="product-grid" *ngIf="!isLoading && products.length > 0">
+      <a
+        *ngFor="let product of products"
+        [routerLink]="['/products', product.Product_id]"
+        class="product-card"
+      >
+        <div class="product-image">
+          <span class="badge badge-sale">Sale {{ product.Discount }}%</span>
+
+          <img
+            [src]="'/assets/images/' + product.Images[0]"
+            [alt]="product.Product_name"
+            (error)="product.Images = null"
+          />
+        </div>
+
+        <div class="product-info">
+          <h3 class="product-name">{{ product.Product_name }}</h3>
+          <p class="product-spec">{{ product.Technical_specs?.CPU || product.Technical_specs?.Chipset }}</p>
+
+          <div class="price-wrap price-wrap-tall">
+            <p class="product-price">
+              {{ formatPrice(getFinalPrice(product.min_price, product.Discount)) }}
+            </p>
+
+            <p class="product-original-price" *ngIf="product.Discount > 0">
+              <del>{{ formatPrice(product.min_price) }}</del>
+            </p>
+
+            <p class="product-save" *ngIf="product.Discount > 0">
+              Tiết kiệm {{ formatPrice(getDiscountAmount(product.min_price, product.Discount)) }}
+            </p>
+          </div>
+
+          <button class="btn-add-cart" (click)="buyFlashSaleNow(product, $event)">Mua ngay</button>
+        </div>
+      </a>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && products.length === 0">
+      <i class="ph ph-lightning"></i>
+      <p>Chưa có sản phẩm flash sale phù hợp</p>
+    </div>
+
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button
+        class="page-btn"
+        (click)="changePage(currentPage - 1)"
+        [disabled]="currentPage === 1"
+      >
+        <i class="ph ph-caret-left"></i>
+      </button>
+
+      <button
+        *ngFor="let page of getPageNumbers()"
+        class="page-btn"
+        [class.active]="page === currentPage"
+        (click)="changePage(page)"
+      >
+        {{ page }}
+      </button>
+
+      <button
+        class="page-btn"
+        (click)="changePage(currentPage + 1)"
+        [disabled]="currentPage === totalPages"
+      >
+        <i class="ph ph-caret-right"></i>
+      </button>
+    </div>
+  </div>
+</section>

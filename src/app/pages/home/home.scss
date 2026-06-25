@@ -398,20 +398,29 @@
     z-index: 2;
 
     h2 {
-      font-size: 36px;
-      font-weight: 800;
+      width: fit-content;
+      font-size: 42px;
+      font-weight: 900;
       font-style: italic;
-      margin: 0 0 4px;
+      margin: 0 0 6px;
       letter-spacing: 0;
+      color: #FFFFFF;
+      text-shadow:
+        0 3px 0 rgba(0, 194, 212, 0.45),
+        0 12px 28px rgba(0, 0, 0, 0.28);
     }
 
     h3 {
-      font-size: 30px;
-      font-weight: 800;
+      width: fit-content;
+      font-size: 34px;
+      font-weight: 900;
       font-style: italic;
-      color: #00C2D4;
+      color: #00E5FF;
       margin: 0 0 12px;
       letter-spacing: 0;
+      text-shadow:
+        0 0 18px rgba(0, 229, 255, 0.65),
+        0 4px 0 rgba(15, 23, 42, 0.22);
     }
 
     p {
@@ -552,6 +561,12 @@
       border-color: #CBD5E1;
       color: #64748B;
     }
+  }
+
+  .flash-products-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 24px;
   }
 
   .flash-product-grid {
