@@ -64,33 +64,35 @@ export class ProductList implements OnInit {
     this.productService.getAllCategories().subscribe({
       next: (res) => {
         this.categories = res.data;
-        
-        // <-- THÊM MỚI: Nếu load trang mà đã có sẵn category trên URL, lập tức load danh sách hãng
         if (this.filters.category) {
           const cat = this.categories.find(c => c.Category_id === this.filters.category);
           if (cat) {
             this.availableBrands = this.brandByCategory[cat.Category_name] || [];
           }
         }
-        
         this.cdr.detectChanges();
       }
     });
 
+    // Lắng nghe TẤT CẢ thay đổi trên thanh URL
     this.route.queryParams.subscribe(params => {
       this.filters.category = params['category'] || '';
-      this.filters.brand = params['brand'] || ''; // <-- THÊM MỚI: Hứng brand từ URL
+      this.filters.brand = params['brand'] || ''; 
       this.filters.search = params['search'] || '';
       this.filters.sort = params['sort'] || 'newest';
       this.filters.isFlashSale = params['isFlashSale'] || '';
       this.filters.isNew = params['isNew'] || '';
-      if (params['filter'] === 'ai-suggested') {
-        this.filters.isAI = 'true';
-      } else {
-        this.filters.isAI = params['isAI'] || '';
-      }
+      this.filters.isAI = params['filter'] === 'ai-suggested' ? 'true' : (params['isAI'] || '');
+      
+      this.filters.minPrice = params['minPrice'] || '';
+      this.filters.maxPrice = params['maxPrice'] || '';
+
+      const matchedRange = this.priceRanges.find(r => r.min === this.filters.minPrice && r.max === this.filters.maxPrice);
+      this.selectedPriceRange = matchedRange ? matchedRange.label : '';
+
       this.currentPage = Number(params['page']) || 1;
-      this.loadProducts();
+      
+      this.loadProducts(); 
     });
   }
 
@@ -113,8 +115,22 @@ export class ProductList implements OnInit {
   }
 
   applyFilter() {
-    this.currentPage = 1;
-    this.loadProducts();
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        category: this.filters.category || null,
+        brand: this.filters.brand || null,
+        search: this.filters.search || null,
+        minPrice: this.filters.minPrice || null,
+        maxPrice: this.filters.maxPrice || null,
+        sort: this.filters.sort !== 'newest' ? this.filters.sort : null, 
+        isFlashSale: this.filters.isFlashSale || null,
+        isAI: this.filters.isAI || null,
+        isNew: this.filters.isNew || null,
+        page: this.currentPage > 1 ? this.currentPage : null
+      },
+      queryParamsHandling: 'merge' 
+    });
   }
 
   // <-- THÊM MỚI: Hàm xử lý click chọn Danh mục
@@ -206,8 +222,8 @@ export class ProductList implements OnInit {
   changePage(page: number) {
     if (page < 1 || page > this.totalPages) return;
     this.currentPage = page;
-    this.loadProducts();
-    window.scrollTo(0, 0);
+    this.applyFilter();
+    window.scrollTo({ top: 0, behavior: 'smooth' }); 
   }
 
   formatPrice(price: number): string {
