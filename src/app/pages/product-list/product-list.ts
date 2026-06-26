@@ -27,7 +27,8 @@ export class ProductList implements OnInit {
     sort: 'newest',
     isFlashSale: '',
     isAI: '', 
-    isNew: '' 
+    isNew: '',
+    isPromo: ''
   };
 
   // Cập nhật lại từ điển: Tên danh mục (Key) phải khớp chính xác 100% với tên hiển thị trên menu
@@ -64,42 +65,56 @@ export class ProductList implements OnInit {
     this.productService.getAllCategories().subscribe({
       next: (res) => {
         this.categories = res.data;
-        
-        // <-- THÊM MỚI: Nếu load trang mà đã có sẵn category trên URL, lập tức load danh sách hãng
         if (this.filters.category) {
           const cat = this.categories.find(c => c.Category_id === this.filters.category);
           if (cat) {
             this.availableBrands = this.brandByCategory[cat.Category_name] || [];
           }
         }
-        
         this.cdr.detectChanges();
       }
     });
 
+    // Lắng nghe TẤT CẢ thay đổi trên thanh URL
     this.route.queryParams.subscribe(params => {
       this.filters.category = params['category'] || '';
-      this.filters.brand = params['brand'] || ''; // <-- THÊM MỚI: Hứng brand từ URL
+      this.filters.brand = params['brand'] || ''; 
       this.filters.search = params['search'] || '';
       this.filters.sort = params['sort'] || 'newest';
       this.filters.isFlashSale = params['isFlashSale'] || '';
       this.filters.isNew = params['isNew'] || '';
-      if (params['filter'] === 'ai-suggested') {
-        this.filters.isAI = 'true';
-      } else {
-        this.filters.isAI = params['isAI'] || '';
-      }
+      this.filters.isPromo = params['isPromo'] || '';
+      this.filters.isAI = params['filter'] === 'ai-suggested' ? 'true' : (params['isAI'] || '');
+      
+      this.filters.minPrice = params['minPrice'] || '';
+      this.filters.maxPrice = params['maxPrice'] || '';
+
+      const matchedRange = this.priceRanges.find(r => r.min === this.filters.minPrice && r.max === this.filters.maxPrice);
+      this.selectedPriceRange = matchedRange ? matchedRange.label : '';
+
       this.currentPage = Number(params['page']) || 1;
-      this.loadProducts();
+      
+      this.loadProducts(); 
     });
   }
 
   loadProducts() {
-    const params = {
-      ...this.filters,
+    const params: any = {
       page: this.currentPage,
       limit: 9
     };
+
+    if (this.filters.category) params.category = this.filters.category;
+    if (this.filters.brand) params.brand = this.filters.brand;
+    if (this.filters.search) params.search = this.filters.search;
+    if (this.filters.minPrice) params.minPrice = this.filters.minPrice;
+    if (this.filters.maxPrice) params.maxPrice = this.filters.maxPrice;
+    if (this.filters.sort) params.sort = this.filters.sort;
+    
+    // Chỉ gửi flag nếu nó là 'true'
+    if (this.filters.isAI === 'true') params.isAI = 'true';
+    if (this.filters.isNew === 'true') params.isNew = 'true';
+    if (this.filters.isPromo === 'true') params.isPromo = 'true';
 
     this.productService.getAllProducts(params).subscribe({
       next: (res) => {
@@ -113,8 +128,23 @@ export class ProductList implements OnInit {
   }
 
   applyFilter() {
-    this.currentPage = 1;
-    this.loadProducts();
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        category: this.filters.category || null,
+        brand: this.filters.brand || null,
+        search: this.filters.search || null,
+        minPrice: this.filters.minPrice || null,
+        maxPrice: this.filters.maxPrice || null,
+        sort: this.filters.sort !== 'newest' ? this.filters.sort : null, 
+        isFlashSale: this.filters.isFlashSale || null,
+        isAI: this.filters.isAI || null,
+        isNew: this.filters.isNew || null,
+        isPromo: this.filters.isPromo || null,
+        page: this.currentPage > 1 ? this.currentPage : null
+      },
+      queryParamsHandling: 'merge' 
+    });
   }
 
   // <-- THÊM MỚI: Hàm xử lý click chọn Danh mục
@@ -142,13 +172,9 @@ export class ProductList implements OnInit {
   // Hàm xử lý khi bấm chọn Thương hiệu
   selectBrand(brandName: string) {
     if (this.filters.brand === brandName || brandName === '') {
-      // Nếu click lại hãng cũ hoặc click "Tất cả thương hiệu" -> Hủy hãng và ẩn nhãn sp
+      // Nếu click lại hãng cũ hoặc "Tất cả thương hiệu" -> Chỉ hủy hãng
       this.filters.brand = '';
-      this.filters.isAI = '';
-      this.filters.isFlashSale = '';
-      this.filters.isNew = '';
     } else {
-      // Chọn hãng mới -> Bật khối nhãn sp lên
       this.filters.brand = brandName;
     }
     this.applyFilter();
@@ -170,25 +196,29 @@ export class ProductList implements OnInit {
     this.applyFilter();
   }
 
-  // 2. Hàm mới cho Nhãn sản phẩm (isAI, isFlashSale, isNew)
+  // Hàm xử lý Nhãn sản phẩm (Chỉ còn AI, Mới, Ưu đãi)
   selectLabel(labelType: string) {
     if (labelType === 'ai') {
       this.filters.isAI = this.filters.isAI === 'true' ? '' : 'true';
-      this.filters.isFlashSale = '';
       this.filters.isNew = '';
-    } else if (labelType === 'flashsale') {
-      this.filters.isFlashSale = this.filters.isFlashSale === 'true' ? '' : 'true';
+      this.filters.isPromo = '';
+      this.filters.isFlashSale = ''; // Dọn dẹp nếu lỡ có trên URL
+    } else if (labelType === 'promo') {
+      this.filters.isPromo = this.filters.isPromo === 'true' ? '' : 'true';
       this.filters.isAI = '';
       this.filters.isNew = '';
+      this.filters.isFlashSale = '';
     } else if (labelType === 'new') {
       this.filters.isNew = this.filters.isNew === 'true' ? '' : 'true';
       this.filters.isAI = '';
+      this.filters.isPromo = '';
       this.filters.isFlashSale = '';
     } else {
-      // Nếu là nút "Tất cả"
+      // Nút "Tất cả sản phẩm"
       this.filters.isAI = '';
-      this.filters.isFlashSale = '';
       this.filters.isNew = '';
+      this.filters.isPromo = '';
+      this.filters.isFlashSale = '';
     }
     this.applyFilter();
   }
@@ -206,8 +236,8 @@ export class ProductList implements OnInit {
   changePage(page: number) {
     if (page < 1 || page > this.totalPages) return;
     this.currentPage = page;
-    this.loadProducts();
-    window.scrollTo(0, 0);
+    this.applyFilter();
+    window.scrollTo({ top: 0, behavior: 'smooth' }); 
   }
 
   formatPrice(price: number): string {
@@ -220,7 +250,7 @@ export class ProductList implements OnInit {
   }
 
   getCategoryName(): string {
-    if (this.filters.isFlashSale === 'true') return 'Ưu đãi';
+    if (this.filters.isPromo === 'true') return 'Ưu đãi';
     if (this.filters.isAI === 'true') return 'AI Gợi ý cho bạn';
     if (this.filters.isNew === 'true') return 'Sản phẩm mới nhất';
     if (!this.filters.category) return 'Tất cả sản phẩm';

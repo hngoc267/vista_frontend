@@ -66,10 +66,8 @@
   <div class="section-container">
     <div class="flash-hero">
       <div class="flash-copy">
-        <h2>SIÊU HỘI FLASH SALE</h2>
-        <h3>GIỜ VÀNG GIÁ SỐC</h3>
-
-        <p>Giảm đến <strong>30%</strong> thiết bị công nghệ</p>
+       <h2>SIÊU HỘI FLASH SALE</h2>
+       <h3>GIẢM SỐC ĐẾN 35%</h3>
 
         <div class="flash-main-countdown">
           <div class="flash-time-box">
@@ -122,9 +120,13 @@
         </div>
       </div>
 
+      <div class="flash-products-header">
+        <a [routerLink]="['/flash-sale']" class="view-all">Xem tất cả →</a>
+      </div>
+
       <div class="product-grid flash-product-grid">
         <a
-          *ngFor="let product of flashSaleProducts"
+          *ngFor="let product of flashSaleProducts.slice(0, 8)"
           [routerLink]="['/products', product.Product_id]"
           class="product-card"
         >
@@ -218,11 +220,11 @@
   <div class="section-container">
     <div class="monthly-promo-banner">
       <div class="monthly-promo-text">
-        <h3>Ưu đãi tháng này - Giảm đến 30%</h3>
+        <h3>Ưu đãi tháng này - Giảm đến 15%</h3>
         <p>Cơ hội mua sắm giá tốt nhất - Đừng bỏ lỡ!</p>
       </div>
 
-      <a [routerLink]="['/products']" [queryParams]="{isFlashSale: 'true'}" class="btn-monthly-promo">
+      <a [routerLink]="['/products']" [queryParams]="{isPromo: 'true'}" class="btn-monthly-promo">
         Xem ngay
       </a>
     </div>
