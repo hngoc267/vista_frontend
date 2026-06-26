@@ -44,9 +44,13 @@
 
       <div class="product-info">
 
-        <span class="badge badge-sale" *ngIf="product.Is_Flash_Sale">Sale {{product.Discount}}%</span>
+        <span class="badge badge-promo" *ngIf="!product.Is_Flash_Sale && product.Discount > 0">
+    Ưu đãi {{product.Discount}}%
+  </span>
         <span class="badge badge-ai" *ngIf="product.Is_AI">AI Gợi ý</span>
-        <span class="badge badge-new" *ngIf="!product.Is_Flash_Sale && !product.Is_AI">Mới</span>
+        <span class="badge badge-new" *ngIf="!product.Is_Flash_Sale && product.Discount === 0 && !product.Is_AI">
+    Mới
+  </span>
         
         <h1 class="product-name">{{ product.Product_name }}</h1>
 
@@ -232,17 +236,25 @@
 
       <a *ngFor="let p of relatedProducts" [routerLink]="['/products', p.Product_id]" class="product-card">
         <div class="product-image">
-          <span class="badge badge-sale" *ngIf="p.Is_Flash_Sale">Sale {{p.Discount}}%</span>
-          <span class="badge badge-ai" *ngIf="p.Is_AI">AI Gợi ý</span>
-          <span class="badge badge-new" *ngIf="!p.Is_Flash_Sale && !p.Is_AI">Mới</span>
-          
-          <img 
-            [src]="'/assets/images/' + p.Images[0]" 
-            [alt]="p.Product_name" 
-            (error)="p.Images = null"
-            style="width: 100%; height: 160px; object-fit: contain;"
-          >
-        </div>
+  <span class="badge badge-promo" *ngIf="!p.Is_Flash_Sale && p.Discount > 0">
+    Ưu đãi {{p.Discount}}%
+  </span>
+  
+  <span class="badge badge-ai" *ngIf="p.Is_AI">
+    AI Gợi ý
+  </span>
+  
+  <span class="badge badge-new" *ngIf="!p.Is_Flash_Sale && p.Discount === 0 && !p.Is_AI">
+    Mới
+  </span>
+  
+  <img 
+    [src]="'/assets/images/' + p.Images[0]" 
+    [alt]="p.Product_name" 
+    (error)="p.Images = null"
+    style="width: 100%; height: 160px; object-fit: contain;"
+  >
+</div>
 
         <div class="product-info-card">
           <h3>{{ p.Product_name }}</h3>
