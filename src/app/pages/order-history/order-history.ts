@@ -600,57 +600,10 @@ export class OrderHistory implements OnInit, OnDestroy {
     return String(order?.Return_address || order?.Address || '').trim() || 'Chưa có thông tin';
   }
 
+  // 1. Các hàm bổ trợ về Bằng chứng hoàn hàng (Đã fix đóng ngoặc)
   isReturnEvidenceImage(evidence: string): boolean {
     const value = String(evidence || '').trim();
     return value.startsWith('data:image/') || /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(value);
-  handleCancelOrder(_order: any): void {
-    this.notificationService.info('Chức năng hủy đơn hàng sẽ được cập nhật sau');
-  }
-
-  handleReturnOrder(_order: any): void {
-    this.notificationService.info('Chức năng trả hàng sẽ được cập nhật sau');
-  }
-
-  // 3. THAY ĐỔI LOGIC NÚT ĐÁNH GIÁ (DÙNG SWEETALERT2 ĐỂ CỘNG ĐIỂM)
-  async handleReviewNow(order: any): Promise<void> {
-    const { isConfirmed } = await Swal.fire({
-      title: 'Đánh giá đơn hàng',
-      html: `
-        <p style="font-size: 14px; color: #64748B; margin-bottom: 12px;">Cảm nhận của bạn về đơn hàng <strong>#${order.Order_code}</strong>?</p>
-        <div style="color: #F59E0B; font-size: 32px; margin-bottom: 12px; cursor: pointer;">
-          ★ ★ ★ ★ ★
-        </div>
-        <textarea id="swal-review-input" class="swal2-textarea" placeholder="Sản phẩm rất tuyệt vời..." style="margin: 0; width: 100%; box-sizing: border-box;"></textarea>
-      `,
-      showCancelButton: true,
-      confirmButtonText: 'Gửi đánh giá',
-      cancelButtonText: 'Hủy',
-      confirmButtonColor: '#2563B0',
-      preConfirm: () => {
-        return (document.getElementById('swal-review-input') as HTMLTextAreaElement).value;
-      }
-    });
-
-    if (isConfirmed) {
-      // Đổi trạng thái hiển thị của UI sang Đã đánh giá
-      order.Review_status = 'reviewed'; 
-      
-      // Tính tiền ra điểm
-      const amountToPoints = Number(order.Total_amount) || this.getTotal(order);
-      
-      // Gọi service để cộng vào tổng chi tiêu
-      this.authService.addPoints(amountToPoints);
-
-      // Thông báo thành công
-      Swal.fire({
-        icon: 'success',
-        title: 'Đánh giá thành công!',
-        text: `Bạn đã được cộng ${new Intl.NumberFormat('vi-VN').format(amountToPoints)} điểm vào thẻ Thành Viên.`,
-        confirmButtonColor: '#2563B0'
-      });
-
-      this.cdr.detectChanges();
-    }
   }
 
   isReturnEvidenceVideo(evidence: string): boolean {
@@ -668,7 +621,7 @@ export class OrderHistory implements OnInit, OnDestroy {
     return `${mime || 'Tệp đính kèm'} ${index + 1}`;
   }
 
-
+  // 2. Các hàm kiểm soát Modal hủy đơn hàng từ file main của bạn
   openCancelOrderModal(order: any): void {
     if (!this.canCancelOrder(order)) {
       this.notificationService.info('Đơn hàng này không thể hủy.');
@@ -751,6 +704,7 @@ export class OrderHistory implements OnInit, OnDestroy {
     });
   }
 
+  // 3. Các hàm Handler thật kết nối trực tiếp với sự kiện click trên giao diện HTML
   handleCancelOrder(order: any): void {
     this.openCancelOrderModal(order);
   }
@@ -771,8 +725,41 @@ export class OrderHistory implements OnInit, OnDestroy {
     });
   }
 
-  handleReviewNow(_order: any): void {
-    this.notificationService.info('Chức năng đánh giá sẽ được cập nhật sau');
+  // Hàm Đánh giá thật kèm SweetAlert2 và tích hợp cộng điểm thành viên
+  async handleReviewNow(order: any): Promise<void> {
+    const { isConfirmed } = await Swal.fire({
+      title: 'Đánh giá đơn hàng',
+      html: `
+        <p style="font-size: 14px; color: #64748B; margin-bottom: 12px;">Cảm nhận của bạn về đơn hàng <strong>#${order.Order_code}</strong>?</p>
+        <div style="color: #F59E0B; font-size: 32px; margin-bottom: 12px; cursor: pointer;">
+          ★ ★ ★ ★ ★
+        </div>
+        <textarea id="swal-review-input" class="swal2-textarea" placeholder="Sản phẩm rất tuyệt vời..." style="margin: 0; width: 100%; box-sizing: border-box;"></textarea>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Gửi đánh giá',
+      cancelButtonText: 'Hủy',
+      confirmButtonColor: '#2563B0',
+      preConfirm: () => {
+        return (document.getElementById('swal-review-input') as HTMLTextAreaElement).value;
+      }
+    });
+
+    if (isConfirmed) {
+      order.Review_status = 'reviewed'; 
+      
+      const amountToPoints = Number(order.Total_amount) || this.getTotal(order);
+      this.authService.addPoints(amountToPoints);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Đánh giá thành công!',
+        text: `Bạn đã được cộng ${new Intl.NumberFormat('vi-VN').format(amountToPoints)} điểm vào thẻ Thành Viên.`,
+        confirmButtonColor: '#2563B0'
+      });
+
+      this.cdr.detectChanges();
+    }
   }
 
   async handleBuyAgain(order: any): Promise<void> {
