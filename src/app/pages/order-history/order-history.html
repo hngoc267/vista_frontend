@@ -41,7 +41,7 @@
       </div>
 
       <div class="order-list" *ngIf="!isLoading && !loadError && paginatedOrders.length > 0; else emptyOrder">
-        <article class="order-card" *ngFor="let order of paginatedOrders">
+        <article class="order-card" *ngFor="let order of paginatedOrders; trackBy: trackByOrderCode">
           <div class="order-head">
             <div>
               <h3>#{{ order.Order_code }}</h3>
@@ -70,7 +70,7 @@
           <div class="product-row">
             <a
               class="product-card"
-              *ngFor="let item of getVisibleItems(order)"
+              *ngFor="let item of getVisibleItems(order); trackBy: trackByProductVariant"
               [routerLink]="['/products', item.Product_id]"
             >
               <div class="product-img">
@@ -277,7 +277,7 @@
         <div class="return-evidence wide">
           <span>Bằng chứng:</span>
           <div class="return-evidence-grid" *ngIf="getReturnEvidence(detailOrder).length; else noReturnEvidence">
-            <figure *ngFor="let evidence of getReturnEvidence(detailOrder); let evidenceIndex = index">
+            <figure *ngFor="let evidence of getReturnEvidence(detailOrder); let evidenceIndex = index; trackBy: trackByEvidence">
               <img
                 *ngIf="isReturnEvidenceImage(evidence)"
                 [src]="evidence"
@@ -287,6 +287,8 @@
                 *ngIf="isReturnEvidenceVideo(evidence)"
                 [src]="evidence"
                 controls
+                controlsList="nodownload noremoteplayback noplaybackrate"
+                disablePictureInPicture
                 muted
               ></video>
               <figcaption>
@@ -363,7 +365,7 @@
       <h3>{{ isReturningOrder(detailOrder) ? 'Sản phẩm hoàn trả' : 'Sản phẩm trong đơn' }}</h3>
 
       <div class="detail-product-list">
-        <div class="detail-product-item" *ngFor="let item of getOrderDisplayItems(detailOrder)">
+        <div class="detail-product-item" *ngFor="let item of getOrderDisplayItems(detailOrder); trackBy: trackByProductVariant">
           <div class="detail-product-img">
             <img
               *ngIf="item.Image"
@@ -392,7 +394,7 @@
 
       <div>
         <span>Tạm tính</span>
-        <strong>{{ formatPrice(isReturningOrder(detailOrder) ? getReturnRefundAmount(detailOrder) : detailOrder.Total_items_price) }}</strong>
+        <strong>{{ formatPrice(isReturningOrder(detailOrder) ? getReturnProductSubtotal(detailOrder) : detailOrder.Total_items_price) }}</strong>
       </div>
 
       <div *ngIf="!isReturningOrder(detailOrder) && detailOrder.Discount_amount > 0">

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -16,25 +16,16 @@ export class OrderHistory {
       params = params.set('status', status);
     }
 
-    let userId = localStorage.getItem('userId');
-
+    const userId = this.getCurrentUserId();
     if (!userId) {
-      const userRaw = localStorage.getItem('user');
-      if (userRaw) {
-        try {
-          const userObj = JSON.parse(userRaw);
-          userId = userObj.User_id || userObj.id || userObj._id;
-        } catch (error) {
-          console.error('Loi khi doc thong tin user tu localStorage', error);
-        }
-      }
+      return of({
+        success: true,
+        data: [],
+        message: 'Vui long dang nhap de xem lich su don hang.',
+      });
     }
 
-    if (!userId) {
-      userId = 'USR_002';
-    }
-
-    return this.http.get<any>(`${this.apiUrl}/${userId}`, { params });
+    return this.http.get<any>(`${this.apiUrl}/${encodeURIComponent(userId)}`, { params });
   }
 
   markOrderReceived(orderId: string): Observable<any> {
@@ -46,5 +37,34 @@ export class OrderHistory {
       `${this.apiUrl}/${encodeURIComponent(orderId)}/cancel`,
       { reason }
     );
+  }
+
+  private getCurrentUserId(): string {
+    if (typeof localStorage === 'undefined') {
+      return '';
+    }
+
+    const rawUser = localStorage.getItem('user');
+    if (!rawUser) {
+      localStorage.removeItem('userId');
+      return '';
+    }
+
+    try {
+      const user = JSON.parse(rawUser);
+      const userId = String(user?.User_id || user?.userId || '').trim();
+
+      if (userId) {
+        localStorage.setItem('userId', userId);
+      } else {
+        localStorage.removeItem('userId');
+      }
+
+      return userId;
+    } catch (error) {
+      console.error('Loi khi doc thong tin user tu localStorage', error);
+      localStorage.removeItem('userId');
+      return '';
+    }
   }
 }

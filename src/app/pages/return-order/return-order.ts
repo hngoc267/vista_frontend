@@ -31,6 +31,7 @@ interface EvidenceFile {
 }
 
 const SAVED_RETURN_ADDRESSES_KEY = 'vista_saved_return_addresses';
+const DELETED_RETURN_ADDRESSES_KEY = 'vista_deleted_return_addresses';
 
 @Component({
   selector: 'app-return-order',
@@ -79,6 +80,7 @@ export class ReturnOrder implements OnInit {
   evidenceFiles: EvidenceFile[] = [];
   pendingEvidenceReads = 0;
   returnQuantities: Record<string, number> = {};
+  selectedReturnItems: Record<string, boolean> = {};
 
   returnInfo: ReturnInfoForm = this.createEmptyReturnInfo();
   returnInfoDraft: ReturnInfoForm = this.createEmptyReturnInfo();
@@ -105,8 +107,44 @@ export class ReturnOrder implements OnInit {
     this.openLocationDropdown = null;
   }
 
+  private getCurrentUserId(): string {
+    if (typeof localStorage !== 'undefined') {
+      const rawUser = localStorage.getItem('user');
+      if (rawUser) {
+        try {
+          const user = JSON.parse(rawUser);
+          const userId = String(user?.User_id || user?.userId || '').trim();
+          if (userId) {
+            return userId;
+          }
+        } catch {
+          return '';
+        }
+      }
+    }
+
+    return String(this.order?.User_id || this.order?.userId || '').trim();
+  }
+
+  private getUserScopedStorageKey(baseKey: string): string {
+    const userId = this.getCurrentUserId() || 'guest';
+    return baseKey + '_' + userId;
+  }
+
+  private getSavedReturnAddressesKey(): string {
+    return this.getUserScopedStorageKey(SAVED_RETURN_ADDRESSES_KEY);
+  }
+
+  private getDeletedReturnAddressesKey(): string {
+    return this.getUserScopedStorageKey(DELETED_RETURN_ADDRESSES_KEY);
+  }
+
   get items(): any[] {
     return Array.isArray(this.order?.Items) ? this.order.Items : [];
+  }
+
+  get selectedOrderItems(): any[] {
+    return this.items.filter((item) => this.isItemSelected(item));
   }
 
   get imageCount(): number {
@@ -223,6 +261,7 @@ export class ReturnOrder implements OnInit {
     this.returnInfo = this.buildReturnInfoFromOrder(order);
     this.returnInfoDraft = { ...this.returnInfo };
     this.initializeReturnQuantities();
+    this.initializeReturnSelections();
   }
 
   openReturnInfoModal(): void {
@@ -269,12 +308,16 @@ export class ReturnOrder implements OnInit {
   deleteSavedReturnAddress(address: ReturnInfoForm, event: Event): void {
     event.stopPropagation();
     const deleteKey = this.buildReturnAddressKey(address);
+    const deletedKeys = new Set(this.loadDeletedReturnAddressKeys());
+    deletedKeys.add(deleteKey);
+    this.saveDeletedReturnAddressKeys(Array.from(deletedKeys));
+
     this.savedReturnAddresses = this.savedReturnAddresses.filter(
       (item) => this.buildReturnAddressKey(item) !== deleteKey
     );
 
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(SAVED_RETURN_ADDRESSES_KEY, JSON.stringify(this.savedReturnAddresses));
+      localStorage.setItem(this.getSavedReturnAddressesKey(), JSON.stringify(this.savedReturnAddresses));
     }
 
     if (this.buildReturnAddressKey(this.returnInfoDraft) === deleteKey) {
@@ -320,6 +363,7 @@ export class ReturnOrder implements OnInit {
     this.returnInfoDraft.province = province?.name || '';
     this.returnInfoDraft.district = '';
     this.returnInfoDraft.ward = '';
+    this.returnInfoDraft.specificAddress = '';
     this.districts = province?.districts || [];
     this.wards = [];
     this.selectedDistrictCode = '';
@@ -330,6 +374,7 @@ export class ReturnOrder implements OnInit {
     const district = this.districts.find((item) => String(item.code) === this.selectedDistrictCode) || null;
     this.returnInfoDraft.district = district?.name || '';
     this.returnInfoDraft.ward = '';
+    this.returnInfoDraft.specificAddress = '';
     this.wards = district?.wards || [];
     this.selectedWardCode = '';
   }
@@ -337,6 +382,7 @@ export class ReturnOrder implements OnInit {
   onWardChange(): void {
     const ward = this.wards.find((item) => String(item.code) === this.selectedWardCode) || null;
     this.returnInfoDraft.ward = ward?.name || '';
+    this.returnInfoDraft.specificAddress = '';
   }
 
   toggleReason(value: string): void {
@@ -430,7 +476,7 @@ export class ReturnOrder implements OnInit {
       Return_phone: this.returnInfo.phone.trim(),
       Return_email: this.returnInfo.email.trim(),
       Return_address: this.returnAddressLine,
-      items: this.items.map((item) => ({
+      items: this.selectedOrderItems.map((item) => ({
         Product_variant_id: this.getItemVariantId(item),
         Quantity: this.getItemReturnQuantity(item),
       })).filter((item) => !!item.Product_variant_id && item.Quantity > 0),
@@ -481,11 +527,11 @@ export class ReturnOrder implements OnInit {
   }
 
   getTotalQuantity(): number {
-    return this.items.reduce((sum, item) => sum + this.getItemReturnQuantity(item), 0);
+    return this.selectedOrderItems.reduce((sum, item) => sum + this.getItemReturnQuantity(item), 0);
   }
 
   getItemsSubtotal(): number {
-    return this.items.reduce((sum, item) => {
+    return this.selectedOrderItems.reduce((sum, item) => {
       return sum + this.getItemUnitPrice(item) * this.getItemReturnQuantity(item);
     }, 0);
   }
@@ -500,16 +546,27 @@ export class ReturnOrder implements OnInit {
     return Number(this.order?.Total_amount || this.order?.totalAmount || 0) || this.getOrderItemsSubtotal();
   }
 
+  getTotalPurchasedQuantity(): number {
+    return this.items.reduce((sum, item) => sum + this.getPurchasedQuantity(item), 0);
+  }
+
   getRefundAmount(): number {
-    const orderSubtotal = this.getOrderItemsSubtotal();
     const selectedSubtotal = this.getItemsSubtotal();
     const paidAmount = this.getPaidOrderAmount();
+
+    if (this.selectedOrderItems.length === 0) {
+      return 0;
+    }
 
     if (this.isFullQuantityReturn()) {
       return paidAmount;
     }
 
-    return Math.round((paidAmount * selectedSubtotal) / Math.max(orderSubtotal, 1));
+    const orderSubtotal = this.getOrderItemsSubtotal();
+    const orderAdjustment = paidAmount - orderSubtotal;
+    const adjustmentPerUnit = orderAdjustment / Math.max(this.getTotalPurchasedQuantity(), 1);
+
+    return Math.max(0, Math.round(selectedSubtotal + adjustmentPerUnit * this.getTotalQuantity()));
   }
 
   getItemVariantId(item: any): string {
@@ -524,6 +581,15 @@ export class ReturnOrder implements OnInit {
     return Number(item?.Price || item?.price || 0);
   }
 
+  getItemPurchasedLineTotal(item: any): number {
+    return this.getItemUnitPrice(item) * this.getPurchasedQuantity(item);
+  }
+
+  getItemOriginalPurchasedLineTotal(item: any): number {
+    const originalUnitPrice = Number(item?.Original_price || item?.originalPrice || 0);
+    return originalUnitPrice > 0 ? originalUnitPrice * this.getPurchasedQuantity(item) : 0;
+  }
+
   getItemReturnQuantity(item: any): number {
     const variantId = this.getItemVariantId(item);
     const purchasedQuantity = this.getPurchasedQuantity(item);
@@ -534,6 +600,41 @@ export class ReturnOrder implements OnInit {
     }
 
     return Math.min(Math.max(1, Math.round(selectedQuantity)), purchasedQuantity);
+  }
+
+  shouldShowItemSelector(): boolean {
+    return this.items.length > 1;
+  }
+
+  isItemSelected(item: any): boolean {
+    const variantId = this.getItemVariantId(item);
+
+    if (!variantId) {
+      return false;
+    }
+
+    if (!this.shouldShowItemSelector()) {
+      return true;
+    }
+
+    return this.selectedReturnItems[variantId] !== false;
+  }
+
+  onReturnItemToggle(item: any, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const variantId = this.getItemVariantId(item);
+
+    if (!variantId) {
+      return;
+    }
+
+    this.selectedReturnItems[variantId] = input.checked;
+
+    if (input.checked && !this.returnQuantities[variantId]) {
+      this.returnQuantities[variantId] = this.getPurchasedQuantity(item);
+    }
+
+    this.submitError = '';
   }
 
   changeReturnQuantity(item: any, delta: number): void {
@@ -563,11 +664,17 @@ export class ReturnOrder implements OnInit {
   }
 
   getReturnLineTotal(item: any): number {
+    if (!this.isItemSelected(item)) {
+      return 0;
+    }
+
     return this.getItemUnitPrice(item) * this.getItemReturnQuantity(item);
   }
 
   isFullQuantityReturn(): boolean {
-    return this.items.every((item) => this.getItemReturnQuantity(item) === this.getPurchasedQuantity(item));
+    return this.items.length > 0 && this.items.every((item) => {
+      return this.isItemSelected(item) && this.getItemReturnQuantity(item) === this.getPurchasedQuantity(item);
+    });
   }
 
   isEvidenceImage(file: EvidenceFile): boolean {
@@ -598,6 +705,42 @@ export class ReturnOrder implements OnInit {
       if (variantId) {
         result[variantId] = this.getPurchasedQuantity(item);
       }
+      return result;
+    }, {} as Record<string, number>);
+  }
+
+  private initializeReturnSelections(): void {
+    this.selectedReturnItems = this.items.reduce((result, item) => {
+      const variantId = this.getItemVariantId(item);
+      if (variantId) {
+        result[variantId] = true;
+      }
+      return result;
+    }, {} as Record<string, boolean>);
+  }
+
+  private getReturnLineRefundAmounts(): Record<string, number> {
+    const selectedItems = this.selectedOrderItems;
+    const targetRefundAmount = this.getRefundAmount();
+    const orderSubtotal = this.getOrderItemsSubtotal();
+    const orderAdjustment = this.getPaidOrderAmount() - orderSubtotal;
+    const adjustmentPerUnit = orderAdjustment / Math.max(this.getTotalPurchasedQuantity(), 1);
+    let allocated = 0;
+
+    return selectedItems.reduce((result, item, index) => {
+      const variantId = this.getItemVariantId(item);
+      if (!variantId) {
+        return result;
+      }
+
+      const quantity = this.getItemReturnQuantity(item);
+      const itemSubtotal = this.getItemUnitPrice(item) * quantity;
+      const amount = index === selectedItems.length - 1
+        ? Math.max(0, targetRefundAmount - allocated)
+        : Math.max(0, Math.round(itemSubtotal + adjustmentPerUnit * quantity));
+
+      allocated += amount;
+      result[variantId] = amount;
       return result;
     }, {} as Record<string, number>);
   }
@@ -672,7 +815,11 @@ export class ReturnOrder implements OnInit {
       return 'Đơn hàng không có sản phẩm để hoàn trả.';
     }
 
-    if (this.getTotalQuantity() <= 0 || this.items.some((item) => this.getItemReturnQuantity(item) > this.getPurchasedQuantity(item))) {
+    if (!this.selectedOrderItems.length) {
+      return 'Vui lòng chọn ít nhất một sản phẩm cần hoàn trả.';
+    }
+
+    if (this.getTotalQuantity() <= 0 || this.selectedOrderItems.some((item) => this.getItemReturnQuantity(item) > this.getPurchasedQuantity(item))) {
       return 'Số lượng sản phẩm hoàn trả chưa hợp lệ.';
     }
 
@@ -741,7 +888,7 @@ export class ReturnOrder implements OnInit {
     }
 
     const hasNumber = /\d/.test(text);
-    const hasLetter = /[a-zA-ZÀ-ỹ]/.test(text);
+    const hasLetter = /[a-z]/.test(compact);
     const hasAddressKeyword = [
       'duong',
       'pho',
@@ -766,12 +913,12 @@ export class ReturnOrder implements OnInit {
   }
 
   private loadSavedReturnAddresses(): void {
-    if (typeof localStorage === 'undefined') {
+    if (typeof localStorage === 'undefined' || !this.getCurrentUserId()) {
       this.savedReturnAddresses = [];
       return;
     }
 
-    const raw = localStorage.getItem(SAVED_RETURN_ADDRESSES_KEY);
+    const raw = localStorage.getItem(this.getSavedReturnAddressesKey());
     if (!raw) {
       this.savedReturnAddresses = [];
       return;
@@ -779,14 +926,16 @@ export class ReturnOrder implements OnInit {
 
     try {
       const parsed = JSON.parse(raw);
-      this.savedReturnAddresses = this.dedupeReturnAddresses(Array.isArray(parsed) ? parsed : []);
+      const deletedKeys = new Set(this.loadDeletedReturnAddressKeys());
+      this.savedReturnAddresses = this.dedupeReturnAddresses(Array.isArray(parsed) ? parsed : [])
+        .filter((item) => !deletedKeys.has(this.buildReturnAddressKey(item)));
     } catch {
       this.savedReturnAddresses = [];
     }
   }
 
   private saveReturnAddress(info: ReturnInfoForm): void {
-    if (typeof localStorage === 'undefined') {
+    if (typeof localStorage === 'undefined' || !this.getCurrentUserId()) {
       return;
     }
 
@@ -804,7 +953,11 @@ export class ReturnOrder implements OnInit {
     };
 
     this.savedReturnAddresses = this.dedupeReturnAddresses([savedAddress, ...this.savedReturnAddresses]);
-    localStorage.setItem(SAVED_RETURN_ADDRESSES_KEY, JSON.stringify(this.savedReturnAddresses));
+    const savedKey = this.buildReturnAddressKey(savedAddress);
+    this.saveDeletedReturnAddressKeys(
+      this.loadDeletedReturnAddressKeys().filter((key) => key !== savedKey)
+    );
+    localStorage.setItem(this.getSavedReturnAddressesKey(), JSON.stringify(this.savedReturnAddresses));
   }
 
   private dedupeReturnAddresses(addresses: ReturnInfoForm[]): ReturnInfoForm[] {
@@ -843,6 +996,27 @@ export class ReturnOrder implements OnInit {
       info.district,
       info.province,
     ].map((part) => this.normalizeText(part)).join('|');
+  }
+
+  private loadDeletedReturnAddressKeys(): string[] {
+    if (typeof localStorage === 'undefined' || !this.getCurrentUserId()) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(localStorage.getItem(this.getDeletedReturnAddressesKey()) || '[]');
+      return Array.isArray(parsed) ? parsed.map((item) => String(item || '')).filter(Boolean) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private saveDeletedReturnAddressKeys(keys: string[]): void {
+    if (typeof localStorage === 'undefined' || !this.getCurrentUserId()) {
+      return;
+    }
+
+    localStorage.setItem(this.getDeletedReturnAddressesKey(), JSON.stringify([...new Set(keys.filter(Boolean))]));
   }
 
   private extractReturnRequestId(res: any): string {
@@ -915,3 +1089,4 @@ export class ReturnOrder implements OnInit {
       .replace(/Đ/g, 'd');
   }
 }
+

@@ -57,7 +57,20 @@
           <h2>Thông tin sản phẩm hoàn trả</h2>
         </div>
 
-        <article class="product-line" *ngFor="let item of items">
+        <article
+          class="product-line"
+          *ngFor="let item of items"
+          [class.has-selector]="shouldShowItemSelector()"
+          [class.is-unselected]="!isItemSelected(item)"
+        >
+          <label class="return-item-check" *ngIf="shouldShowItemSelector()">
+            <input
+              type="checkbox"
+              [checked]="isItemSelected(item)"
+              (change)="onReturnItemToggle(item, $event)"
+            />
+          </label>
+
           <div class="product-media">
             <img [src]="getProductImage(item)" [alt]="item.Product_name" (error)="hideBrokenImage($event)" />
           </div>
@@ -65,24 +78,28 @@
           <div class="product-info">
             <h3>{{ item.Product_name }}</h3>
             <p class="variant-single-line">{{ item.Variant_name }}</p>
-            <p>Đã mua x {{ getPurchasedQuantity(item) }}</p>
-            <div class="return-quantity-control" *ngIf="shouldShowReturnQuantityControl(item)">
-              <span>Số lượng hoàn</span>
-              <div class="quantity-stepper">
-                <button type="button" (click)="changeReturnQuantity(item, -1)" [disabled]="!canDecreaseReturnQuantity(item)">−</button>
-                <strong>{{ getItemReturnQuantity(item) }}</strong>
-                <button type="button" (click)="changeReturnQuantity(item, 1)" [disabled]="!canIncreaseReturnQuantity(item)">+</button>
-              </div>
-            </div>
-            <p *ngIf="!shouldShowReturnQuantityControl(item)">Hoàn x {{ getItemReturnQuantity(item) }}</p>
+            <p *ngIf="!isItemSelected(item)">Chưa chọn hoàn trả</p>
           </div>
 
           <div class="product-side">
             <div class="product-price-stack">
-              <strong>{{ formatPrice(getReturnLineTotal(item)) }}</strong>
-              <del *ngIf="item.Original_price && item.Original_price > item.Price">
-                {{ formatPrice(item.Original_price * getItemReturnQuantity(item)) }}
+              <strong>{{ formatPrice(getItemPurchasedLineTotal(item)) }}</strong>
+              <del *ngIf="getItemOriginalPurchasedLineTotal(item) > getItemPurchasedLineTotal(item)">
+                {{ formatPrice(getItemOriginalPurchasedLineTotal(item)) }}
               </del>
+            </div>
+          </div>
+          <div class="return-quantity-row" *ngIf="isItemSelected(item)">
+            <span>Số lượng hoàn:</span>
+            <div class="return-quantity-control">
+              <div class="quantity-stepper" *ngIf="shouldShowReturnQuantityControl(item); else fixedReturnQuantity">
+                <button type="button" (click)="changeReturnQuantity(item, -1)" [disabled]="!canDecreaseReturnQuantity(item)">−</button>
+                <strong>{{ getItemReturnQuantity(item) }}</strong>
+                <button type="button" (click)="changeReturnQuantity(item, 1)" [disabled]="!canIncreaseReturnQuantity(item)">+</button>
+              </div>
+              <ng-template #fixedReturnQuantity>
+                <strong class="fixed-return-quantity">x {{ getItemReturnQuantity(item) }}</strong>
+              </ng-template>
             </div>
           </div>
         </article>
@@ -181,9 +198,6 @@
           </button>
         </div>
 
-        <p class="small-muted">
-          Cần thêm ít nhất một hình ảnh hoặc một video bằng chứng để gửi yêu cầu hoàn trả.
-        </p>
       </section>
 
       <div class="checkout-actions">
@@ -197,7 +211,7 @@
             type="button"
             class="primary-btn"
             (click)="openConfirmModal()"
-            [disabled]="isSubmitting"
+            [disabled]="isSubmitting || !canSubmitReturnRequest"
           >
             Yêu cầu hoàn trả
           </button>
@@ -337,8 +351,6 @@
       </button>
 
       <h1>Xác nhận hoàn trả</h1>
-      <div class="modal-divider"></div>
-
       <div class="confirm-block">
         <p>
           <span class="confirm-label">Thông tin người trả: </span>
@@ -352,7 +364,7 @@
 
       <div class="confirm-block product-confirm">
         <h2 class="confirm-label">Thông tin sản phẩm hoàn trả</h2>
-        <article *ngFor="let item of items">
+        <article *ngFor="let item of selectedOrderItems">
           <img [src]="getProductImage(item)" [alt]="item.Product_name" (error)="hideBrokenImage($event)" />
           <div>
             <h3>{{ item.Product_name }}</h3>
@@ -387,7 +399,7 @@
 
       <div class="confirm-actions">
         <button type="button" class="outline-btn" (click)="closeConfirmModal()" [disabled]="isSubmitting">Trở lại</button>
-        <button type="button" class="primary-btn" (click)="submitReturnOrder()" [disabled]="isSubmitting">
+        <button type="button" class="primary-btn" (click)="submitReturnOrder()" [disabled]="isSubmitting || !canSubmitReturnRequest">
           {{ isSubmitting ? 'Đang gửi...' : 'Xác nhận trả hàng' }}
         </button>
       </div>

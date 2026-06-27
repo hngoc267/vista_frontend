@@ -9,6 +9,19 @@ $bg-page: #F8FAFC;
 $border: #E2E8F0;
 $white: #FFFFFF;
 
+:host,
+:host * {
+  font-family: 'Be Vietnam Pro', sans-serif !important;
+}
+
+:host .ph,
+:host .ph::before {
+  font-family: 'Phosphor' !important;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+}
+
 .order-history-page {
   background: $bg-page;
   padding: 40px 0 120px;
@@ -1364,6 +1377,11 @@ $white: #FFFFFF;
     background: #F1F5F9;
     object-fit: cover;
     display: block;
+    font-family: 'Be Vietnam Pro', sans-serif;
+  }
+
+  video::cue {
+    font-family: 'Be Vietnam Pro', sans-serif;
   }
 
   figcaption {
@@ -1376,6 +1394,7 @@ $white: #FFFFFF;
     font-weight: 700;
     line-height: 1.35;
     word-break: break-word;
+    font-family: 'Be Vietnam Pro', sans-serif;
   }
 
   small {
