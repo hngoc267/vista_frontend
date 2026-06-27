@@ -78,20 +78,18 @@
           <div class="product-info">
             <h3>{{ item.Product_name }}</h3>
             <p class="variant-single-line">{{ item.Variant_name }}</p>
-            <p *ngIf="!isItemSelected(item)">Chưa chọn hoàn trả</p>
+            <p>Đã mua x {{ getPurchasedQuantity(item) }}</p>
           </div>
 
           <div class="product-side">
             <div class="product-price-stack">
-              <strong>{{ formatPrice(getItemPurchasedLineTotal(item)) }}</strong>
-              <del *ngIf="getItemOriginalPurchasedLineTotal(item) > getItemPurchasedLineTotal(item)">
-                {{ formatPrice(getItemOriginalPurchasedLineTotal(item)) }}
+              <strong>{{ formatPrice(getItemUnitPrice(item)) }}</strong>
+              <del *ngIf="getItemOriginalUnitPrice(item) > getItemUnitPrice(item)">
+                {{ formatPrice(getItemOriginalUnitPrice(item)) }}
               </del>
             </div>
-          </div>
-          <div class="return-quantity-row" *ngIf="isItemSelected(item)">
-            <span>Số lượng hoàn:</span>
-            <div class="return-quantity-control">
+            <div class="return-quantity-control" *ngIf="isItemSelected(item)">
+              <span>Số lượng hoàn</span>
               <div class="quantity-stepper" *ngIf="shouldShowReturnQuantityControl(item); else fixedReturnQuantity">
                 <button type="button" (click)="changeReturnQuantity(item, -1)" [disabled]="!canDecreaseReturnQuantity(item)">−</button>
                 <strong>{{ getItemReturnQuantity(item) }}</strong>
@@ -372,7 +370,7 @@
             <p>x {{ getItemReturnQuantity(item) }}</p>
           </div>
           <div class="confirm-price-stack">
-            <strong>{{ formatPrice(getReturnLineTotal(item)) }}</strong>
+            <strong>{{ formatPrice(getItemUnitPrice(item)) }}</strong>
           </div>
         </article>
       </div>

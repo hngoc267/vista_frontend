@@ -33,4 +33,10 @@ export class ReviewService {
       this.apiUrl + '/order-detail/' + encodeURIComponent(orderDetailId)
     );
   }
+
+  getReviewsByProductId(productId: string): Observable<ReviewResponse<any[]>> {
+    return this.http.get<ReviewResponse<any[]>>(
+      this.apiUrl + '/product/' + encodeURIComponent(productId)
+    );
+  }
 }

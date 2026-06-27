@@ -4,6 +4,7 @@ import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../services/product';
 import { CartService } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
+import { ReviewService } from '../../services/review';
 import Swal from 'sweetalert2';
 
 const REVIEW_PRODUCT_STORAGE_KEY = 'vista_product_reviews_cache';
@@ -48,6 +49,7 @@ export class ProductDetail implements OnInit {
     private productService: ProductService,
     private cartService: CartService,
     private cartState: CartStateService,
+    private reviewService: ReviewService,
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -94,6 +96,7 @@ export class ProductDetail implements OnInit {
         this.mockReviews = this.generateMockReviews(mockReviewCount, this.product.Average_rating)
           .map((review, index) => this.normalizeLegacyMockReview(review, index));
         this.rebuildReviewList();
+        this.loadReviewsFromReviewApi(productId, reviewSummary);
         
         this.cdr.detectChanges();
         this.loadRelated(id);
@@ -236,6 +239,45 @@ export class ProductDetail implements OnInit {
   setTab(tab: string) {
     this.activeTab = tab;
     this.cdr.detectChanges();
+  }
+
+  loadReviewsFromReviewApi(productId: string, reviewSummary: any = {}): void {
+    if (!productId) {
+      return;
+    }
+
+    this.reviewService.getReviewsByProductId(productId).subscribe({
+      next: (res) => {
+        const apiReviews = Array.isArray(res?.data) ? res.data : [];
+        if (!apiReviews.length) {
+          return;
+        }
+
+        const variantIds = this.variants
+          .map((variant) => variant?.Product_variant_id)
+          .filter(Boolean);
+        const cachedReviews = this.getCachedProductReviews(productId, variantIds);
+        const persistedReviews = this.mergeReviewItems(this.normalizePersistedReviews([
+          ...apiReviews,
+          ...cachedReviews,
+        ]));
+        const mockReviewCount = this.resolveMockReviewCount(
+          productId,
+          Number(this.product?.Total_reviews || 0),
+          persistedReviews.length,
+          reviewSummary || this.product?.Review_summary || {}
+        );
+
+        this.persistedReviews = persistedReviews;
+        this.mockReviews = this.generateMockReviews(mockReviewCount, this.product?.Average_rating)
+          .map((review, index) => this.normalizeLegacyMockReview(review, index));
+        this.rebuildReviewList();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Product detail van hien review co san neu API review rieng chua duoc gan route.
+      },
+    });
   }
 
   toggleReviewMediaFilter(): void {

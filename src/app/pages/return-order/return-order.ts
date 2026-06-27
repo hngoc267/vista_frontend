@@ -31,7 +31,6 @@ interface EvidenceFile {
 }
 
 const SAVED_RETURN_ADDRESSES_KEY = 'vista_saved_return_addresses';
-const DELETED_RETURN_ADDRESSES_KEY = 'vista_deleted_return_addresses';
 
 @Component({
   selector: 'app-return-order',
@@ -105,38 +104,6 @@ export class ReturnOrder implements OnInit {
   @HostListener('document:click')
   closeLocationDropdownFromOutside(): void {
     this.openLocationDropdown = null;
-  }
-
-  private getCurrentUserId(): string {
-    if (typeof localStorage !== 'undefined') {
-      const rawUser = localStorage.getItem('user');
-      if (rawUser) {
-        try {
-          const user = JSON.parse(rawUser);
-          const userId = String(user?.User_id || user?.userId || '').trim();
-          if (userId) {
-            return userId;
-          }
-        } catch {
-          return '';
-        }
-      }
-    }
-
-    return String(this.order?.User_id || this.order?.userId || '').trim();
-  }
-
-  private getUserScopedStorageKey(baseKey: string): string {
-    const userId = this.getCurrentUserId() || 'guest';
-    return baseKey + '_' + userId;
-  }
-
-  private getSavedReturnAddressesKey(): string {
-    return this.getUserScopedStorageKey(SAVED_RETURN_ADDRESSES_KEY);
-  }
-
-  private getDeletedReturnAddressesKey(): string {
-    return this.getUserScopedStorageKey(DELETED_RETURN_ADDRESSES_KEY);
   }
 
   get items(): any[] {
@@ -308,16 +275,12 @@ export class ReturnOrder implements OnInit {
   deleteSavedReturnAddress(address: ReturnInfoForm, event: Event): void {
     event.stopPropagation();
     const deleteKey = this.buildReturnAddressKey(address);
-    const deletedKeys = new Set(this.loadDeletedReturnAddressKeys());
-    deletedKeys.add(deleteKey);
-    this.saveDeletedReturnAddressKeys(Array.from(deletedKeys));
-
     this.savedReturnAddresses = this.savedReturnAddresses.filter(
       (item) => this.buildReturnAddressKey(item) !== deleteKey
     );
 
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(this.getSavedReturnAddressesKey(), JSON.stringify(this.savedReturnAddresses));
+      localStorage.setItem(SAVED_RETURN_ADDRESSES_KEY, JSON.stringify(this.savedReturnAddresses));
     }
 
     if (this.buildReturnAddressKey(this.returnInfoDraft) === deleteKey) {
@@ -363,7 +326,6 @@ export class ReturnOrder implements OnInit {
     this.returnInfoDraft.province = province?.name || '';
     this.returnInfoDraft.district = '';
     this.returnInfoDraft.ward = '';
-    this.returnInfoDraft.specificAddress = '';
     this.districts = province?.districts || [];
     this.wards = [];
     this.selectedDistrictCode = '';
@@ -374,7 +336,6 @@ export class ReturnOrder implements OnInit {
     const district = this.districts.find((item) => String(item.code) === this.selectedDistrictCode) || null;
     this.returnInfoDraft.district = district?.name || '';
     this.returnInfoDraft.ward = '';
-    this.returnInfoDraft.specificAddress = '';
     this.wards = district?.wards || [];
     this.selectedWardCode = '';
   }
@@ -382,7 +343,6 @@ export class ReturnOrder implements OnInit {
   onWardChange(): void {
     const ward = this.wards.find((item) => String(item.code) === this.selectedWardCode) || null;
     this.returnInfoDraft.ward = ward?.name || '';
-    this.returnInfoDraft.specificAddress = '';
   }
 
   toggleReason(value: string): void {
@@ -578,16 +538,58 @@ export class ReturnOrder implements OnInit {
   }
 
   getItemUnitPrice(item: any): number {
-    return Number(item?.Price || item?.price || 0);
+    const purchasedQuantity = this.getPurchasedQuantity(item);
+    const explicitUnitPrice = Number(
+      item?.Unit_price
+      || item?.UnitPrice
+      || item?.unitPrice
+      || item?.Product_price
+      || item?.productPrice
+      || 0
+    );
+
+    if (explicitUnitPrice > 0) {
+      return explicitUnitPrice;
+    }
+
+    const price = Number(item?.Price || item?.price || 0);
+    const totalPrice = Number(
+      item?.Total_price
+      || item?.TotalPrice
+      || item?.totalPrice
+      || item?.Line_total
+      || item?.lineTotal
+      || 0
+    );
+
+    if (totalPrice > 0 && purchasedQuantity > 1 && Math.abs(price - totalPrice) < 1) {
+      return Math.round(totalPrice / purchasedQuantity);
+    }
+
+    return price;
   }
 
-  getItemPurchasedLineTotal(item: any): number {
-    return this.getItemUnitPrice(item) * this.getPurchasedQuantity(item);
-  }
+  getItemOriginalUnitPrice(item: any): number {
+    const purchasedQuantity = this.getPurchasedQuantity(item);
+    const currentUnitPrice = this.getItemUnitPrice(item);
+    const originalPrice = Number(
+      item?.Original_price
+      || item?.OriginalPrice
+      || item?.originalPrice
+      || item?.Compare_at_price
+      || item?.compareAtPrice
+      || 0
+    );
 
-  getItemOriginalPurchasedLineTotal(item: any): number {
-    const originalUnitPrice = Number(item?.Original_price || item?.originalPrice || 0);
-    return originalUnitPrice > 0 ? originalUnitPrice * this.getPurchasedQuantity(item) : 0;
+    if (!originalPrice) {
+      return 0;
+    }
+
+    if (purchasedQuantity > 1 && originalPrice > currentUnitPrice * 1.5) {
+      return Math.round(originalPrice / purchasedQuantity);
+    }
+
+    return originalPrice;
   }
 
   getItemReturnQuantity(item: any): number {
@@ -668,7 +670,8 @@ export class ReturnOrder implements OnInit {
       return 0;
     }
 
-    return this.getItemUnitPrice(item) * this.getItemReturnQuantity(item);
+    const variantId = this.getItemVariantId(item);
+    return this.getReturnLineRefundAmounts()[variantId] || 0;
   }
 
   isFullQuantityReturn(): boolean {
@@ -888,7 +891,7 @@ export class ReturnOrder implements OnInit {
     }
 
     const hasNumber = /\d/.test(text);
-    const hasLetter = /[a-z]/.test(compact);
+    const hasLetter = /[a-zA-ZÀ-ỹ]/.test(text);
     const hasAddressKeyword = [
       'duong',
       'pho',
@@ -913,12 +916,12 @@ export class ReturnOrder implements OnInit {
   }
 
   private loadSavedReturnAddresses(): void {
-    if (typeof localStorage === 'undefined' || !this.getCurrentUserId()) {
+    if (typeof localStorage === 'undefined') {
       this.savedReturnAddresses = [];
       return;
     }
 
-    const raw = localStorage.getItem(this.getSavedReturnAddressesKey());
+    const raw = localStorage.getItem(SAVED_RETURN_ADDRESSES_KEY);
     if (!raw) {
       this.savedReturnAddresses = [];
       return;
@@ -926,16 +929,14 @@ export class ReturnOrder implements OnInit {
 
     try {
       const parsed = JSON.parse(raw);
-      const deletedKeys = new Set(this.loadDeletedReturnAddressKeys());
-      this.savedReturnAddresses = this.dedupeReturnAddresses(Array.isArray(parsed) ? parsed : [])
-        .filter((item) => !deletedKeys.has(this.buildReturnAddressKey(item)));
+      this.savedReturnAddresses = this.dedupeReturnAddresses(Array.isArray(parsed) ? parsed : []);
     } catch {
       this.savedReturnAddresses = [];
     }
   }
 
   private saveReturnAddress(info: ReturnInfoForm): void {
-    if (typeof localStorage === 'undefined' || !this.getCurrentUserId()) {
+    if (typeof localStorage === 'undefined') {
       return;
     }
 
@@ -953,11 +954,7 @@ export class ReturnOrder implements OnInit {
     };
 
     this.savedReturnAddresses = this.dedupeReturnAddresses([savedAddress, ...this.savedReturnAddresses]);
-    const savedKey = this.buildReturnAddressKey(savedAddress);
-    this.saveDeletedReturnAddressKeys(
-      this.loadDeletedReturnAddressKeys().filter((key) => key !== savedKey)
-    );
-    localStorage.setItem(this.getSavedReturnAddressesKey(), JSON.stringify(this.savedReturnAddresses));
+    localStorage.setItem(SAVED_RETURN_ADDRESSES_KEY, JSON.stringify(this.savedReturnAddresses));
   }
 
   private dedupeReturnAddresses(addresses: ReturnInfoForm[]): ReturnInfoForm[] {
@@ -996,27 +993,6 @@ export class ReturnOrder implements OnInit {
       info.district,
       info.province,
     ].map((part) => this.normalizeText(part)).join('|');
-  }
-
-  private loadDeletedReturnAddressKeys(): string[] {
-    if (typeof localStorage === 'undefined' || !this.getCurrentUserId()) {
-      return [];
-    }
-
-    try {
-      const parsed = JSON.parse(localStorage.getItem(this.getDeletedReturnAddressesKey()) || '[]');
-      return Array.isArray(parsed) ? parsed.map((item) => String(item || '')).filter(Boolean) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private saveDeletedReturnAddressKeys(keys: string[]): void {
-    if (typeof localStorage === 'undefined' || !this.getCurrentUserId()) {
-      return;
-    }
-
-    localStorage.setItem(this.getDeletedReturnAddressesKey(), JSON.stringify([...new Set(keys.filter(Boolean))]));
   }
 
   private extractReturnRequestId(res: any): string {
@@ -1089,4 +1065,3 @@ export class ReturnOrder implements OnInit {
       .replace(/Đ/g, 'd');
   }
 }
-

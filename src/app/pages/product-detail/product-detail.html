@@ -258,12 +258,12 @@
                       <div class="review-media-preview">
                         <img
                           *ngIf="isReviewMediaImage(media)"
-                          [src]="media"
+                          [src]="getReviewMediaSource(media)"
                           alt="Hình ảnh đánh giá"
                         />
                         <video
                           *ngIf="isReviewMediaVideo(media)"
-                          [src]="media"
+                          [src]="getReviewMediaSource(media)"
                           controls
                           controlsList="nodownload noremoteplayback noplaybackrate"
                           disablePictureInPicture
