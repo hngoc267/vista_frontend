@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs'; // Thêm throwError và of vào đây
 
 @Injectable({
   providedIn: 'root',
@@ -25,14 +25,22 @@ export class OrderHistory {
           const userObj = JSON.parse(userRaw);
           userId = userObj.User_id || userObj.id || userObj._id;
         } catch (error) {
-          console.error('Loi khi doc thong tin user tu localStorage', error);
+          console.error('Lỗi khi đọc thông tin user từ localStorage', error);
         }
       }
     }
 
+    // --- ĐOẠN ĐÃ SỬA ---
     if (!userId) {
-      userId = 'USR_002';
+      // Nếu hoàn toàn không tìm thấy userId, lập tức báo lỗi hoặc trả về danh sách rỗng
+      // Không được tự ý gán thành USR_002 nữa!
+      console.error('Không tìm thấy userId, chặn gọi API.');
+      return throwError(() => new Error('Vui lòng đăng nhập để xem lịch sử đơn hàng.'));
+      
+      // Hoặc nếu muốn trả về mảng rỗng để giao diện tự hiện thông báo "Không có đơn hàng":
+      // return of({ success: true, data: [] }); 
     }
+    // -------------------
 
     return this.http.get<any>(`${this.apiUrl}/${userId}`, { params });
   }
@@ -47,7 +55,7 @@ export class OrderHistory {
       { reason }
     );
   }
-  // --- THÊM HÀM NÀY ĐỂ GỌI API ĐÁNH GIÁ ---
+
   markOrderReviewed(orderCode: string): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/mark-reviewed`, { Order_code: orderCode });
   }
