@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { VoucherService } from '../../services/voucher';
+import { AuthService } from '../../services/auth'; 
 
 type VoucherTab = 'all' | 'freeship' | 'discount' | 'used' | 'expiring';
 
@@ -9,9 +10,9 @@ interface VoucherItem {
   code: string;
   title: string;
   condition: string;
-  type: 'percent' | 'shipping';
+  type: 'percent' | 'shipping' | 'fixed'; 
   category: 'freeship' | 'discount';
-  status: 'available' | 'used' | 'expiring';
+  status: 'available' | 'used' | 'expiring' | 'unavailable' | 'expired'; 
   expiry?: string;
   daysLeft?: number | null;
   description: string;
@@ -20,6 +21,8 @@ interface VoucherItem {
   startDate: string;
   usageLimit: string;
   statusText: string;
+  canApply?: boolean;
+  unavailableReason?: string;
 }
 
 interface VoucherResponse {
@@ -41,6 +44,14 @@ export class Voucher implements OnInit {
   vouchers: VoucherItem[] = [];
   isLoading = false;
 
+  // --- CÁC BIẾN CHO THẺ THÀNH VIÊN ---
+  currentPoints = 0;
+  tierName = 'Bronze';
+  tierLevel = 0;
+  nextTierName = 'Silver';
+  pointsNeeded = 10000000;
+  progressPercent = 0;
+
   tabs: { key: VoucherTab; label: string }[] = [
     { key: 'all', label: 'Tất cả' },
     { key: 'freeship', label: 'Freeship' },
@@ -51,19 +62,57 @@ export class Voucher implements OnInit {
 
   constructor(
     private voucherService: VoucherService,
+    private authService: AuthService, 
     private cdr: ChangeDetectorRef,
     private router: Router
   ) {}
 
   ngOnInit(): void {
     this.activeTab = 'all';
-    this.loadVouchers();
+
+    this.authService.currentUser$.subscribe(user => {
+      if (user) {
+        this.currentPoints = user.totalSpent || 0;
+        this.tierName = user.tierName || 'Bronze';
+        this.tierLevel = user.tierLevel || 0;
+        this.calculateProgress();
+        
+        // SỬA CHỖ NÀY: Truyền thẳng mã User_id vào hàm
+        this.loadVouchers(user.User_id); 
+      } else {
+        // SỬA CHỖ NÀY: Nếu chưa đăng nhập thì gửi chuỗi rỗng
+        this.loadVouchers(''); 
+      }
+    });
   }
 
-  loadVouchers(): void {
+  calculateProgress() {
+    const spent = this.currentPoints;
+    if (spent < 10000000) {
+      this.nextTierName = 'Silver';
+      this.pointsNeeded = 10000000 - spent;
+      this.progressPercent = (spent / 10000000) * 100;
+    } else if (spent < 50000000) {
+      this.nextTierName = 'Gold';
+      this.pointsNeeded = 50000000 - spent;
+      this.progressPercent = ((spent - 10000000) / 40000000) * 100;
+    } else if (spent < 100000000) {
+      this.nextTierName = 'Diamond';
+      this.pointsNeeded = 100000000 - spent;
+      this.progressPercent = ((spent - 50000000) / 50000000) * 100;
+    } else {
+      this.nextTierName = 'MAX';
+      this.pointsNeeded = 0;
+      this.progressPercent = 100;
+    }
+  }
+
+  // SỬA CHỖ NÀY: Khai báo nhận tham số userId
+  loadVouchers(userId: string): void {
     this.isLoading = true;
 
-    this.voucherService.getMyVouchers().subscribe({
+    // SỬA CHỖ NÀY: Bỏ userId vào trong ngoặc để gọi Service
+    this.voucherService.getMyVouchers(userId).subscribe({
       next: (res: VoucherResponse) => {
         this.vouchers = [...(res.data || [])].filter((voucher) => this.isVoucherStillValid(voucher));
         this.activeTab = 'all';
@@ -127,6 +176,11 @@ export class Voucher implements OnInit {
   }
 
   applyVoucher(voucher: VoucherItem): void {
+    if (voucher.canApply === false) {
+      alert(voucher.unavailableReason || 'Mã này không khả dụng cho tài khoản của bạn.');
+      return;
+    }
+
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.setItem('vista_pending_voucher_code', voucher.code);
     }

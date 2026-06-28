@@ -1,90 +1,153 @@
 <section class="voucher-page">
-  <div class="voucher-container">
-    <h1>Mã giảm giá của tôi</h1>
+  <div class="voucher-wrapper">
+    
+    <div class="content-box">
+  <h2>Thành viên</h2>
+  
+  <!-- Thêm ngClass để đổi màu động theo tierLevel (0, 1, 2, 3...) -->
+  <div class="membership-card" [ngClass]="'tier-' + tierLevel">
+    <div class="watermark-text">VISTA</div>
+    
+    <div class="card-top">
+      <div class="tier-info">
+        <div class="tier-badge">
+          <!-- Thay thế số bằng icon huy chương -->
+          <ng-container [ngSwitch]="tierLevel">
+            <i *ngSwitchCase="0" class="ph-fill ph-medal medal-bronze"></i>
+            <i *ngSwitchCase="1" class="ph-fill ph-medal medal-silver"></i>
+            <i *ngSwitchCase="2" class="ph-fill ph-medal medal-gold"></i>
+            <i *ngSwitchCase="3" class="ph-fill ph-trophy medal-diamond"></i>
+            <i *ngSwitchDefault class="ph-fill ph-medal"></i>
+          </ng-container>
+        </div>
+        
+        <div class="tier-text">
+          <p class="label">Hạng thành viên</p>
+          <h3 class="name">{{ tierName }} Member</h3>
+          
+          <p class="hint" *ngIf="nextTierName !== 'MAX'">
+            Bạn cần mua thêm <span>{{ pointsNeeded | number:'1.0-0' }}đ</span> để lên hạng <span>{{ nextTierName }}</span>
+          </p>
+          <p class="hint" *ngIf="nextTierName === 'MAX'">
+            <span>Bạn đã đạt hạng cao nhất của VISTA!</span>
+          </p>
+        </div>
+      </div>
+      
+      <div class="points-info">
+        <p class="label">Điểm tích lũy</p>
+        <h3 class="value">{{ currentPoints | number:'1.0-0' }}</h3>
+      </div>
+    </div>
+    
+    <div class="card-bottom">
+      <p class="progress-title">Tiến trình lên hạng <span>{{ nextTierName === 'MAX' ? 'Diamond' : nextTierName }}</span></p>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="progressPercent"></div>
+      </div>
+      <div class="progress-labels">
+        <span class="start">{{ tierName }}</span>
+        <span class="current">{{ currentPoints | number:'1.0-0' }}</span>
+        <span class="end">{{ nextTierName === 'MAX' ? 'Vô cực' : (currentPoints + pointsNeeded | number:'1.0-0') }}</span>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <div class="voucher-tabs">
-      <button
-        *ngFor="let tab of tabs"
-        type="button"
-        class="tab-btn"
-        [class.active]="activeTab === tab.key"
-        (click)="setTab(tab.key)"
-      >
-        {{ tab.label }}
-      </button>
+    <div class="content-box">
+      <h2>Mã giảm giá của tôi</h2>
+
+      <div class="voucher-tabs">
+        <button
+          *ngFor="let tab of tabs"
+          type="button"
+          class="tab-btn"
+          [class.active]="activeTab === tab.key"
+          (click)="setTab(tab.key)"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+
+      <div class="voucher-list" *ngIf="filteredVouchers.length > 0; else emptyVoucher">
+  <article
+    *ngFor="let voucher of filteredVouchers"
+    class="voucher-card"
+    [class.used]="voucher.status === 'used'"
+    (click)="openVoucherDetail(voucher)"
+  >
+    <!-- NỬA BÊN TRÁI: Chỉ để Logo và Tiêu đề chính -->
+    <div class="voucher-left" [ngClass]="voucher.type === 'shipping' ? 'bg-green' : 'bg-blue'">
+      <i *ngIf="voucher.type === 'percent'" class="ph ph-percent bg-watermark"></i>
+      <i *ngIf="voucher.type === 'shipping'" class="ph ph-truck bg-watermark"></i>
+      
+      <div class="voucher-icon">
+        <i *ngIf="voucher.type === 'percent'" class="ph ph-percent"></i>
+        <i *ngIf="voucher.type === 'shipping'" class="ph ph-truck"></i>
+      </div>
+
+      <div class="voucher-info">
+        <h3>{{ voucher.title }}</h3>
+      </div>
     </div>
 
-    <div class="voucher-list" *ngIf="filteredVouchers.length > 0; else emptyVoucher">
-      <article
-        *ngFor="let voucher of filteredVouchers"
-        class="voucher-card"
-        [class.used]="voucher.status === 'used'"
-        (click)="openVoucherDetail(voucher)"
-      >
-        <div class="voucher-left" [class.shipping]="voucher.type === 'shipping'">
-          <div class="stamp-edge"></div>
+    <div class="voucher-divider"></div>
 
-          <div class="voucher-icon">
-            <i *ngIf="voucher.category === 'discount'" class="ph ph-percent"></i>
-            <i *ngIf="voucher.category === 'freeship' || voucher.type === 'shipping'" class="ph ph-truck"></i>
-          </div>
-          
-          <div class="voucher-info">
-            <h2>{{ voucher.title }}</h2>
-            <p>{{ voucher.condition }}</p>
-          </div>
-        </div>
+    <!-- NỬA BÊN PHẢI: Chứa Điều kiện, Code và HSD -->
+    <div class="voucher-right">
+      <span *ngIf="voucher.status === 'expiring' && getDaysLeft(voucher) > 0" class="expiry-badge">
+        Sắp hết hạn
+      </span>
 
-        <div class="voucher-right">
-          <span *ngIf="voucher.status === 'expiring' && getDaysLeft(voucher) > 0" class="expiry-badge">
-            Còn {{ getDaysLeft(voucher) }} ngày
-          </span>
+      <span *ngIf="voucher.status === 'used'" class="used-badge">
+        Đã sử dụng
+      </span>
 
-          <span *ngIf="voucher.status === 'used'" class="used-badge">
-            Đã sử dụng
-          </span>
+      <!-- Đưa phần Điều kiện sang đây để rộng rãi hơn -->
+      <h4 class="voucher-condition">{{ voucher.condition }}</h4>
 
-          <div class="voucher-code-row">
-            <span class="code-label">Mã</span>
-
-            <div class="code-box">
-              <span>{{ voucher.code }}</span>
-
-              <button
-                type="button"
-                class="copy-btn"
-                (click)="copyCode(voucher.code); $event.stopPropagation()"
-                title="Sao chép mã"
-              >
-                <i class="ph ph-copy"></i>
-              </button>
-            </div>
-          </div>
-
-          <span class="voucher-type">Toàn bộ sản phẩm</span>
-
-          <div class="voucher-date">
-            <i class="ph ph-calendar-blank"></i>
-            <span>HSD: {{ getExpiryDate(voucher) || 'Chưa cập nhật' }}</span>
-          </div>
-
+      <div class="voucher-code-row">
+        <span class="code-label">Mã:</span>
+        <div class="code-box">
+          <span>{{ voucher.code }}</span>
           <button
             type="button"
-            class="detail-btn"
-            (click)="openVoucherDetail(voucher); $event.stopPropagation()"
+            class="copy-btn"
+            (click)="copyCode(voucher.code); $event.stopPropagation()"
+            title="Sao chép mã"
           >
-            Chi tiết
+            <i class="ph ph-copy"></i>
           </button>
         </div>
-      </article>
-    </div>
-
-    <ng-template #emptyVoucher>
-      <div class="empty-voucher">
-        <i class="ph ph-ticket"></i>
-        <p>Không có voucher phù hợp</p>
       </div>
-    </ng-template>
+
+      <span class="voucher-type">Toàn bộ sản phẩm</span>
+
+      <div class="voucher-bottom">
+        <div class="voucher-date">
+          <i class="ph ph-calendar-blank"></i>
+          <span>HSD: {{ getExpiryDate(voucher) || 'Chưa cập nhật' }}</span>
+        </div>
+
+        <button
+          type="button"
+          class="detail-btn"
+          (click)="openVoucherDetail(voucher); $event.stopPropagation()"
+        >
+          Chi tiết
+        </button>
+      </div>
+    </div>
+  </article>
+</div>
+
+      <ng-template #emptyVoucher>
+        <div class="empty-voucher">
+          <i class="ph ph-ticket"></i>
+          <p>Không có voucher phù hợp</p>
+        </div>
+      </ng-template>
+    </div>
   </div>
 
   <div class="copy-toast" *ngIf="copyMessage">

@@ -2,11 +2,13 @@ import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-// Nhớ chỉnh lại đường dẫn service cho khớp với thư mục của bạn
 import { OrderHistory as OrderHistoryApi } from '../../services/order-history';
 import { OrderService } from '../../services/order';
 import { NotificationService } from '../../components/notification/notification.service';
 import Swal from 'sweetalert2';
+
+// 1. IMPORT AUTHO SERVICE VÀO ĐÂY
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-order-history',
@@ -81,7 +83,9 @@ export class OrderHistory implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private router: Router,
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef // Tiêm công cụ ép vẽ lại giao diện
+    private cdr: ChangeDetectorRef,
+    // 2. TIÊM AUTHO SERVICE VÀO CONSTRUCTOR
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
@@ -210,7 +214,6 @@ export class OrderHistory implements OnInit, OnDestroy {
   trackByEvidence(index: number, evidence: string): string {
     return `${index}-${String(evidence || '').slice(0, 80)}`;
   }
-
   // --- CÁC HÀM TIỆN ÍCH HIỂN THỊ HTML ---
   getTotalQuantity(order: any): number {
     const items = this.isReturningOrder(order) ? this.getReturningItems(order) : (order.Items || []);
@@ -228,18 +231,15 @@ export class OrderHistory implements OnInit, OnDestroy {
 
   getStatusLabel(order: any): string {
     const status = this.normalizeStatus(order.Status);
-    if (this.selectedStatus === 'review' && (status === 'delivered' || status === 'review')) {
+    
+    // Dù ở Tab "Tất cả" hay Tab "Đánh giá", cứ hễ nhận hàng xong là biến thành Đánh Giá hết!
+    if (status === 'review' || status === 'delivered') {
       return this.isReviewedOrder(order) ? 'Đã đánh giá' : 'Chưa đánh giá';
-    }
-
-    if (status === 'delivered') {
-      return 'Đã giao';
     }
 
     const tab = this.tabs.find(t => t?.value === status);
     return tab ? tab.label : 'Không xác định';
   }
-
   isShippingOrder(order: any): boolean {
     const status = this.normalizeStatus(order.Status);
     return status === 'shipping' || status === 'delivering';
@@ -277,6 +277,7 @@ export class OrderHistory implements OnInit, OnDestroy {
   isCancelledOrder(order: any): boolean {
     return this.normalizeStatus(order.Status) === 'cancelled';
   }
+  
   isReturningOrder(order: any): boolean {
     return this.normalizeStatus(order?.Status) === 'returning';
   }
@@ -510,7 +511,6 @@ export class OrderHistory implements OnInit, OnDestroy {
     }));
   }
 
-  // --- NÚT BẤM VÀ MODAL ---
   openOrderDetail(order: any): void { this.selectedOrder = order; }
   closeOrderDetail(): void { this.selectedOrder = null; }
 
@@ -615,6 +615,7 @@ export class OrderHistory implements OnInit, OnDestroy {
     return String(order?.Return_address || order?.Address || '').trim() || 'Chưa có thông tin';
   }
 
+  // 1. Các hàm bổ trợ về Bằng chứng hoàn hàng (Đã fix đóng ngoặc)
   isReturnEvidenceImage(evidence: string): boolean {
     const value = String(evidence || '').trim();
     return value.startsWith('data:image/') || /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(value);
@@ -635,7 +636,7 @@ export class OrderHistory implements OnInit, OnDestroy {
     return `${mime || 'Tệp đính kèm'} ${index + 1}`;
   }
 
-
+  // 2. Các hàm kiểm soát Modal hủy đơn hàng từ file main của bạn
   openCancelOrderModal(order: any): void {
     if (!this.canCancelOrder(order)) {
       this.notificationService.info('Đơn hàng này không thể hủy.');
@@ -718,6 +719,7 @@ export class OrderHistory implements OnInit, OnDestroy {
     });
   }
 
+  // 3. Các hàm Handler thật kết nối trực tiếp với sự kiện click trên giao diện HTML
   handleCancelOrder(order: any): void {
     this.openCancelOrderModal(order);
   }
@@ -886,6 +888,7 @@ export class OrderHistory implements OnInit, OnDestroy {
       next: (res) => {
         if (res.success) {
           this.notificationService.success(res.message || 'Đã ghi nhận đơn hàng đã được nhận.');
+          this.authService.reloadUserProfile();
           this.closeOrderDetail();
           this.selectedStatus = 'review';
           this.currentPage = 1;
