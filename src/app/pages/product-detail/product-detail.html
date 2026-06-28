@@ -61,8 +61,8 @@
               <i class="ph-fill ph-star star-filled" [style.width.%]="getStarFill(s)"></i>
             </div>
           </div>
-          <span class="rating-score">{{ product.Average_rating }}</span>
-          <span class="rating-count">({{ product.Total_reviews }} đánh giá)</span>
+          <span class="rating-score">{{ getDisplayAverageRating() }}</span>
+          <span class="rating-count">({{ getReviewTotalCount() }} đánh giá)</span>
         </div>
 
         <div class="price-wrap">
@@ -148,7 +148,7 @@
       <div class="tab-bar">
         <button class="tab-btn" [class.active]="activeTab === 'description'" (click)="setTab('description')">Mô tả sản phẩm</button>
         <button class="tab-btn" [class.active]="activeTab === 'specs'" (click)="setTab('specs')">Thông số kỹ thuật</button>
-        <button class="tab-btn" [class.active]="activeTab === 'reviews'" (click)="setTab('reviews')">Đánh giá ({{ product.Total_reviews }})</button>
+        <button class="tab-btn" [class.active]="activeTab === 'reviews'" (click)="setTab('reviews')">Đánh giá ({{ getReviewTotalCount() }})</button>
       </div>
 
       <div class="tab-content">
@@ -171,24 +171,70 @@
         <div *ngIf="activeTab === 'reviews'" class="tab-pane">
           <div class="rating-summary">
             <div class="rating-big">
-              <span class="rating-number">{{ product.Average_rating }}</span>
+              <span class="rating-number">{{ getDisplayAverageRating() }}</span>
               <div class="stars">
                 <div class="star-wrapper" *ngFor="let s of [1,2,3,4,5]">
                   <i class="ph-fill ph-star star-empty"></i>
                   <i class="ph-fill ph-star star-filled" [style.width.%]="getStarFill(s)"></i>
                 </div>
               </div>
-              <span class="rating-total">{{ product.Total_reviews }} đánh giá</span>
+              <span class="rating-total">{{ getReviewTotalCount() }} đánh giá</span>
+            </div>
+
+            <div class="review-filter-panel">
+              <button
+                type="button"
+                class="review-filter-btn"
+                [class.active]="reviewMediaFilterActive"
+                (click)="toggleReviewMediaFilter()"
+                title="Lọc đánh giá có hình ảnh hoặc video"
+              >
+                <i class="ph ph-image-square"></i>
+                Có hình ảnh/video
+              </button>
+
+              <button
+                type="button"
+                class="review-filter-btn"
+                [class.active]="reviewCommentFilterActive"
+                (click)="toggleReviewCommentFilter()"
+                title="Lọc đánh giá có bình luận"
+              >
+                <i class="ph ph-chat-circle-dots"></i>
+                Có bình luận
+              </button>
+
+              <button
+                type="button"
+                class="review-filter-btn"
+                [class.active]="reviewSortDirection !== 'none'"
+                (click)="toggleReviewSortDirection()"
+                title="Sắp xếp đánh giá theo số sao"
+              >
+                <i class="ph" [ngClass]="reviewSortDirection === 'asc' ? 'ph-sort-ascending' : 'ph-sort-descending'"></i>
+                {{ getReviewSortLabel() }}
+              </button>
+
+              <button
+                type="button"
+                class="review-filter-btn clear-filter-btn"
+                *ngIf="hasActiveReviewFilters()"
+                (click)="clearReviewFilters()"
+                title="Xóa tất cả bộ lọc đánh giá"
+              >
+                <i class="ph ph-x"></i>
+                Xóa lọc
+              </button>
             </div>
           </div>
           
           <div class="reviews-list" *ngIf="reviews && reviews.length > 0; else noReviews">
             
-            <div class="review-item" *ngFor="let review of reviews | slice:0:visibleReviewsCount">
-              <div class="review-avatar">{{ review.user.charAt(0) }}</div>
+            <div class="review-item" *ngFor="let review of reviews | slice:0:visibleReviewsCount; trackBy: trackByReview">
+              <div class="review-avatar">{{ (review.user || 'K').charAt(0) }}</div>
               <div class="review-content">
                 <div class="review-header">
-                  <span class="reviewer-name">{{ review.user }}</span>
+                  <span class="reviewer-name">{{ review.user || 'Khách hàng VISTA' }}</span>
                   <span class="review-date">{{ review.date }}</span>
                 </div>
                 
@@ -202,6 +248,35 @@
                 </div>
                 
                 <p class="review-text" *ngIf="review.comment">{{ review.comment }}</p>
+
+                <div class="review-media-frame" *ngIf="review.mediaItems?.length">
+                  <div class="review-media-grid">
+                    <figure
+                      class="review-media-item"
+                      *ngFor="let media of review.mediaItems; let i = index; trackBy: trackByReviewMedia"
+                    >
+                      <div class="review-media-preview">
+                        <img
+                          *ngIf="isReviewMediaImage(media)"
+                          [src]="getReviewMediaSource(media)"
+                          alt="Hình ảnh đánh giá"
+                        />
+                        <video
+                          *ngIf="isReviewMediaVideo(media)"
+                          [src]="getReviewMediaSource(media)"
+                          controls
+                          controlsList="nodownload noremoteplayback noplaybackrate"
+                          disablePictureInPicture
+                          muted
+                        ></video>
+                      </div>
+                      <figcaption>
+                        <i class="ph ph-paperclip"></i>
+                        <span>{{ getReviewMediaTypeLabel(media) }} {{ i + 1 }}</span>
+                      </figcaption>
+                    </figure>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -222,7 +297,9 @@
           </div>
 
           <ng-template #noReviews>
-            <p class="no-reviews">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+            <p class="no-reviews">
+              {{ hasActiveReviewFilters() ? 'Không có đánh giá phù hợp với bộ lọc đang chọn.' : 'Chưa có đánh giá nào. Hãy là người đầu tiên!' }}
+            </p>
           </ng-template>
         </div>
       </div>

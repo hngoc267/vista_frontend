@@ -146,6 +146,29 @@
     border-top: 1px solid #edf2f7;
     padding-top: 24px;
   }
+
+  &.has-selector {
+    grid-template-columns: 28px 116px minmax(0, 1fr) 190px;
+  }
+
+  &.is-unselected {
+    opacity: 0.58;
+  }
+}
+
+.return-item-check {
+  width: 22px;
+  min-height: 116px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: #2563b0;
+    cursor: pointer;
+  }
 }
 
 .product-media {
@@ -239,6 +262,19 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+
+  .return-quantity-control {
+    margin-top: 14px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+}
+
+.fixed-return-quantity {
+  color: #172033;
+  font-size: 14px;
+  font-weight: 900;
 }
 
 .product-price-stack,
@@ -334,6 +370,11 @@
   font-size: 11px;
   font-weight: 900;
   vertical-align: super;
+}
+
+.card-head .required-star,
+.card-head-inline .required-star {
+  color: #dc2626;
 }
 
 .note-field {
@@ -915,8 +956,10 @@
   }
 
   .confirm-block:first-of-type {
-    border-top: 0;
-    padding-top: 0;
+    border-top: 1px solid #e5edf5;
+    border-bottom: 1px solid #e5edf5;
+    margin-top: 28px;
+    padding: 24px 0;
   }
 }
 
@@ -925,12 +968,16 @@
   padding: 22px 0;
 
   p {
-    margin: 0 0 12px;
+    margin: 0 0 14px;
     display: grid;
     grid-template-columns: 210px minmax(0, 1fr);
     gap: 16px;
-    align-items: baseline;
+    align-items: center;
     font-size: 14px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
 }
 
@@ -997,8 +1044,8 @@
 }
 
 .confirm-row-tall {
-  align-items: start;
-  padding: 18px 0;
+  align-items: center;
+  padding: 0;
 }
 
 .confirm-total {
@@ -1106,6 +1153,20 @@
     grid-template-columns: 92px minmax(0, 1fr);
   }
 
+  .product-line.has-selector {
+    grid-template-columns: 28px 92px minmax(0, 1fr);
+    gap: 14px;
+
+    .product-info,
+    .product-side {
+      grid-column: 3;
+    }
+  }
+
+  .return-item-check {
+    min-height: 92px;
+  }
+
   .product-media {
     width: 92px;
     height: 92px;
@@ -1114,6 +1175,10 @@
   .product-side {
     grid-column: 2;
     align-items: flex-start;
+
+    .return-quantity-control {
+      align-items: flex-start;
+    }
   }
 
   .form-grid.three-cols {

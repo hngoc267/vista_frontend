@@ -52,15 +52,16 @@ export class OrderHistory implements OnInit, OnDestroy {
   };
 
   readonly cancelReasons = [
-    'Tôi muốn cập nhật địa chỉ/sđt nhận hàng.',
-    'Tôi muốn thêm/thay đổi Mã giảm giá.',
+    'Tôi muốn cập nhật địa chỉ/SĐT nhận hàng',
+    'Tôi muốn thêm/thay đổi mã giảm giá',
     'Tôi muốn thay đổi sản phẩm (kích thước, màu sắc, số lượng...)',
-    'Thủ tục thanh toán rắc rối.',
-    'Tôi tìm thấy chỗ mua khác tốt hơn (Rẻ hơn, uy tín hơn, giao nhanh hơn...).',
-    'Tôi không có nhu cầu mua nữa.',
-    'Tôi không tìm thấy lý do hủy phù hợp.',
+    'Thủ tục thanh toán rắc rối',
+    'Tôi tìm thấy chỗ mua khác tốt hơn (rẻ hơn, uy tín hơn, giao nhanh hơn...)',
+    'Tôi không có nhu cầu mua nữa',
+    'Tôi không tìm thấy lý do hủy phù hợp',
   ];
   private statusTimers: ReturnType<typeof setTimeout>[] = [];
+  private readonly processingAutoShipMs = 90 * 1000;
   private paymentTimerId: ReturnType<typeof setInterval> | null = null;
   private paymentPollingId: ReturnType<typeof setInterval> | null = null;
 
@@ -198,6 +199,18 @@ export class OrderHistory implements OnInit, OnDestroy {
     }
   }
 
+  trackByOrderCode(index: number, order: any): string {
+    return String(order?.Order_code || order?.Order_id || index);
+  }
+
+  trackByProductVariant(index: number, item: any): string {
+    return String(item?.Product_variant_id || item?.productVariantId || item?.Product_id || index);
+  }
+
+  trackByEvidence(index: number, evidence: string): string {
+    return `${index}-${String(evidence || '').slice(0, 80)}`;
+  }
+
   // --- CÁC HÀM TIỆN ÍCH HIỂN THỊ HTML ---
   getTotalQuantity(order: any): number {
     const items = this.isReturningOrder(order) ? this.getReturningItems(order) : (order.Items || []);
@@ -297,11 +310,13 @@ export class OrderHistory implements OnInit, OnDestroy {
   }
 
   getDisplayItemLineTotal(order: any, item: any): number {
-    if (this.isReturningOrder(order) && Number(item?.Return_refund_amount || 0) > 0) {
-      return Number(item.Return_refund_amount) || 0;
-    }
-
     return (Number(item?.Price || 0) || 0) * this.getDisplayItemQuantity(order, item);
+  }
+
+  getReturnProductSubtotal(order: any): number {
+    return this.getReturningItems(order).reduce((sum: number, item: any) => {
+      return sum + this.getDisplayItemLineTotal(order, item);
+    }, 0);
   }
 
   toggleProducts(order: any): void {
@@ -500,7 +515,7 @@ export class OrderHistory implements OnInit, OnDestroy {
   closeOrderDetail(): void { this.selectedOrder = null; }
 
   canCancelOrder(order: any): boolean {
-    return ['pending_payment', 'processing', 'shipping'].includes(this.normalizeStatus(order?.Status));
+    return ['pending_payment', 'processing'].includes(this.normalizeStatus(order?.Status));
   }
 
   getCancelReason(order: any): string {
@@ -530,7 +545,7 @@ export class OrderHistory implements OnInit, OnDestroy {
       return 'Từ chối hoàn trả';
     }
 
-    if (status === 'completed') {
+    if (status === 'completed' || status === 'refunded') {
       return 'Đã hoàn tiền';
     }
 
@@ -723,8 +738,58 @@ export class OrderHistory implements OnInit, OnDestroy {
     });
   }
 
-  handleReviewNow(_order: any): void {
-    this.notificationService.info('Chức năng đánh giá sẽ được cập nhật sau');
+  handleReviewNow(order: any): void {
+    if (!this.isReviewOrder(order)) {
+      this.notificationService.info('Chỉ đơn hàng đã giao mới có thể đánh giá sản phẩm.');
+      return;
+    }
+
+    if (this.isReviewedOrder(order)) {
+      this.notificationService.info('Đơn hàng này đã được đánh giá.');
+      return;
+    }
+
+    const items = Array.isArray(order?.Items) ? order.Items : [];
+    const reviewItem = items.find((item: any) => {
+      return !this.isReviewedOrderItem(item) && !!this.getReviewOrderDetailId(item);
+    }) || items.find((item: any) => !!this.getReviewOrderDetailId(item));
+
+    if (!reviewItem) {
+      this.notificationService.error('Không tìm thấy mã chi tiết đơn hàng để mở trang đánh giá.');
+      return;
+    }
+
+    const orderDetailId = this.getReviewOrderDetailId(reviewItem);
+
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('vista_review_order_data', JSON.stringify(order));
+    }
+
+    this.router.navigate(['/review'], {
+      queryParams: {
+        orderId: order.Order_code,
+        orderDetailId,
+      },
+      state: {
+        order,
+        item: reviewItem,
+      },
+    });
+  }
+
+  private getReviewOrderDetailId(item: any): string {
+    return String(
+      item?.Order_detail_id ||
+      item?.OrderDetail_id ||
+      item?.orderDetailId ||
+      ''
+    ).trim();
+  }
+
+  private isReviewedOrderItem(item: any): boolean {
+    const reviewId = String(item?.Review_id || '').trim();
+    const reviewStatus = String(item?.Review_status || '').trim().toLowerCase();
+    return !!reviewId || reviewStatus === 'reviewed' || item?.Reviewed === true;
   }
 
   async handleBuyAgain(order: any): Promise<void> {
@@ -1016,7 +1081,7 @@ export class OrderHistory implements OnInit, OnDestroy {
         if (Number.isNaN(startTime)) {
           return null;
         }
-        return Math.max(0, 10000 - (Date.now() - startTime));
+        return Math.max(0, this.processingAutoShipMs - (Date.now() - startTime));
       })
       .filter((value): value is number => value !== null);
 

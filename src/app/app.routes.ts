@@ -16,6 +16,7 @@ import { Order } from './pages/order/order';
 import { OrderHistory } from './pages/order-history/order-history';
 import { ReturnOrder } from './pages/return-order/return-order';
 import { FlashSale } from './pages/flash-sale/flash-sale';
+import { Review } from './pages/review/review';
 
 export const routes: Routes = [
   { path: 'profile', component: Profile, canActivate: [AuthGuard] },
@@ -35,6 +36,7 @@ export const routes: Routes = [
   { path: 'order-history', component: OrderHistory, canActivate: [AuthGuard] },
   { path: 'return-order', component: ReturnOrder },
   { path: 'flash-sale', component: FlashSale },
+  { path: 'review', component: Review, canActivate: [AuthGuard] },
   { path: '**', redirectTo: '' },
 
 ];
