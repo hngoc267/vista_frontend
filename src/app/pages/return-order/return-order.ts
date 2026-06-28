@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OrderService, VietnamDistrict, VietnamProvince, VietnamWard } from '../../services/order';
 import { OrderHistory as OrderHistoryApi } from '../../services/order-history';
 import { CreateReturnOrderPayload, ReturnOrder as ReturnOrderApi } from '../../services/return-order';
-
+import { AuthService } from '../../services/auth';
 interface ReturnReasonOption {
   value: string;
   label: string;
@@ -90,7 +90,8 @@ export class ReturnOrder implements OnInit {
     private orderService: OrderService,
     private orderHistoryService: OrderHistoryApi,
     private returnOrderService: ReturnOrderApi,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -448,6 +449,7 @@ export class ReturnOrder implements OnInit {
           this.cdr.detectChanges();
           return;
         }
+        this.authService.reloadUserProfile();
 
         this.order = { ...this.order, Status: 'returning' };
         this.createdReturnRequestId = this.extractReturnRequestId(res);

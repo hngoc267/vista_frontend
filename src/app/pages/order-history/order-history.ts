@@ -856,6 +856,7 @@ export class OrderHistory implements OnInit, OnDestroy {
       next: (res) => {
         if (res.success) {
           this.notificationService.success(res.message || 'Đã ghi nhận đơn hàng đã được nhận.');
+          this.authService.reloadUserProfile();
           this.closeOrderDetail();
           this.selectedStatus = 'review';
           this.currentPage = 1;

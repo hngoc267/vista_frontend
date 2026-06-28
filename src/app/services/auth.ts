@@ -117,44 +117,43 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/auth/reset-password`, data);
   }
 
-  // =======================================================
+// =======================================================
   // THÊM LOGIC: QUẢN LÝ ĐIỂM VÀ HẠNG THÀNH VIÊN
   // =======================================================
 
-  // Hàm tính toán Hạng dựa vào tổng tiền chi tiêu
   public calculateTier(spent: number) {
-    if (spent >= 100000000) return { name: 'Diamond', level: 3 }; // Trên 100tr
-    if (spent >= 50000000) return { name: 'Gold', level: 2 };     // 50tr - 100tr
-    if (spent >= 10000000) return { name: 'Silver', level: 1 };   // 10tr - 50tr
-    return { name: 'Bronze', level: 0 };                          // Dưới 10tr
+    if (spent >= 100000000) return { name: 'Diamond', level: 3 };
+    if (spent >= 50000000) return { name: 'Gold', level: 2 };
+    if (spent >= 10000000) return { name: 'Silver', level: 1 };
+    return { name: 'Bronze', level: 0 };
   }
 
-  // Hàm cộng điểm khi khách đánh giá đơn hàng thành công
-  public addPoints(amount: number): void {
+  // 1. Sửa addPoints thành Observable để đợi API trả về
+  public addPoints(amount: number): Observable<any> {
     const user = this.currentUserSubject.value;
-    if (!user) return;
+    if (!user) throw new Error('Vui lòng đăng nhập!');
 
-    // Cộng dồn tiền
+    // Cập nhật local
     user.totalSpent = (user.totalSpent || 0) + amount;
-    
-    // Tính lại hạng
     const newTier = this.calculateTier(user.totalSpent);
     user.tierName = newTier.name;
     user.tierLevel = newTier.level;
 
-    // Cập nhật State & LocalStorage
     this.updateLocalUser(user);
 
-    // Gửi lên Backend để lưu vào Database (Tái sử dụng api updateProfile)
-    this.updateProfile({ totalSpent: user.totalSpent }).subscribe({
-      next: () => console.log('Đã đồng bộ điểm lên Server'),
-      error: (err) => console.error('Lỗi khi đồng bộ điểm', err)
+    // QUAN TRỌNG: Trả về kết quả API để Component kia subscribe
+    return this.updateProfile({ totalSpent: user.totalSpent });
+  }
+
+  // 2. Thêm hàm load lại data từ DB (Rất hữu ích khi cần chốt số liệu chuẩn)
+  public reloadUserProfile(): void {
+    this.getMe().subscribe({
+      next: () => console.log('Đã làm mới dữ liệu User từ MongoDB'),
+      error: (err) => console.error('Lỗi làm mới User:', err)
     });
   }
 
-  // Helper function để tái sử dụng việc lưu LocalStorage và BehaviorSubject
   private updateLocalUser(userData: any): void {
-    // Khớp lệnh: Lấy Total_spent từ MongoDB gán cho Angular
     userData.totalSpent = userData.Total_spent || userData.totalSpent || 0;
     const tierInfo = this.calculateTier(userData.totalSpent);
     userData.tierName = tierInfo.name;
