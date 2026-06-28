@@ -125,17 +125,17 @@ $gold: #F59E0B;
 
   &.tier-1 {
     /* Hạng Bạc: Đổi sang Thép xám đen (Gunmetal) để nổi bật trên nền trắng */
-    --glow-color: rgba(71, 85, 105, 0.6);
+    --glow-color: rgba(137, 150, 167, 0.6);
     --card-text-main: #FFFFFF; /* Chữ trắng sáng bừng trên nền xám tối */
     --card-text-muted: #CBD5E1; /* Xám nhạt */
     --card-accent: #d7effa; /* Xanh Icy Blue (xanh lơ lạnh) cực kỳ hợp với tone thép */
     --card-glass-bg: rgba(255, 255, 255, 0.08);
     --card-glass-border: rgba(255, 255, 255, 0.15);
-    --card-progress-track: rgba(0, 0, 0, 0.4);
+    --card-progress-track: rgba(102, 102, 102, 0.445);
     --card-badge-shadow: rgba(0, 0, 0, 0.3);
     
     /* Nền xám đậm sành điệu */
-    background: linear-gradient(135deg, #64748B 0%, #475569 50%, #334155 100%);
+    background: linear-gradient(135deg, #8da0bc 0%, #8c9aad 50%, #464b52 100%);
     box-shadow: 0 20px 40px -10px rgba(51, 65, 85, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
