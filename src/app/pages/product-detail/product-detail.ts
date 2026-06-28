@@ -4,7 +4,10 @@ import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../services/product';
 import { CartService } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
+import { ReviewService } from '../../services/review';
 import Swal from 'sweetalert2';
+
+const REVIEW_PRODUCT_STORAGE_KEY = 'vista_product_reviews_cache';
 
 @Component({
   selector: 'app-product-detail',
@@ -24,6 +27,20 @@ export class ProductDetail implements OnInit {
   selectedImageIndex = 0;
   quantity = 1;
   activeTab = 'description';
+  allReviews: any[] = [];
+  mockReviews: any[] = [];
+  persistedReviews: any[] = [];
+  reviewMediaFilterActive = false;
+  reviewCommentFilterActive = false;
+  reviewSortDirection: 'none' | 'asc' | 'desc' = 'none';
+  private readonly defaultMockReviewFallback = 67;
+  private readonly defaultReviewComments = [
+    "Sản phẩm quá xịn, đóng gói cẩn thận. Giao hàng nhanh!",
+    "Dùng ngon, mượt mà. Rất đáng tiền.",
+    "Chất lượng tuyệt vời, đúng như mô tả.",
+    "Nhân viên hỗ trợ nhiệt tình, 10 điểm không có nhưng.",
+    "Tạm ổn trong tầm giá, mua lúc sale nên thấy khá hời."
+  ];
   
   
   reviews: any[] = []; // <-- Đã thêm mảng chứa đánh giá
@@ -32,6 +49,7 @@ export class ProductDetail implements OnInit {
     private productService: ProductService,
     private cartService: CartService,
     private cartState: CartStateService,
+    private reviewService: ReviewService,
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -57,7 +75,28 @@ export class ProductDetail implements OnInit {
         this.selectedImageIndex = 0;
         
         // <-- GỌI HÀM SINH ĐÁNH GIÁ Ở ĐÂY
-        this.generateMockReviews(this.product.Total_reviews, this.product.Average_rating);
+        const productId = this.product?.Product_id || id;
+        const cachedReviews = this.getCachedProductReviews(
+          productId,
+          this.variants.map((variant) => variant?.Product_variant_id).filter(Boolean)
+        );
+        const persistedReviews = this.mergeReviewItems(this.normalizePersistedReviews([
+          ...cachedReviews,
+          ...(res.data?.Reviews || res.data?.reviews || res.data?.Real_reviews || []),
+        ]));
+        const reviewSummary = res.data?.Review_summary || {};
+        const mockReviewCount = this.resolveMockReviewCount(
+          productId,
+          Number(this.product.Total_reviews || 0),
+          persistedReviews.length,
+          reviewSummary
+        );
+
+        this.persistedReviews = persistedReviews;
+        this.mockReviews = this.generateMockReviews(mockReviewCount, this.product.Average_rating)
+          .map((review, index) => this.normalizeLegacyMockReview(review, index));
+        this.rebuildReviewList();
+        this.loadReviewsFromReviewApi(productId, reviewSummary);
         
         this.cdr.detectChanges();
         this.loadRelated(id);
@@ -202,6 +241,194 @@ export class ProductDetail implements OnInit {
     this.cdr.detectChanges();
   }
 
+  loadReviewsFromReviewApi(productId: string, reviewSummary: any = {}): void {
+    if (!productId) {
+      return;
+    }
+
+    this.reviewService.getReviewsByProductId(productId).subscribe({
+      next: (res) => {
+        const apiReviews = Array.isArray(res?.data) ? res.data : [];
+        if (!apiReviews.length) {
+          return;
+        }
+
+        const variantIds = this.variants
+          .map((variant) => variant?.Product_variant_id)
+          .filter(Boolean);
+        const cachedReviews = this.getCachedProductReviews(productId, variantIds);
+        const persistedReviews = this.mergeReviewItems(this.normalizePersistedReviews([
+          ...apiReviews,
+          ...cachedReviews,
+        ]));
+        const mockReviewCount = this.resolveMockReviewCount(
+          productId,
+          Number(this.product?.Total_reviews || 0),
+          persistedReviews.length,
+          reviewSummary || this.product?.Review_summary || {}
+        );
+
+        this.persistedReviews = persistedReviews;
+        this.mockReviews = this.generateMockReviews(mockReviewCount, this.product?.Average_rating)
+          .map((review, index) => this.normalizeLegacyMockReview(review, index));
+        this.rebuildReviewList();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Product detail van hien review co san neu API review rieng chua duoc gan route.
+      },
+    });
+  }
+
+  toggleReviewMediaFilter(): void {
+    this.reviewMediaFilterActive = !this.reviewMediaFilterActive;
+    this.visibleReviewsCount = 5;
+    this.rebuildReviewList();
+  }
+
+  toggleReviewCommentFilter(): void {
+    this.reviewCommentFilterActive = !this.reviewCommentFilterActive;
+    this.visibleReviewsCount = 5;
+    this.rebuildReviewList();
+  }
+
+  toggleReviewSortDirection(): void {
+    this.reviewSortDirection = this.reviewSortDirection === 'desc' ? 'asc' : 'desc';
+    this.visibleReviewsCount = 5;
+    this.rebuildReviewList();
+  }
+
+  clearReviewFilters(): void {
+    this.reviewMediaFilterActive = false;
+    this.reviewCommentFilterActive = false;
+    this.reviewSortDirection = 'none';
+    this.visibleReviewsCount = 5;
+    this.rebuildReviewList();
+  }
+
+  getReviewSortLabel(): string {
+    if (this.reviewSortDirection === 'asc') {
+      return 'Sao tăng dần';
+    }
+
+    if (this.reviewSortDirection === 'desc') {
+      return 'Sao giảm dần';
+    }
+
+    return 'Sắp xếp sao';
+  }
+
+  hasActiveReviewFilters(): boolean {
+    return this.reviewMediaFilterActive || this.reviewCommentFilterActive || this.reviewSortDirection !== 'none';
+  }
+
+  getReviewTotalCount(): number {
+    return this.allReviews.length;
+  }
+
+  getDisplayAverageRating(): string {
+    const value = Number(this.product?.Average_rating || 0);
+    return value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+  }
+
+  getReviewImages(review: any): string[] {
+    return Array.isArray(review?.mediaItems)
+      ? review.mediaItems
+      : this.buildReviewMediaItems(review?.images ?? review?.Images ?? review?.media ?? review?.attachments);
+  }
+
+  getReviewMediaSource(media: any): string {
+    if (typeof media === 'string') {
+      const raw = media.trim();
+      if (raw.startsWith('{') || raw.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(raw);
+          return this.getReviewMediaSource(Array.isArray(parsed) ? parsed[0] : parsed);
+        } catch {
+          return this.normalizeReviewMediaUrl(raw, {});
+        }
+      }
+
+      return this.normalizeReviewMediaUrl(raw, {});
+    }
+
+    if (!media || typeof media !== 'object') {
+      return '';
+    }
+
+    const directValue = media.url
+      || media.src
+      || media.preview
+      || media.dataUrl
+      || media.dataURL
+      || media.fileUrl
+      || media.file_url
+      || media.filePath
+      || media.file_path
+      || media.path
+      || media.Location
+      || media.location
+      || media.secure_url
+      || media.Image_url
+      || media.imageUrl
+      || media.Video_url
+      || media.videoUrl
+      || media.Attachment_url
+      || media.attachmentUrl
+      || media.Media_url
+      || media.mediaUrl
+      || media.File_url
+      || media.File_path
+      || media.base64
+      || media.Base64
+      || media.content
+      || media.Content;
+
+    if (directValue) {
+      return this.normalizeReviewMediaUrl(directValue, media);
+    }
+
+    const nestedValue = media.file || media.File || media.image || media.Image || media.video || media.Video || media.media || media.Media || media.attachment || media.Attachment || media.data || media.Data;
+    return nestedValue && nestedValue !== media ? this.getReviewMediaSource(nestedValue) : '';
+  }
+
+  isReviewMediaImage(media: any): boolean {
+    const value = this.getReviewMediaSource(media);
+    const type = typeof media === 'object' ? String(media?.type || media?.mediaType || '').toLowerCase() : '';
+    return type === 'image' || type.startsWith('image/')
+      || value.startsWith('data:image/')
+      || /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(value)
+      || (!!value && !this.isReviewMediaVideo(media));
+  }
+
+  isReviewMediaVideo(media: any): boolean {
+    const value = this.getReviewMediaSource(media);
+    const type = typeof media === 'object' ? String(media?.type || media?.mediaType || '').toLowerCase() : '';
+    return type === 'video' || type.startsWith('video/') || value.startsWith('data:video/') || /\.(mp4|webm|mov|avi|mkv)$/i.test(value);
+  }
+
+  trackByReview(index: number, review: any): string {
+    return String(review?.id || review?.Review_id || index);
+  }
+
+  trackByReviewMedia(index: number, media: string): string {
+    return `${index}-${String(media || '').slice(0, 80)}`;
+  }
+
+  getReviewMediaName(media: string, index: number): string {
+    const source = String(media || '').trim();
+    const fileName = source.split('/').pop()?.split('?')[0] || '';
+    return fileName || `Tệp ${index + 1}`;
+  }
+
+  getReviewMediaTypeLabel(media: string): string {
+    if (this.isReviewMediaVideo(media)) {
+      return 'video';
+    }
+
+    return 'image/jpeg';
+  }
+
   formatPrice(price: number): string {
     return price ? price.toLocaleString('vi-VN') + ' ₫' : 'Liên hệ';
   }
@@ -226,11 +453,10 @@ export class ProductDetail implements OnInit {
   }
 
   // <-- THUẬT TOÁN ĐÃ ĐƯỢC TÍCH HỢP
-  generateMockReviews(totalReviews: number, averageRating: number) {
+  generateMockReviews(totalReviews: number, averageRating: number): any[] {
     this.visibleReviewsCount = 5; // Reset về 5 khi đổi sang sản phẩm khác
     if (!totalReviews || totalReviews <= 0) {
-      this.reviews = [];
-      return;
+      return [];
     }
 
     let totalStarsNeeded = Math.round(totalReviews * averageRating);
@@ -251,18 +477,9 @@ export class ProductDetail implements OnInit {
     const hoList = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Huỳnh', 'Vũ', 'Đặng', 'Bùi', 'Đỗ', 'Hồ', 'Ngô'];
     const lotList = ['Văn', 'Thị', 'Minh', 'Ngọc', 'Hải', 'Tuấn', 'Thanh', 'Đức', 'Thu', 'Hoàng', 'Gia', 'Bảo'];
 
-    const sampleComments = [
-      "Sản phẩm quá xịn, đóng gói cẩn thận. Giao hàng nhanh!",
-      "Dùng ngon, mượt mà. Rất đáng tiền.",
-      "Chất lượng tuyệt vời, đúng như mô tả.",
-      "Nhân viên hỗ trợ nhiệt tình, 10 điểm không có nhưng.",
-      "Tạm ổn trong tầm giá, mua lúc sale nên thấy khá hời."
-    ];
+    const sampleComments = this.defaultReviewComments;
 
-    const guaranteedCommentIndex = Math.floor(Math.random() * ratings.length);
-
-    this.reviews = ratings.map((rating, index) => {
-      const hasComment = (index === guaranteedCommentIndex) || (Math.random() > 0.7); 
+    return ratings.map((rating, index) => {
       const randomDay = Math.floor(Math.random() * 11) + 1; 
 
       const randomHo = hoList[Math.floor(Math.random() * hoList.length)];
@@ -272,9 +489,484 @@ export class ProductDetail implements OnInit {
       return {
         user: maskedName, // Gán tên đã che vào đây
         rating: rating,
-        comment: hasComment ? sampleComments[Math.floor(Math.random() * sampleComments.length)] : "",
+        comment: sampleComments[index % sampleComments.length],
         date: `${randomDay < 10 ? '0'+randomDay : randomDay}/06/2026`
       };
     });
+  }
+
+  private rebuildReviewList(): void {
+    const normalizedPersistedReviews = this.persistedReviews
+      .map((review, index) => this.ensureDisplayReview(review, index));
+    const normalizedMockReviews = this.mockReviews
+      .map((review, index) => this.ensureDisplayReview(review, normalizedPersistedReviews.length + index));
+    const persistedWithContent = normalizedPersistedReviews.filter((review) => this.hasReviewVisibleContent(review));
+    const persistedStarOnly = normalizedPersistedReviews.filter((review) => !this.hasReviewVisibleContent(review));
+    const mergedReviews = [
+      ...persistedWithContent,
+      ...normalizedMockReviews,
+      ...persistedStarOnly,
+    ];
+
+    this.allReviews = mergedReviews;
+
+    if (this.product) {
+      this.product.Total_reviews = mergedReviews.length;
+      this.product.Average_rating = this.calculateAverageRating(mergedReviews);
+    }
+
+    let filteredReviews = [...mergedReviews];
+
+    if (this.reviewMediaFilterActive) {
+      filteredReviews = filteredReviews.filter((review) => this.getReviewImages(review).length > 0);
+    }
+
+    if (this.reviewCommentFilterActive) {
+      filteredReviews = filteredReviews.filter((review) => String(review?.comment || '').trim().length > 0);
+    }
+
+    if (this.reviewSortDirection === 'asc' || this.reviewSortDirection === 'desc') {
+      const direction = this.reviewSortDirection === 'asc' ? 1 : -1;
+      filteredReviews.sort((a, b) => {
+        const ratingDiff = (Number(a.rating || 0) - Number(b.rating || 0)) * direction;
+        if (ratingDiff !== 0) {
+          return ratingDiff;
+        }
+
+        return Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0);
+      });
+    }
+
+    this.reviews = filteredReviews;
+  }
+
+  private calculateAverageRating(reviews: any[]): number {
+    if (!reviews.length) {
+      return 0;
+    }
+
+    const total = reviews.reduce((sum, review) => sum + Number(review?.rating || 0), 0);
+    return Number((total / reviews.length).toFixed(1));
+  }
+
+  private normalizePersistedReviews(reviews: any[]): any[] {
+    return (Array.isArray(reviews) ? reviews : [])
+      .map((review: any, index: number) => {
+        const createdAt = review.Created_at || review.createdAt || review.date || '';
+        const mediaItems = this.buildReviewMediaItems(review.Images ?? review.images ?? review.media ?? review.attachments);
+        const reviewerName = this.resolvePersistedReviewerName(review.User_name || review.user || review.Customer_name);
+
+        return {
+          id: String(review.Review_id || review.id || `review-${index}`),
+          user: this.maskReviewerName(reviewerName || `Khách hàng ${index + 1}`),
+          rating: Math.max(1, Math.min(5, Number(review.Rating || review.rating || 5) || 5)),
+          comment: String(review.Comment || review.comment || '').trim(),
+          date: this.formatReviewDate(createdAt),
+          createdAtMs: this.getReviewTime(createdAt),
+          images: mediaItems,
+          mediaItems,
+          isPersisted: true,
+        };
+      })
+      .sort((a, b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0));
+  }
+
+  private normalizeLegacyMockReview(review: any, index: number): any {
+    return {
+      id: `mock-${this.product?.Product_id || 'product'}-${index}`,
+      user: String(review?.user || 'Khách hàng VISTA').trim(),
+      rating: Math.max(1, Math.min(5, Number(review?.rating || 5) || 5)),
+      comment: String(review?.comment || (index < this.defaultReviewComments.length ? this.defaultReviewComments[index] : '')).trim(),
+      date: String(review?.date || '').trim(),
+      createdAtMs: this.parseReviewDateToMs(String(review?.date || '')),
+      images: [],
+      mediaItems: [],
+      isPersisted: false,
+    };
+  }
+
+  private ensureDisplayReview(review: any, index: number): any {
+    const mediaItems = Array.isArray(review?.mediaItems)
+      ? review.mediaItems
+      : this.buildReviewMediaItems(review?.images ?? review?.Images ?? review?.media ?? review?.attachments);
+
+    return {
+      ...review,
+      id: String(review?.id || review?.Review_id || `review-${index}`),
+      user: String(review?.user || review?.User_name || `Khách hàng ${index + 1} ***`).trim(),
+      rating: Math.max(1, Math.min(5, Number(review?.rating || review?.Rating || 5) || 5)),
+      comment: String(review?.comment || review?.Comment || '').trim(),
+      date: String(review?.date || review?.Created_at || new Date().toLocaleDateString('vi-VN')).trim(),
+      images: mediaItems,
+      mediaItems,
+      createdAtMs: Number(review?.createdAtMs || 0),
+    };
+  }
+
+  private hasReviewVisibleContent(review: any): boolean {
+    return String(review?.comment || review?.Comment || '').trim().length > 0
+      || (Array.isArray(review?.mediaItems) && review.mediaItems.length > 0)
+      || (Array.isArray(review?.images) && review.images.length > 0);
+  }
+
+  private buildReviewMediaItems(value: any): string[] {
+    return this.normalizeReviewImages(value)
+      .map((media) => {
+        const source = this.getReviewMediaSource(media);
+        return source || null;
+      })
+      .filter(Boolean) as string[];
+  }
+
+  private normalizeReviewImages(value: any): any[] {
+    if (Array.isArray(value)) {
+      return value.flatMap((item) => this.normalizeReviewImages(item));
+    }
+
+    if (!value) {
+      return [];
+    }
+
+    if (typeof value === 'object') {
+      const nested = value.Images ?? value.images ?? value.files ?? value.Files ?? value.attachments ?? value.Attachments ?? value.mediaList ?? value.MediaList;
+      if (nested && nested !== value) {
+        const nestedItems = this.normalizeReviewImages(nested);
+        if (nestedItems.length) {
+          return nestedItems;
+        }
+      }
+
+      return [value];
+    }
+
+    const raw = String(value || '').trim();
+    if (!raw) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.flatMap((item) => this.normalizeReviewImages(item));
+      }
+      if (parsed && typeof parsed === 'object') {
+        return [parsed];
+      }
+    } catch {
+      return [raw];
+    }
+
+    return [raw];
+  }
+
+  private getCachedProductReviews(productId: string, variantIds: string[]): any[] {
+    if (typeof localStorage === 'undefined') {
+      return [];
+    }
+
+    try {
+      const raw = localStorage.getItem(REVIEW_PRODUCT_STORAGE_KEY);
+      const reviews = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(reviews)) {
+        return [];
+      }
+
+      const productKey = String(productId || '').trim();
+      const variantKeySet = new Set((variantIds || []).map((item) => String(item || '').trim()).filter(Boolean));
+
+      return reviews.filter((review) => {
+        const reviewProductId = String(review?.Product_id || review?.productId || '').trim();
+        const reviewVariantId = String(review?.Product_variant_id || review?.productVariantId || '').trim();
+        return (!!productKey && reviewProductId === productKey)
+          || (!!reviewVariantId && variantKeySet.has(reviewVariantId));
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  private mergeReviewItems(reviews: any[]): any[] {
+    const seen = new Set<string>();
+    const merged: any[] = [];
+
+    reviews.forEach((review, index) => {
+      const key = String(review?.id || review?.Review_id || review?.Order_detail_id || `review-${index}`).trim();
+      if (seen.has(key)) {
+        return;
+      }
+
+      seen.add(key);
+      merged.push(review);
+    });
+
+    return merged;
+  }
+
+  private resolvePersistedReviewerName(value: any): string {
+    const reviewerName = String(value || '').replace(/\s+/g, ' ').trim();
+    const normalizedName = reviewerName
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd');
+
+    if (reviewerName && normalizedName !== 'khach hang vista' && normalizedName !== 'khach hang') {
+      return reviewerName;
+    }
+
+    return this.getCurrentReviewerName();
+  }
+
+  private getCurrentReviewerName(): string {
+    const storageSources = [
+      typeof localStorage !== 'undefined' ? localStorage : null,
+      typeof sessionStorage !== 'undefined' ? sessionStorage : null,
+    ];
+
+    for (const storage of storageSources) {
+      const name = this.getReviewerNameFromStorage(storage);
+      if (name) {
+        return name;
+      }
+    }
+
+    return 'Khách hàng VISTA';
+  }
+
+  private getReviewerNameFromStorage(storage: Storage | null): string {
+    if (!storage) {
+      return '';
+    }
+
+    const preferredKeys = [
+      'vista_user',
+      'currentUser',
+      'current_user',
+      'authUser',
+      'auth_user',
+      'loggedInUser',
+      'user',
+      'User',
+      'account',
+      'profile',
+    ];
+
+    for (const key of preferredKeys) {
+      const value = this.extractReviewerName(storage.getItem(key));
+      if (value) {
+        return value;
+      }
+    }
+
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index) || '';
+      if (!/(user|auth|account|profile|customer)/i.test(key)) {
+        continue;
+      }
+
+      const value = this.extractReviewerName(storage.getItem(key));
+      if (value) {
+        return value;
+      }
+    }
+
+    return '';
+  }
+
+  private extractReviewerName(value: any): string {
+    if (!value) {
+      return '';
+    }
+
+    if (typeof value === 'object') {
+      const directName = this.cleanReviewerName(
+        value.Full_name
+        || value.full_name
+        || value.FullName
+        || value.fullName
+        || value.Customer_name
+        || value.customerName
+        || value.Name
+        || value.name
+        || value.Username
+        || value.username
+        || value.Email
+        || value.email
+      );
+
+      if (directName) {
+        return directName;
+      }
+
+      return this.extractReviewerName(value.user || value.customer || value.account || value.profile || value.data);
+    }
+
+    const raw = String(value || '').trim();
+    if (!raw) {
+      return '';
+    }
+
+    try {
+      return this.extractReviewerName(JSON.parse(raw));
+    } catch {
+      const decodedPayload = this.decodeJwtPayload(raw);
+      if (decodedPayload) {
+        return this.extractReviewerName(decodedPayload);
+      }
+
+      return this.cleanReviewerName(raw);
+    }
+  }
+
+  private decodeJwtPayload(token: string): any {
+    const payload = String(token || '').split('.')[1];
+    if (!payload) {
+      return null;
+    }
+
+    try {
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+      const json = decodeURIComponent(
+        atob(padded)
+          .split('')
+          .map((char) => `%${(`00${char.charCodeAt(0).toString(16)}`).slice(-2)}`)
+          .join('')
+      );
+
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
+  }
+
+  private cleanReviewerName(value: any): string {
+    const text = String(value || '').replace(/\s+/g, ' ').trim();
+    if (!text || text.length > 80 || /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\./.test(text)) {
+      return '';
+    }
+
+    return text;
+  }
+
+  private maskReviewerName(value: string): string {
+    const text = String(value || '').replace(/\s+/g, ' ').trim();
+    if (!text) {
+      return 'Khách hàng VISTA';
+    }
+
+    const parts = text.split(' ');
+    if (parts.length === 1) {
+      return `${parts[0]} ***`;
+    }
+
+    return `${parts.slice(0, 2).join(' ')} ***`;
+  }
+
+  private formatReviewDate(value: any): string {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleDateString('vi-VN');
+    }
+
+    return String(value || '').trim() || new Date().toLocaleDateString('vi-VN');
+  }
+
+  private getReviewTime(value: any): number {
+    const directDate = new Date(value);
+    if (!Number.isNaN(directDate.getTime())) {
+      return directDate.getTime();
+    }
+
+    return this.parseReviewDateToMs(String(value || ''));
+  }
+
+  private parseReviewDateToMs(value: string): number {
+    const match = String(value || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!match) {
+      return 0;
+    }
+
+    const [, day, month, year] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+  }
+
+  private resolveMockReviewCount(productId: string, totalReviews: number, persistedCount: number, reviewSummary: any): number {
+    const summaryMockCount = Number(reviewSummary?.mockReviewCount);
+    if (Number.isFinite(summaryMockCount) && summaryMockCount > 0) {
+      this.saveStoredMockReviewCount(productId, summaryMockCount);
+      return summaryMockCount;
+    }
+
+    const inferredMockCount = Math.max(0, totalReviews - persistedCount);
+    if (inferredMockCount > 0) {
+      this.saveStoredMockReviewCount(productId, inferredMockCount);
+      return inferredMockCount;
+    }
+
+    const storedMockCount = this.getStoredMockReviewCount(productId);
+    if (storedMockCount > 0) {
+      return persistedCount > 0
+        ? Math.max(storedMockCount, this.defaultMockReviewFallback)
+        : storedMockCount;
+    }
+
+    if (persistedCount > 0) {
+      this.saveStoredMockReviewCount(productId, this.defaultMockReviewFallback);
+      return this.defaultMockReviewFallback;
+    }
+
+    return 0;
+  }
+
+  private getStoredMockReviewCount(productId: string): number {
+    if (typeof localStorage === 'undefined' || !productId) {
+      return 0;
+    }
+
+    return Math.max(0, Number(localStorage.getItem(`vista_mock_review_count_${productId}`) || 0) || 0);
+  }
+
+  private saveStoredMockReviewCount(productId: string, count: number): void {
+    if (typeof localStorage === 'undefined' || !productId || count <= 0) {
+      return;
+    }
+
+    localStorage.setItem(`vista_mock_review_count_${productId}`, String(count));
+  }
+
+  private normalizeReviewMediaUrl(value: any, media: any): string {
+    const raw = String(value || '').trim();
+    if (!raw) {
+      return '';
+    }
+
+    if (/^(data:|blob:|https?:\/\/|\/)/i.test(raw)) {
+      return raw;
+    }
+
+    if (/^(assets\/|uploads\/|public\/|static\/)/i.test(raw)) {
+      return `/${raw}`;
+    }
+
+    let type = String(media?.type || media?.mediaType || media?.mimeType || media?.mimetype || '').toLowerCase();
+    if (type === 'image') {
+      type = 'image/jpeg';
+    }
+
+    if (type === 'video') {
+      type = 'video/mp4';
+    }
+
+    const looksLikeBase64 = raw.length > 120 && /^[A-Za-z0-9+/=\r\n]+$/.test(raw);
+    if (looksLikeBase64 && (type.startsWith('image/') || type.startsWith('video/'))) {
+      return `data:${type};base64,${raw.replace(/\s+/g, '')}`;
+    }
+
+    if (/\.(png|jpe?g|webp|gif|bmp|svg|mp4|webm|mov|avi|mkv)$/i.test(raw)) {
+      return raw.includes('/') ? raw : `/assets/images/${raw}`;
+    }
+
+    return '';
   }
 }

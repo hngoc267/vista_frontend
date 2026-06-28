@@ -126,6 +126,7 @@
     margin-bottom: 8px;
 
     &.badge-new { background: #E1F5EE; color: #16A34A; }
+    &.badge-promo { background: #E1F5EE; color: #cc7306; } 
     &.badge-sale { background: #FEECEC; color: #EF4444; }
     &.badge-ai { background: #E0F7FA; color: #00C2D4; }
   }
@@ -503,6 +504,103 @@
               line-height: 1.6;
               margin: 0;
             }
+
+            .review-media-frame {
+              width: fit-content;
+              max-width: 100%;
+              margin-top: 14px;
+              padding: 12px;
+              border: 1px solid #BFDBFE;
+              border-radius: 8px;
+              background: #EFF6FF;
+
+              .review-media-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+              }
+
+              .review-media-item {
+                width: 118px;
+                min-height: 132px;
+                margin: 0;
+                border: 1px solid #BFDBFE;
+                border-radius: 8px;
+                background: #FFFFFF;
+                overflow: hidden;
+
+                .review-media-preview {
+                  width: 100%;
+                  height: 92px;
+                  background: #F8FAFC;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  overflow: hidden;
+                }
+
+                img,
+                video {
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                  display: block;
+                }
+
+                .review-media-file-fallback {
+                  width: 100%;
+                  height: 100%;
+                  padding: 10px;
+                  color: #2563B0;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 7px;
+                  text-align: center;
+
+                  i {
+                    font-size: 24px;
+                  }
+
+                  span {
+                    max-width: 100%;
+                    color: #64748B;
+                    font-size: 10px;
+                    font-weight: 800;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  }
+                }
+
+                figcaption {
+                  min-height: 38px;
+                  padding: 7px 8px;
+                  border-top: 1px solid #DBEAFE;
+                  color: #334155;
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  font-size: 11px;
+                  font-weight: 800;
+                  line-height: 1.25;
+
+                  i {
+                    color: #2563B0;
+                    font-size: 14px;
+                    flex-shrink: 0;
+                  }
+
+                  span {
+                    min-width: 0;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -541,8 +639,10 @@
   .rating-summary {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 32px;
     margin-bottom: 24px;
+    flex-wrap: wrap;
 
     .rating-big {
       display: flex;
@@ -559,6 +659,59 @@
       .rating-total {
         font-size: 13px;
         color: #94A3B8;
+      }
+    }
+
+    .review-filter-panel {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .review-filter-btn {
+      min-height: 36px;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      background: #FFFFFF;
+      color: #64748B;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      cursor: pointer;
+      transition: 0.2s ease;
+
+      i {
+        color: #2563B0;
+        font-size: 17px;
+      }
+
+      &:hover,
+      &.active {
+        border-color: #2563B0;
+        background: #EEF2FF;
+        color: #2563B0;
+      }
+
+      &.clear-filter-btn {
+        color: #B42318;
+
+        i {
+          color: #B42318;
+        }
+
+        &:hover {
+          border-color: #FCA5A5;
+          background: #FEF2F2;
+          color: #B42318;
+        }
       }
     }
   }
@@ -784,4 +937,23 @@
 .rating-summary .star-empty,
 .rating-summary .star-filled {
   font-size: 22px;
+}
+
+@media (max-width: 768px) {
+  .tab-section {
+    .rating-summary {
+      align-items: flex-start;
+      flex-direction: column;
+
+      .review-filter-panel {
+        width: 100%;
+        margin-left: 0;
+        justify-content: flex-start;
+      }
+
+      .review-filter-btn {
+        flex: 1 1 150px;
+      }
+    }
+  }
 }

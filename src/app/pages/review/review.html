@@ -1,0 +1,191 @@
+<div class="review-page">
+  <div class="breadcrumb-bar">
+    <div class="section-container">
+      <a routerLink="/">Trang chủ</a>
+      <span class="sep">›</span>
+      <a routerLink="/order-history" [queryParams]="{ status: 'review' }">Lịch sử đơn hàng</a>
+      <span class="sep">›</span>
+      <span class="current">Đánh giá</span>
+    </div>
+  </div>
+
+  <main class="review-shell">
+    <header class="review-heading">
+      <h1>Đánh giá sản phẩm của bạn</h1>
+      <p>Chia sẻ trải nghiệm thực tế để VISTA phục vụ bạn tốt hơn.</p>
+    </header>
+
+    <section class="state-card" *ngIf="isLoadingOrder">
+      <div class="loading-spinner"></div>
+      <p>Đang tải thông tin sản phẩm...</p>
+    </section>
+
+    <section class="state-card error-state" *ngIf="!isLoadingOrder && loadError">
+      <i class="ph ph-warning-circle"></i>
+      <h2>Không thể mở trang đánh giá</h2>
+      <p>{{ loadError }}</p>
+      <button type="button" class="outline-btn" (click)="goBack()">Trở lại</button>
+    </section>
+
+    <ng-container *ngIf="!isLoadingOrder && !loadError">
+      <ng-container *ngIf="currentReviewItem as mainItem">
+        <section class="vista-review-progress" *ngIf="activeReviewTargets.length > 1">
+          <div class="vista-review-progress-main">
+            <strong>Sản phẩm {{ safeCurrentReviewIndex + 1 }}/{{ activeReviewTargets.length }}</strong>
+            <span>Đã chọn sao {{ completedReviewCount }}/{{ activeReviewTargets.length }} sản phẩm</span>
+          </div>
+        </section>
+
+        <section class="vista-review-product-card vista-review-main-card">
+          <button
+            type="button"
+            class="vista-review-card-nav prev"
+            *ngIf="activeReviewTargets.length > 1"
+            (click)="showPreviousReviewItem()"
+            [disabled]="!canGoPreviousReviewItem"
+            title="Sản phẩm trước"
+          >
+            &#8249;
+          </button>
+
+          <div class="vista-review-product-media">
+            <img
+              [src]="getProductImage(mainItem)"
+              [alt]="mainItem.Product_name || mainItem.productName || 'Sản phẩm'"
+              (error)="hideBrokenImage($event)"
+            />
+          </div>
+
+          <div class="vista-review-product-summary">
+            <h2>{{ mainItem.Product_name || mainItem.productName || mainItem.Name || 'Sản phẩm cần đánh giá' }}</h2>
+            <strong>{{ formatPrice(mainItem.Price || mainItem.price || mainItem.Unit_price || 0) }}</strong>
+            <dl>
+              <div>
+                <dt>Số lượng:</dt>
+                <dd>x{{ getItemQuantity(mainItem) }}</dd>
+              </div>
+              <div>
+                <dt>Phân loại:</dt>
+                <dd>{{ getItemVariantName(mainItem) }}</dd>
+              </div>
+              <div>
+                <dt>Ngày nhận hàng:</dt>
+                <dd>{{ (order?.Delivered_at || order?.Created_at) | date:'dd/MM/yyyy' }}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <button
+            type="button"
+            class="vista-review-card-nav next"
+            *ngIf="activeReviewTargets.length > 1"
+            (click)="showNextReviewItem()"
+            [disabled]="!canGoNextReviewItem"
+            title="Sản phẩm tiếp theo"
+          >
+            &#8250;
+          </button>
+        </section>
+
+        <section class="vista-review-form-card">
+          <div class="form-block">
+            <label>1. Chất lượng sản phẩm</label>
+            <div class="star-rating" (mouseleave)="clearItemRatingPreview(mainItem)">
+              <button
+                type="button"
+                *ngFor="let star of stars"
+                [class.active]="star <= getItemDisplayRating(mainItem)"
+                (mouseenter)="previewItemRating(mainItem, star)"
+                (focus)="previewItemRating(mainItem, star)"
+                (click)="setItemRating(mainItem, star)"
+                [attr.aria-label]="'Đánh giá ' + star + ' sao'"
+              >
+                <span class="star-glyph">&#9733;</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-block">
+            <label [attr.for]="'review-comment-main-' + getItemDraftKey(mainItem)">2. Chia sẻ trải nghiệm của bạn</label>
+            <textarea
+              [id]="'review-comment-main-' + getItemDraftKey(mainItem)"
+              rows="4"
+              maxlength="1000"
+              [ngModel]="getReviewDraft(mainItem).comment"
+              (ngModelChange)="setItemComment(mainItem, $event)"
+              placeholder="Ví dụ: máy mượt, hoàn thiện tốt, pin ổn..."
+            ></textarea>
+            <span class="counter">{{ getReviewDraft(mainItem).comment.length }}/1000</span>
+          </div>
+
+          <div class="form-block">
+            <label>3. Thêm hình ảnh / video <span>(Tùy chọn)</span></label>
+            <div class="attachment-grid">
+              <ng-container *ngFor="let slot of attachmentSlots; let i = index">
+                <button
+                  type="button"
+                  class="attachment-preview"
+                  *ngIf="getItemAttachment(mainItem, i) as attachment"
+                  (click)="removeItemAttachment(mainItem, i)"
+                  [attr.aria-label]="'Xóa ' + attachment.name"
+                >
+                  <img *ngIf="isAttachmentImage(attachment)" [src]="attachment.preview" [alt]="attachment.name" />
+                  <video *ngIf="isAttachmentVideo(attachment)" [src]="attachment.preview" muted></video>
+                  <span class="remove-mark">x</span>
+                </button>
+
+                <label class="upload-tile" *ngIf="!getItemAttachment(mainItem, i)" [class.disabled]="!canAddItemAttachment(mainItem)">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    [disabled]="!canAddItemAttachment(mainItem)"
+                    (change)="onItemAttachmentSelected($event, mainItem)"
+                  />
+                  <span class="upload-icon">+</span>
+                  <span>Thêm hình ảnh / video</span>
+                </label>
+              </ng-container>
+            </div>
+          </div>
+
+          <p class="form-error" *ngIf="getReviewDraft(mainItem).submitError">{{ getReviewDraft(mainItem).submitError }}</p>
+        </section>
+
+        <p class="form-error global-error" *ngIf="submitError">{{ submitError }}</p>
+
+        <div class="review-actions">
+          <button type="button" class="outline-btn" (click)="goBack()">Trở lại</button>
+          <button
+            type="button"
+            class="primary-btn"
+            (click)="submitReview()"
+            [disabled]="isSubmitting || !canSubmitReview"
+          >
+            {{ isSubmitting ? 'Đang gửi...' : 'Gửi đánh giá' }}
+          </button>
+        </div>
+      </ng-container>
+    </ng-container>
+  </main>
+
+  <div class="modal-backdrop success-backdrop" *ngIf="isSuccessModalOpen">
+    <section class="success-card">
+      <i class="ph ph-check-circle success-icon"></i>
+      <h1>Đánh giá thành công!</h1>
+      <p>VISTA đã ghi nhận đánh giá của bạn.</p>
+      <small class="review-code" *ngIf="createdReviewId">Mã đánh giá: {{ createdReviewId }}</small>
+
+      <ul class="success-review-list" *ngIf="submittedReviews.length > 1">
+        <li *ngFor="let item of submittedReviews">
+          <span>{{ item.productName }}</span>
+          <strong>{{ item.rating }} sao</strong>
+        </li>
+      </ul>
+
+      <div class="success-actions">
+        <button type="button" class="success-ok" (click)="finishReview()">Xem lịch sử đơn hàng</button>
+      </div>
+    </section>
+  </div>
+</div>

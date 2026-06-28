@@ -79,6 +79,7 @@ export class ReturnOrder implements OnInit {
   evidenceFiles: EvidenceFile[] = [];
   pendingEvidenceReads = 0;
   returnQuantities: Record<string, number> = {};
+  selectedReturnItems: Record<string, boolean> = {};
 
   returnInfo: ReturnInfoForm = this.createEmptyReturnInfo();
   returnInfoDraft: ReturnInfoForm = this.createEmptyReturnInfo();
@@ -108,6 +109,10 @@ export class ReturnOrder implements OnInit {
 
   get items(): any[] {
     return Array.isArray(this.order?.Items) ? this.order.Items : [];
+  }
+
+  get selectedOrderItems(): any[] {
+    return this.items.filter((item) => this.isItemSelected(item));
   }
 
   get imageCount(): number {
@@ -224,6 +229,7 @@ export class ReturnOrder implements OnInit {
     this.returnInfo = this.buildReturnInfoFromOrder(order);
     this.returnInfoDraft = { ...this.returnInfo };
     this.initializeReturnQuantities();
+    this.initializeReturnSelections();
   }
 
   openReturnInfoModal(): void {
@@ -431,7 +437,7 @@ export class ReturnOrder implements OnInit {
       Return_phone: this.returnInfo.phone.trim(),
       Return_email: this.returnInfo.email.trim(),
       Return_address: this.returnAddressLine,
-      items: this.items.map((item) => ({
+      items: this.selectedOrderItems.map((item) => ({
         Product_variant_id: this.getItemVariantId(item),
         Quantity: this.getItemReturnQuantity(item),
       })).filter((item) => !!item.Product_variant_id && item.Quantity > 0),
@@ -483,11 +489,11 @@ export class ReturnOrder implements OnInit {
   }
 
   getTotalQuantity(): number {
-    return this.items.reduce((sum, item) => sum + this.getItemReturnQuantity(item), 0);
+    return this.selectedOrderItems.reduce((sum, item) => sum + this.getItemReturnQuantity(item), 0);
   }
 
   getItemsSubtotal(): number {
-    return this.items.reduce((sum, item) => {
+    return this.selectedOrderItems.reduce((sum, item) => {
       return sum + this.getItemUnitPrice(item) * this.getItemReturnQuantity(item);
     }, 0);
   }
@@ -502,16 +508,27 @@ export class ReturnOrder implements OnInit {
     return Number(this.order?.Total_amount || this.order?.totalAmount || 0) || this.getOrderItemsSubtotal();
   }
 
+  getTotalPurchasedQuantity(): number {
+    return this.items.reduce((sum, item) => sum + this.getPurchasedQuantity(item), 0);
+  }
+
   getRefundAmount(): number {
-    const orderSubtotal = this.getOrderItemsSubtotal();
     const selectedSubtotal = this.getItemsSubtotal();
     const paidAmount = this.getPaidOrderAmount();
+
+    if (this.selectedOrderItems.length === 0) {
+      return 0;
+    }
 
     if (this.isFullQuantityReturn()) {
       return paidAmount;
     }
 
-    return Math.round((paidAmount * selectedSubtotal) / Math.max(orderSubtotal, 1));
+    const orderSubtotal = this.getOrderItemsSubtotal();
+    const orderAdjustment = paidAmount - orderSubtotal;
+    const adjustmentPerUnit = orderAdjustment / Math.max(this.getTotalPurchasedQuantity(), 1);
+
+    return Math.max(0, Math.round(selectedSubtotal + adjustmentPerUnit * this.getTotalQuantity()));
   }
 
   getItemVariantId(item: any): string {
@@ -523,7 +540,58 @@ export class ReturnOrder implements OnInit {
   }
 
   getItemUnitPrice(item: any): number {
-    return Number(item?.Price || item?.price || 0);
+    const purchasedQuantity = this.getPurchasedQuantity(item);
+    const explicitUnitPrice = Number(
+      item?.Unit_price
+      || item?.UnitPrice
+      || item?.unitPrice
+      || item?.Product_price
+      || item?.productPrice
+      || 0
+    );
+
+    if (explicitUnitPrice > 0) {
+      return explicitUnitPrice;
+    }
+
+    const price = Number(item?.Price || item?.price || 0);
+    const totalPrice = Number(
+      item?.Total_price
+      || item?.TotalPrice
+      || item?.totalPrice
+      || item?.Line_total
+      || item?.lineTotal
+      || 0
+    );
+
+    if (totalPrice > 0 && purchasedQuantity > 1 && Math.abs(price - totalPrice) < 1) {
+      return Math.round(totalPrice / purchasedQuantity);
+    }
+
+    return price;
+  }
+
+  getItemOriginalUnitPrice(item: any): number {
+    const purchasedQuantity = this.getPurchasedQuantity(item);
+    const currentUnitPrice = this.getItemUnitPrice(item);
+    const originalPrice = Number(
+      item?.Original_price
+      || item?.OriginalPrice
+      || item?.originalPrice
+      || item?.Compare_at_price
+      || item?.compareAtPrice
+      || 0
+    );
+
+    if (!originalPrice) {
+      return 0;
+    }
+
+    if (purchasedQuantity > 1 && originalPrice > currentUnitPrice * 1.5) {
+      return Math.round(originalPrice / purchasedQuantity);
+    }
+
+    return originalPrice;
   }
 
   getItemReturnQuantity(item: any): number {
@@ -536,6 +604,41 @@ export class ReturnOrder implements OnInit {
     }
 
     return Math.min(Math.max(1, Math.round(selectedQuantity)), purchasedQuantity);
+  }
+
+  shouldShowItemSelector(): boolean {
+    return this.items.length > 1;
+  }
+
+  isItemSelected(item: any): boolean {
+    const variantId = this.getItemVariantId(item);
+
+    if (!variantId) {
+      return false;
+    }
+
+    if (!this.shouldShowItemSelector()) {
+      return true;
+    }
+
+    return this.selectedReturnItems[variantId] !== false;
+  }
+
+  onReturnItemToggle(item: any, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const variantId = this.getItemVariantId(item);
+
+    if (!variantId) {
+      return;
+    }
+
+    this.selectedReturnItems[variantId] = input.checked;
+
+    if (input.checked && !this.returnQuantities[variantId]) {
+      this.returnQuantities[variantId] = this.getPurchasedQuantity(item);
+    }
+
+    this.submitError = '';
   }
 
   changeReturnQuantity(item: any, delta: number): void {
@@ -565,11 +668,18 @@ export class ReturnOrder implements OnInit {
   }
 
   getReturnLineTotal(item: any): number {
-    return this.getItemUnitPrice(item) * this.getItemReturnQuantity(item);
+    if (!this.isItemSelected(item)) {
+      return 0;
+    }
+
+    const variantId = this.getItemVariantId(item);
+    return this.getReturnLineRefundAmounts()[variantId] || 0;
   }
 
   isFullQuantityReturn(): boolean {
-    return this.items.every((item) => this.getItemReturnQuantity(item) === this.getPurchasedQuantity(item));
+    return this.items.length > 0 && this.items.every((item) => {
+      return this.isItemSelected(item) && this.getItemReturnQuantity(item) === this.getPurchasedQuantity(item);
+    });
   }
 
   isEvidenceImage(file: EvidenceFile): boolean {
@@ -600,6 +710,42 @@ export class ReturnOrder implements OnInit {
       if (variantId) {
         result[variantId] = this.getPurchasedQuantity(item);
       }
+      return result;
+    }, {} as Record<string, number>);
+  }
+
+  private initializeReturnSelections(): void {
+    this.selectedReturnItems = this.items.reduce((result, item) => {
+      const variantId = this.getItemVariantId(item);
+      if (variantId) {
+        result[variantId] = true;
+      }
+      return result;
+    }, {} as Record<string, boolean>);
+  }
+
+  private getReturnLineRefundAmounts(): Record<string, number> {
+    const selectedItems = this.selectedOrderItems;
+    const targetRefundAmount = this.getRefundAmount();
+    const orderSubtotal = this.getOrderItemsSubtotal();
+    const orderAdjustment = this.getPaidOrderAmount() - orderSubtotal;
+    const adjustmentPerUnit = orderAdjustment / Math.max(this.getTotalPurchasedQuantity(), 1);
+    let allocated = 0;
+
+    return selectedItems.reduce((result, item, index) => {
+      const variantId = this.getItemVariantId(item);
+      if (!variantId) {
+        return result;
+      }
+
+      const quantity = this.getItemReturnQuantity(item);
+      const itemSubtotal = this.getItemUnitPrice(item) * quantity;
+      const amount = index === selectedItems.length - 1
+        ? Math.max(0, targetRefundAmount - allocated)
+        : Math.max(0, Math.round(itemSubtotal + adjustmentPerUnit * quantity));
+
+      allocated += amount;
+      result[variantId] = amount;
       return result;
     }, {} as Record<string, number>);
   }
@@ -674,7 +820,11 @@ export class ReturnOrder implements OnInit {
       return 'Đơn hàng không có sản phẩm để hoàn trả.';
     }
 
-    if (this.getTotalQuantity() <= 0 || this.items.some((item) => this.getItemReturnQuantity(item) > this.getPurchasedQuantity(item))) {
+    if (!this.selectedOrderItems.length) {
+      return 'Vui lòng chọn ít nhất một sản phẩm cần hoàn trả.';
+    }
+
+    if (this.getTotalQuantity() <= 0 || this.selectedOrderItems.some((item) => this.getItemReturnQuantity(item) > this.getPurchasedQuantity(item))) {
       return 'Số lượng sản phẩm hoàn trả chưa hợp lệ.';
     }
 

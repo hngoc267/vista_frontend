@@ -16,33 +16,22 @@ export class OrderHistory {
       params = params.set('status', status);
     }
 
-    let userId = localStorage.getItem('userId');
+    // 1. Lấy userId từ hàm tiện ích bên dưới (đã xử lý sẵn localStorage)
+    const userId = this.getCurrentUserId();
 
+    // 2. Nếu không có userId thì chặn gọi API
     if (!userId) {
-      const userRaw = localStorage.getItem('user');
-      if (userRaw) {
-        try {
-          const userObj = JSON.parse(userRaw);
-          userId = userObj.User_id || userObj.id || userObj._id;
-        } catch (error) {
-          console.error('Lỗi khi đọc thông tin user từ localStorage', error);
-        }
-      }
-    }
-
-    // --- ĐOẠN ĐÃ SỬA ---
-    if (!userId) {
-      // Nếu hoàn toàn không tìm thấy userId, lập tức báo lỗi hoặc trả về danh sách rỗng
-      // Không được tự ý gán thành USR_002 nữa!
       console.error('Không tìm thấy userId, chặn gọi API.');
-      return throwError(() => new Error('Vui lòng đăng nhập để xem lịch sử đơn hàng.'));
-      
-      // Hoặc nếu muốn trả về mảng rỗng để giao diện tự hiện thông báo "Không có đơn hàng":
-      // return of({ success: true, data: [] }); 
+      // Trả về mảng rỗng như cách bạn định làm ban đầu để giao diện không bị sụp
+      return of({
+        success: true,
+        data: [],
+        message: 'Vui lòng đăng nhập để xem lịch sử đơn hàng.',
+      });
     }
-    // -------------------
 
-    return this.http.get<any>(`${this.apiUrl}/${userId}`, { params });
+    // 3. Nếu có userId hợp lệ thì gọi API
+    return this.http.get<any>(`${this.apiUrl}/${encodeURIComponent(userId)}`, { params });
   }
 
   markOrderReceived(orderId: string): Observable<any> {
@@ -54,6 +43,35 @@ export class OrderHistory {
       `${this.apiUrl}/${encodeURIComponent(orderId)}/cancel`,
       { reason }
     );
+  }
+
+  private getCurrentUserId(): string {
+    if (typeof localStorage === 'undefined') {
+      return '';
+    }
+
+    const rawUser = localStorage.getItem('user');
+    if (!rawUser) {
+      localStorage.removeItem('userId');
+      return '';
+    }
+
+    try {
+      const user = JSON.parse(rawUser);
+      const userId = String(user?.User_id || user?.userId || '').trim();
+
+      if (userId) {
+        localStorage.setItem('userId', userId);
+      } else {
+        localStorage.removeItem('userId');
+      }
+
+      return userId;
+    } catch (error) {
+      console.error('Loi khi doc thong tin user tu localStorage', error);
+      localStorage.removeItem('userId');
+      return '';
+    }
   }
 
   markOrderReviewed(orderCode: string): Observable<any> {

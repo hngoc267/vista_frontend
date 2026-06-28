@@ -109,6 +109,7 @@ const CHECKOUT_SOURCE_KEY = 'vista_checkout_source';
 const PENDING_VOUCHER_KEY = 'vista_pending_voucher_code';
 const REPURCHASE_PREFILL_KEY = 'vista_repurchase_order_prefill';
 const SAVED_CHECKOUT_ADDRESSES_KEY = 'vista_saved_checkout_addresses';
+const DELETED_CHECKOUT_ADDRESSES_KEY = 'vista_deleted_checkout_addresses';
 
 @Component({
   selector: 'app-order',
@@ -261,6 +262,19 @@ export class Order implements OnInit, OnDestroy {
     return this.cartService.getCurrentUserId() || this.getStoredUserId() || '';
   }
 
+  private getUserScopedStorageKey(baseKey: string): string {
+    const userId = this.userId || 'guest';
+    return baseKey + '_' + userId;
+  }
+
+  private getSavedCheckoutAddressesKey(): string {
+    return this.getUserScopedStorageKey(SAVED_CHECKOUT_ADDRESSES_KEY);
+  }
+
+  private getDeletedCheckoutAddressesKey(): string {
+    return this.getUserScopedStorageKey(DELETED_CHECKOUT_ADDRESSES_KEY);
+  }
+
   get selectedShipping(): ShippingMethod {
     return this.shippingMethods.find((method) => method.id === this.selectedShippingId) || this.shippingMethods[0];
   }
@@ -397,7 +411,9 @@ export class Order implements OnInit, OnDestroy {
   }
 
   get visibleSavedAddresses(): AddressItem[] {
-    return this.dedupeAddresses([...this.localSavedAddresses, ...this.savedAddresses]);
+    const deletedKeys = new Set(this.loadDeletedAddressKeys());
+    return this.dedupeAddresses([...this.localSavedAddresses, ...this.savedAddresses])
+      .filter((address) => !deletedKeys.has(this.buildAddressKey(address)));
   }
 
   formatPrice(value: number): string {
@@ -481,16 +497,21 @@ export class Order implements OnInit, OnDestroy {
     }
 
     const status = this.normalizeText(voucher.status);
-    const statusText = this.normalizeText(voucher.statusText);
-    const backendReason = this.normalizeText(voucher.unavailableReason);
-    const combined = `${statusText} ${backendReason}`;
+    const combined = this.normalizeText([
+      voucher.statusText,
+      voucher.unavailableReason,
+      voucher.description,
+      voucher.condition,
+    ].filter(Boolean).join(' '));
 
     return (
       status === 'used' ||
       combined.includes('da su dung') ||
       combined.includes('da duoc su dung') ||
+      combined.includes('da duoc ap dung') ||
       combined.includes('tai khoan cua ban da su dung') ||
-      combined.includes('don hang dau tien') ||
+      combined.includes('ma giam gia nay da duoc su dung') ||
+      combined.includes('ma nay chi ap dung cho don hang dau tien') ||
       combined.includes('tai khoan moi')
     );
   }
@@ -697,6 +718,10 @@ export class Order implements OnInit, OnDestroy {
   deleteSavedAddress(address: AddressItem, event: Event): void {
     event.stopPropagation();
     const deleteKey = this.buildAddressKey(address);
+    const deletedKeys = new Set(this.loadDeletedAddressKeys());
+    deletedKeys.add(deleteKey);
+    this.saveDeletedAddressKeys(Array.from(deletedKeys));
+
     this.localSavedAddresses = this.localSavedAddresses.filter(
       (item) => this.buildAddressKey(item) !== deleteKey
     );
@@ -705,7 +730,7 @@ export class Order implements OnInit, OnDestroy {
     );
 
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(SAVED_CHECKOUT_ADDRESSES_KEY, JSON.stringify(this.localSavedAddresses));
+      localStorage.setItem(this.getSavedCheckoutAddressesKey(), JSON.stringify(this.localSavedAddresses));
     }
 
     if (this.tempReceiver.addressId === address.Address_id) {
@@ -776,6 +801,7 @@ export class Order implements OnInit, OnDestroy {
     this.tempReceiver.province = province?.name || '';
     this.tempReceiver.district = '';
     this.tempReceiver.ward = '';
+    this.tempReceiver.specificAddress = '';
   }
 
   onDistrictChange(districtCode: string): void {
@@ -787,12 +813,14 @@ export class Order implements OnInit, OnDestroy {
 
     this.tempReceiver.district = district?.name || '';
     this.tempReceiver.ward = '';
+    this.tempReceiver.specificAddress = '';
   }
 
   onWardChange(wardCode: string): void {
     this.selectedWardCode = wardCode;
     const ward = this.wardOptions.find((item) => String(item.code) === String(wardCode));
     this.tempReceiver.ward = ward?.name || '';
+    this.tempReceiver.specificAddress = '';
   }
 
   openShippingModal(): void {
@@ -1393,12 +1421,12 @@ export class Order implements OnInit, OnDestroy {
   }
 
   private loadLocalSavedAddresses(): void {
-    if (typeof localStorage === 'undefined') {
+    if (typeof localStorage === 'undefined' || !this.userId) {
       this.localSavedAddresses = [];
       return;
     }
 
-    const raw = localStorage.getItem(SAVED_CHECKOUT_ADDRESSES_KEY);
+    const raw = localStorage.getItem(this.getSavedCheckoutAddressesKey());
     if (!raw) {
       this.localSavedAddresses = [];
       return;
@@ -1406,14 +1434,16 @@ export class Order implements OnInit, OnDestroy {
 
     try {
       const parsed = JSON.parse(raw);
-      this.localSavedAddresses = this.dedupeAddresses(Array.isArray(parsed) ? parsed : []);
+      const deletedKeys = new Set(this.loadDeletedAddressKeys());
+      this.localSavedAddresses = this.dedupeAddresses(Array.isArray(parsed) ? parsed : [])
+        .filter((address) => !deletedKeys.has(this.buildAddressKey(address)));
     } catch {
       this.localSavedAddresses = [];
     }
   }
 
   private saveCheckoutAddress(receiver: ReceiverInfo): void {
-    if (typeof localStorage === 'undefined') {
+    if (typeof localStorage === 'undefined' || !this.userId) {
       return;
     }
 
@@ -1432,7 +1462,11 @@ export class Order implements OnInit, OnDestroy {
     };
 
     this.localSavedAddresses = this.dedupeAddresses([address, ...this.localSavedAddresses]);
-    localStorage.setItem(SAVED_CHECKOUT_ADDRESSES_KEY, JSON.stringify(this.localSavedAddresses));
+    const savedKey = this.buildAddressKey(address);
+    this.saveDeletedAddressKeys(
+      this.loadDeletedAddressKeys().filter((key) => key !== savedKey)
+    );
+    localStorage.setItem(this.getSavedCheckoutAddressesKey(), JSON.stringify(this.localSavedAddresses));
   }
 
   private dedupeAddresses(addresses: AddressItem[]): AddressItem[] {
@@ -1460,6 +1494,27 @@ export class Order implements OnInit, OnDestroy {
       address.District,
       address.Province,
     ].map((part) => this.normalizeText(part)).join('|');
+  }
+
+  private loadDeletedAddressKeys(): string[] {
+    if (typeof localStorage === 'undefined' || !this.userId) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(localStorage.getItem(this.getDeletedCheckoutAddressesKey()) || '[]');
+      return Array.isArray(parsed) ? parsed.map((item) => String(item || '')).filter(Boolean) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private saveDeletedAddressKeys(keys: string[]): void {
+    if (typeof localStorage === 'undefined' || !this.userId) {
+      return;
+    }
+
+    localStorage.setItem(this.getDeletedCheckoutAddressesKey(), JSON.stringify([...new Set(keys.filter(Boolean))]));
   }
 
   private syncLocationSelectsFromReceiver(receiver: ReceiverInfo): void {
@@ -1643,7 +1698,7 @@ export class Order implements OnInit, OnDestroy {
     }
 
     const hasNumber = /\d/.test(text);
-    const hasLetter = /[a-zA-ZÀ-ỹ]/.test(text);
+    const hasLetter = /[a-z]/.test(compact);
     const hasAddressKeyword = [
       'duong',
       'pho',
@@ -1772,7 +1827,7 @@ export class Order implements OnInit, OnDestroy {
 
   private getStoredUserId(): string | null {
     const user = this.getStoredUser();
-    return user?.User_id || user?.userId || user?.id || null;
+    return user?.User_id || user?.userId || null;
   }
 
   private canContinue(): boolean {
@@ -2048,3 +2103,5 @@ export class Order implements OnInit, OnDestroy {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
+
+
