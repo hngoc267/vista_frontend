@@ -19,7 +19,14 @@ export class Home implements OnInit, OnDestroy {
   aiProducts: any[] = [];
   flashSaleProducts: any[] = [];
   searchQuery = '';
-
+  smartResults: any[] = [];
+  searchHistory: string[] = [];
+  lastSearchQuery = '';
+  defaultSuggestions = ['Laptop gaming', 'Điện thoại chụp ảnh đẹp', 'Tai nghe chống ồn'];
+  showDropdown = false;
+  isSearching = false;
+  searchDone = false;
+  currentStep = 0;
   flashMainTime = {
     days: '03',
     hours: '15',
@@ -36,15 +43,20 @@ export class Home implements OnInit, OnDestroy {
   private flashMainSeconds = (3 * 24 * 60 * 60) + (15 * 60 * 60) + (55 * 60) + 37;
   private countdownTimer: any;
 
+  get displaySuggestions(): string[] {
+  return this.searchHistory.length > 0 ? this.searchHistory : this.defaultSuggestions;
+  }
   constructor(
     private productService: ProductService,
     private cartService: CartService,
     private cartState: CartStateService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    public router: Router
   ) {}
 
   ngOnInit() {
+    const saved = localStorage.getItem('vista_search_history');
+    this.searchHistory = saved ? JSON.parse(saved) : [];
     this.loadCategories();
     this.loadFeaturedProducts();
     this.loadFlashSaleProducts();
@@ -306,12 +318,64 @@ export class Home implements OnInit, OnDestroy {
     if (!discount || discount === 0) return price;
     return price - (price * discount / 100);
   }
+  closeDropdown() {
+  this.showDropdown = false;
+  }
 
   onSearch() {
-    if (this.searchQuery.trim()) {
-      this.router.navigate(['/products'], {
-        queryParams: { search: this.searchQuery }
-      });
-    }
+    if (!this.searchQuery.trim()) return;
+    this.lastSearchQuery = this.searchQuery;
+    this.searchHistory = [
+      this.searchQuery,
+      ...this.searchHistory.filter(s => s !== this.searchQuery)
+    ].slice(0, 3);
+    localStorage.setItem('vista_search_history', JSON.stringify(this.searchHistory));
+    this.isSearching = true;
+    this.searchDone = false;
+    this.smartResults = [];
+    this.currentStep = 0;
+
+    let apiDone = false;
+    let apiResults: any[] = [];
+
+    [0, 1, 2, 3].forEach((step, i) => {
+      setTimeout(() => {
+        this.currentStep = step;
+        this.cdr.detectChanges();
+        if (step === 3 && apiDone) {
+          setTimeout(() => {
+            this.smartResults = apiResults;
+            this.isSearching = false;
+            this.searchDone = true;
+            this.showDropdown = true; 
+            this.cdr.detectChanges();
+          }, 400);
+        }
+      }, i * 600);
+    });
+
+    this.productService.smartSearch(this.searchQuery).subscribe({
+      next: (res) => {
+        apiResults = res.data;
+        apiDone = true;
+        if (this.currentStep === 3) {
+          setTimeout(() => {
+            this.smartResults = apiResults;
+            this.isSearching = false;
+            this.searchDone = true;
+            this.showDropdown = true;
+            this.cdr.detectChanges();
+          }, 400);
+        }
+      },
+      error: () => {
+        this.isSearching = false;
+        this.router.navigate(['/products'], { queryParams: { search: this.searchQuery } });
+      }
+    });
+  }
+  fillSearch(text: string) {
+  this.searchQuery = text;
+  this.onSearch();
   }
 }

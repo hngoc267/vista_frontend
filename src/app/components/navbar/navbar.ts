@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core'; 
-import { RouterLink, Router } from '@angular/router'; 
+import { RouterLink, Router ,RouterLinkActive} from '@angular/router'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
 import { Subscription } from 'rxjs';
@@ -11,7 +11,7 @@ import { ProductService } from '../../services/product';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, CommonModule, FormsModule], 
+  imports: [RouterLink,RouterLinkActive, CommonModule, FormsModule], 
   templateUrl: './navbar.html',
   styleUrl: './navbar.scss'
 })

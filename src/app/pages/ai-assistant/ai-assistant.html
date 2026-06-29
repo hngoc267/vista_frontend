@@ -1,0 +1,176 @@
+<div class="ai-page">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="ai-sidebar" [style.width.px]="sidebarWidth">
+    <div class="sidebar-header">
+      <div class="sidebar-title-row">
+        <i class="ph ph-sparkle sidebar-sparkle-icon"></i>
+        <div>
+          <h1 class="sidebar-title">VISTA AI</h1>
+          <p class="sidebar-sub">Mua sắm thông minh</p>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-new-chat" (click)="createNewSession()">
+      <i class="ph ph-plus"></i>
+      Cuộc trò chuyện mới
+    </button>
+
+    <div class="search-session">
+      <i class="ph ph-magnifying-glass"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        placeholder="Tìm kiếm trong các cuộc trò chuyện"
+      />
+    </div>
+
+    <div class="session-group">
+      <p class="group-label">Gần đây</p>
+      <ul class="session-list">
+        <li
+          *ngFor="let session of filteredSessions"
+          class="session-item"
+          [class.active]="session.Session_id === activeSessionId"
+          (click)="openSession(session.Session_id)"
+        >
+          <span class="session-title">{{ session.Title }}</span>
+          <button class="btn-delete-session" (click)="deleteSession(session.Session_id, $event)" title="Xóa">
+            <i class="ph ph-trash"></i>
+          </button>
+        </li>
+        <li *ngIf="sessions.length === 0" class="session-empty">
+          Chưa có cuộc trò chuyện nào
+        </li>
+      </ul>
+    </div>
+    <div class="sidebar-resize-handle" (mousedown)="onResizeStart($event)"></div>
+  </aside>
+
+  <!-- ── CHAT AREA ── -->
+  <main class="ai-main">
+
+    <!-- Header chat -->
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="ai-avatar">
+          <i class="ph ph-robot"></i>
+        </div>
+        <div>
+          <p class="chat-name">VISTA AI Assistant</p>
+          <p class="chat-status">
+            <span class="status-dot"></span>
+            Đang hoạt động
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body chat -->
+    <div class="chat-body" #chatBody>
+
+      <!-- Màn hình chào mừng khi chưa có session -->
+      <div class="chat-welcome" *ngIf="!activeSessionId && messages.length === 0">
+        <div class="welcome-icon"><i class="ph ph-robot"></i></div>
+        <h2>Chào bạn! Tôi là trợ lý VISTA AI.</h2>
+        <p>Tôi có thể giúp bạn tìm kiếm thiết bị công nghệ phù hợp với nhu cầu và ngân sách của bạn. Bạn đang quan tâm đến sản phẩm nào?</p>
+        <button class="btn-start-chat" (click)="createNewSession()">
+          Bắt đầu cuộc trò chuyện
+        </button>
+      </div>
+
+      <!-- Màn hình welcome khi mở session rỗng -->
+      <div class="chat-welcome" *ngIf="activeSessionId && messages.length === 0 && !isLoading">
+        <div class="welcome-icon"><i class="ph ph-robot"></i></div>
+        <p>Hãy đặt câu hỏi đầu tiên cho VISTA AI!</p>
+      </div>
+
+      <!-- Danh sách tin nhắn -->
+      <div *ngFor="let msg of messages" class="message-wrapper" [class.user-wrapper]="msg.sender === 'user'">
+
+        <!-- Tin nhắn USER -->
+        <div *ngIf="msg.sender === 'user'" class="bubble bubble-user">
+          {{ msg.content }}
+        </div>
+
+        <!-- Tin nhắn AI -->
+        <div *ngIf="msg.sender === 'ai'" class="ai-message-group">
+          <div class="ai-avatar-sm"><i class="ph ph-robot"></i></div>
+          <div class="ai-message-body">
+            <div class="bubble bubble-ai">{{ msg.content }}</div>
+
+            <!-- Card sản phẩm AI gợi ý -->
+            <div class="product-cards" *ngIf="msg.products && msg.products.length > 0">
+              <div
+                *ngFor="let product of msg.products"
+                class="product-card"
+                (click)="goToProduct(product.Product_id)"
+              >
+                <div class="card-img">
+                  <img
+                    [src]="'/assets/images/' + product.Images[0]"
+                    [alt]="product.Product_name"
+                    (error)="product.Images = null"
+                  >
+                </div>
+                <div class="card-info">
+                  <p class="card-badge">{{ product.aiTag }}</p>
+                  <h4 class="card-name">{{ product.Product_name }}</h4>
+                  <p class="card-spec">{{ product.Technical_specs?.CPU || product.Technical_specs?.Chipset }}</p>
+                  <p class="card-price">{{ formatPrice(getFinalPrice(product.min_price, product.Discount)) }}</p>
+                </div>
+                <button class="card-arrow"><i class="ph ph-arrow-right"></i></button>
+              </div>
+            </div>
+
+            <p class="msg-time">{{ msg.time }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading indicator -->
+      <div class="ai-message-group" *ngIf="isLoading">
+        <div class="ai-avatar-sm"><i class="ph ph-robot"></i></div>
+        <div class="bubble bubble-ai bubble-loading">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Suggestion chips -->
+    <div class="suggestion-chips" *ngIf="suggestions.length > 0">
+      <button
+        *ngFor="let s of suggestions"
+        class="chip"
+        (click)="sendSuggestion(s)"
+      >{{ s }}</button>
+    </div>
+
+    <!-- Input area -->
+    <div class="chat-input-area">
+      <div class="chat-input-wrap">
+        <i class="ph ph-chat-text input-icon"></i>
+        <textarea
+          [(ngModel)]="inputText"
+          placeholder="Nhập câu hỏi của bạn......"
+          rows="1"
+          (keydown)="onKeydown($event)"
+          [disabled]="isLoading"
+        ></textarea>
+        <button
+          class="btn-send"
+          (click)="sendMessage()"
+          [disabled]="!inputText.trim() || isLoading"
+        >
+          <i class="ph ph-paper-plane-tilt"></i>
+        </button>
+      </div>
+      <p class="chat-disclaimer">
+        VISTA AI có thể đưa ra câu trả lời không chính xác. Hãy luôn kiểm tra lại thông tin.
+      </p>
+    </div>
+
+  </main>
+</div>

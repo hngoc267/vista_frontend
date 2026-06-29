@@ -1,4 +1,4 @@
-<section class="hero">
+<section class="hero" [class.hero-searching]="isSearching || searchDone">
   <div class="hero-container">
     <div class="hero-content">
       <h1 class="hero-title">
@@ -9,25 +9,70 @@
       <p class="hero-desc">
         Chỉ cần mô tả nhu cầu, AI của VISTA sẽ tư vấn sản phẩm phù hợp nhất cho bạn
       </p>
+      <div class="search-overlay" *ngIf="showDropdown" (click)="closeDropdown()"></div>
+      <div class="search-wrapper">
+        <div class="search-bar">
+          <i class="ph ph-magnifying-glass search-icon"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            placeholder="Ví dụ: Laptop cho sinh viên dưới 20 triệu..."
+            (keyup.enter)="onSearch()"
+          />
+          <button class="search-btn" (click)="onSearch()">Tìm kiếm AI</button>
+        </div>
 
-      <div class="search-bar">
-        <i class="ph ph-magnifying-glass search-icon"></i>
-        <input
-          type="text"
-          [(ngModel)]="searchQuery"
-          placeholder="Ví dụ: Laptop cho sinh viên dưới 20 triệu..."
-          (keyup.enter)="onSearch()"
-        />
-        <button class="search-btn" (click)="onSearch()">Tìm kiếm AI</button>
+        <!-- DROPDOWN KẾT QUẢ -->
+        <div class="search-dropdown" *ngIf="showDropdown && smartResults.length > 0">
+          <div
+            *ngFor="let product of smartResults"
+            class="search-dropdown-item"
+            (click)="router.navigate(['/products', product.Product_id])"
+          >
+            <div class="dropdown-img">
+              <img [src]="'/assets/images/' + product.Images[0]" [alt]="product.Product_name"
+                (error)="product.Images = null">
+            </div>
+            <div class="dropdown-info">
+              <span class="dropdown-badge">{{ product.aiTag }}</span>
+              <p class="dropdown-name">{{ product.Product_name }}</p>
+              <p class="dropdown-spec">{{ product.Technical_specs?.CPU || product.Technical_specs?.Chipset }}</p>
+              <strong>{{ formatPrice(getFinalPrice(product.min_price, product.Discount)) }}</strong>
+            </div>
+            <i class="ph ph-arrow-right"></i>
+          </div>
+        </div>
       </div>
 
       <div class="search-suggestions">
-        <span>Gợi ý:</span>
-        <a [routerLink]="['/products']" [queryParams]="{search: 'Laptop gaming'}">Laptop gaming</a>
-        <span>·</span>
-        <a [routerLink]="['/products']" [queryParams]="{search: 'Dien thoai chup anh dep'}">Điện thoại chụp ảnh đẹp</a>
-        <span>·</span>
-        <a [routerLink]="['/products']" [queryParams]="{search: 'Tai nghe chong on'}">Tai nghe chống ồn</a>
+        <span>{{ searchHistory.length > 0 ? 'Gần đây:' : 'Gợi ý:' }}</span>
+        <ng-container *ngFor="let s of displaySuggestions; let last = last">
+          <a (click)="fillSearch(s)" style="cursor:pointer">{{ s }}</a>
+          <span *ngIf="!last">·</span>
+        </ng-container>
+      </div>
+      <div class="ai-analyzing-card" *ngIf="isSearching">
+        <div class="ai-analyzing-header">
+          <span class="ai-analyzing-title">AI đang phân tích yêu cầu...</span>
+          <span class="ai-version">v1.2 Smart Engine</span>
+        </div>
+        <div class="ai-steps">
+          <div class="ai-step" [class.active]="currentStep >= 0">
+            <i class="ph ph-key"></i><span>Chuẩn hóa từ khóa</span>
+          </div>
+          <div class="ai-step" [class.active]="currentStep >= 1">
+            <i class="ph ph-brain"></i><span>Hiểu ngữ nghĩa</span>
+          </div>
+          <div class="ai-step" [class.active]="currentStep >= 2">
+            <i class="ph ph-magnifying-glass"></i><span>Tìm kiếm sản phẩm</span>
+          </div>
+          <div class="ai-step" [class.active]="currentStep >= 3">
+            <i class="ph ph-list-checks"></i><span>Tối ưu kết quả</span>
+          </div>
+        </div>
+        <div class="ai-progress-bar">
+          <div class="ai-progress-fill" [style.width.%]="(currentStep + 1) * 25"></div>
+        </div>
       </div>
     </div>
 

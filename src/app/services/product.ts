@@ -63,4 +63,7 @@ export class ProductService {
       retry({ count: 3, delay: 1000 })
     );
   }
+  smartSearch(query: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/products/smart-search`, { query });
+  }
 }

@@ -8,6 +8,9 @@ import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './components/navbar/navbar';
 import { FooterComponent } from './components/footer/footer';
 import { CommonModule } from '@angular/common';
+import { HostListener } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -27,8 +30,8 @@ export class App implements OnInit {
 
   showSplash = true;
   isClosing = false;
-
-  constructor(private cdr: ChangeDetectorRef) {}
+  showScrollTop = false;
+  constructor(private cdr: ChangeDetectorRef,private router: Router) {}
 
   ngOnInit() {
 
@@ -46,5 +49,15 @@ export class App implements OnInit {
       }, 1000);
 
     }, 5000);
+  }
+  @HostListener('window:scroll')
+  onScroll() {
+    const url = this.router.url;
+    const isAllowed = url === '/' || url === '' || url.startsWith('/products');
+    this.showScrollTop = isAllowed && window.scrollY > 300;
+  }
+
+  scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }

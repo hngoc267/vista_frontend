@@ -17,6 +17,7 @@ import { OrderHistory } from './pages/order-history/order-history';
 import { ReturnOrder } from './pages/return-order/return-order';
 import { FlashSale } from './pages/flash-sale/flash-sale';
 import { Review } from './pages/review/review';
+import { AiAssistantComponent } from './pages/ai-assistant/ai-assistant';
 
 export const routes: Routes = [
   { path: 'profile', component: Profile, canActivate: [AuthGuard] },
@@ -32,6 +33,7 @@ export const routes: Routes = [
   { path: 'verify-code', component: VerifyCode }, // <-- Thêm dòng này
   { path: 'reset-password', component: ResetPassword }, // <-- Thêm dòng này
   { path: 'profile', component: Profile },
+  { path: 'ai-assistant', component: AiAssistantComponent, canActivate: [AuthGuard] },
   { path: 'policy', component: Policy },
   { path: 'order-history', component: OrderHistory, canActivate: [AuthGuard] },
   { path: 'return-order', component: ReturnOrder },
