@@ -15,7 +15,14 @@
         <ul class="dropdown-menu">
           <li *ngFor="let category of categories">
             <a routerLink="/products" [queryParams]="{category: category.Category_id}">
-              {{ category.Category_name }}
+              <i class="ph ph-laptop" *ngIf="category.Category_name === 'Laptop'"></i>
+              <i class="ph ph-device-mobile" *ngIf="category.Category_name === 'Smartphone'"></i>
+              <i class="ph ph-device-tablet" *ngIf="category.Category_name === 'Tablet'"></i>
+              <i class="ph ph-headphones" *ngIf="category.Category_name === 'Thiết bị âm thanh'"></i>
+              <i class="ph ph-plugs" *ngIf="category.Category_name === 'Phụ kiện công nghệ'"></i>
+              <i class="ph ph-game-controller" *ngIf="category.Category_name === 'Thiết bị gaming'"></i>
+              
+              <span>{{ category.Category_name }}</span>
             </a>
           </li>
         </ul>

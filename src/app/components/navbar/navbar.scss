@@ -21,7 +21,7 @@
   .nav-left {
     display: flex;
     align-items: center;
-    gap: 48px; /* Trả lại gap rộng rãi cho bên trái */
+    gap: 32px; /* Trả lại gap rộng rãi cho bên trái */
 
     .navbar-logo {
       display: flex;
@@ -67,12 +67,19 @@
           z-index: 1100;
 
         li a {
-          display: block;
+          display: flex;         // Căn icon và chữ nằm ngang
+          align-items: center;   // Căn giữa theo chiều dọc
+          gap: 12px;             // Khoảng cách giữa icon và chữ
           padding: 12px 20px;
-          color: #0F172A;
+          color: #0F172A;        // Màu chữ mặc định
           text-decoration: none;
           font-size: 14px;
-        font-weight: 500;
+          font-weight: 500;
+
+          i {
+            color: #2563b0;      // Đổ màu xanh đậm cho icon giống hình sếp gửi
+            font-size: 18px;     // Chỉnh to nhỏ icon tùy ý
+          }
 
     &:hover {
       background: #F8FAFC;
@@ -289,7 +296,7 @@
       font-size: 14px;
       font-weight: 500;
       transition: all 0.2s ease-in-out;
-      margin-left: 8px;
+      margin-left: 1px;
 
       i { font-size: 18px; }
 

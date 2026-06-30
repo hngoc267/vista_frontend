@@ -10,6 +10,7 @@ $text-muted: #64748b;
 $border: #e2e8f0;
 $radius: 12px;
 $radius-sm: 8px;
+@use "sass:color";
 
 // ── Layout ────────────────────────────────────────────────────
 .ai-page {
@@ -267,7 +268,7 @@ $radius-sm: 8px;
     font-weight: 500;
     cursor: pointer;
     transition: background 0.2s;
-    &:hover { background: darken($blue, 8%); }
+    &:hover { background: color.adjust($blue, $lightness: -8%); }
   }
 }
 
@@ -537,7 +538,7 @@ $radius-sm: 8px;
     transition: background 0.2s;
     i { font-size: 18px; }
 
-    &:hover:not(:disabled) { background: darken($blue, 8%); }
+    &:hover:not(:disabled) { background: color.adjust($blue, $lightness: -8%); }
     &:disabled { background: $border; color: $text-muted; cursor: not-allowed; }
   }
 }

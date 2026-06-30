@@ -17,7 +17,7 @@ interface ChatMessage {
 
 @Component({
   selector: 'app-ai-assistant',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './ai-assistant.html',
   styleUrl: './ai-assistant.scss'
 })
