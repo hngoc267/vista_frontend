@@ -280,28 +280,21 @@
       }
     }
 
-    /* Đưa CSS Nút AI Assistant sang bên phải */
     .ai-assistant-btn {
       display: flex;
       align-items: center;
       gap: 6px;
-      color: #ffffff; 
+      color: #c9cef7; 
       text-decoration: none;
       font-size: 14px;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 6px;
-      background: rgba(0, 194, 212, 0.08); 
-      border: 1px solid rgba(0, 194, 212, 0.2);
+      font-weight: 500;
       transition: all 0.2s ease-in-out;
       margin-left: 8px;
 
       i { font-size: 18px; }
 
       &:hover {
-        background: rgba(0, 194, 212, 0.18);
-        transform: translateY(-1px);
-        box-shadow: 0 0 10px rgba(0, 194, 212, 0.3);
+        color: #00C2D4; 
       }
     }
     .nav-ai-active {

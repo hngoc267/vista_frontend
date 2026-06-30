@@ -20,6 +20,7 @@ export class Home implements OnInit, OnDestroy {
   flashSaleProducts: any[] = [];
   searchQuery = '';
   smartResults: any[] = [];
+  searchMessage: string = '';
   searchHistory: string[] = [];
   lastSearchQuery = '';
   defaultSuggestions = ['Laptop gaming', 'Điện thoại chụp ảnh đẹp', 'Tai nghe chống ồn'];
@@ -356,7 +357,9 @@ export class Home implements OnInit, OnDestroy {
 
     this.productService.smartSearch(this.searchQuery).subscribe({
       next: (res) => {
-        apiResults = res.data;
+        apiResults = res.data || [];
+        this.searchMessage =
+          res.message || 'Không tìm thấy sản phẩm phù hợp';
         apiDone = true;
         if (this.currentStep === 3) {
           setTimeout(() => {

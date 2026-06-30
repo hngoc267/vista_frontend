@@ -591,3 +591,63 @@ $radius-sm: 8px;
   width: 100%;
   &::placeholder { color: rgba(255,255,255,0.4); }
 }
+
+.voucher-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 440px;
+}
+
+.voucher-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #fff7ed, #fffbeb);
+  border: 1px dashed #f59e0b;
+  border-radius: 12px;
+  padding: 12px;
+
+  .voucher-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 10px;
+    background: #f59e0b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    i { font-size: 20px; color: #fff; }
+  }
+
+  .voucher-info {
+    flex: 1;
+    min-width: 0;
+
+    .voucher-code {
+      font-size: 14px;
+      font-weight: 700;
+      color: #92400e;
+      margin: 0;
+    }
+
+    .voucher-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 2px 0;
+    }
+
+    .voucher-condition {
+      font-size: 11px;
+      color: #94a3b8;
+      margin: 0;
+    }
+  }
+
+  .voucher-expiry {
+    font-size: 10px;
+    color: #ef4444;
+    white-space: nowrap;
+  }
+}
