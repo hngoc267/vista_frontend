@@ -124,6 +124,19 @@
               </div>
             </div>
 
+            <!-- Card voucher -->
+            <div class="voucher-cards" *ngIf="msg.vouchers && msg.vouchers.length > 0">
+              <div *ngFor="let v of msg.vouchers" class="voucher-card">
+                <div class="voucher-icon"><i class="ph ph-ticket"></i></div>
+                <div class="voucher-info">
+                  <p class="voucher-code">{{ v.code }}</p>
+                  <p class="voucher-title">{{ v.title }}</p>
+                  <p class="voucher-condition">{{ v.condition }}</p>
+                </div>
+                <span class="voucher-expiry">HSD: {{ v.expiry }}</span>
+              </div>
+            </div>
+
             <p class="msg-time">{{ msg.time }}</p>
           </div>
         </div>

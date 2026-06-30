@@ -10,6 +10,7 @@ interface ChatMessage {
   sender: 'user' | 'ai';
   content: string;
   products?: any[];
+  vouchers?: any[];
   suggestions?: string[];
   time: string;
 }
@@ -37,7 +38,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
   messages: ChatMessage[] = [];
   inputText = '';
   isLoading = false;
-  suggestions: string[] = ['Ưu đãi hôm nay', 'Gói trả góp cho sinh viên', 'So sánh hiệu năng', 'Laptop gaming'];
+  suggestions: string[] = ['Tư vấn laptop gaming cho sinh viên', 'Sản phẩm đang flash sale hôm nay', 'Có mã giảm giá nào không?', 'Điện thoại chụp ảnh đẹp dưới 10 triệu'];
 
   private shouldScrollToBottom = false;
 
@@ -88,7 +89,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
   openSession(sessionId: string) {
     this.activeSessionId = sessionId;
     this.messages = [];
-    this.suggestions = ['Ưu đãi hôm nay', 'Gói trả góp cho sinh viên', 'So sánh hiệu năng', 'Laptop gaming'];
+    this.suggestions = ['Tư vấn laptop gaming cho sinh viên', 'Sản phẩm đang flash sale hôm nay', 'Có mã giảm giá nào không?', 'Điện thoại chụp ảnh đẹp dưới 10 triệu'];
 
     this.chatbotService.getSessionMessages(sessionId).subscribe({
       next: (res) => {
@@ -98,6 +99,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
           sender: m.Sender_type,
           content: m.Content,
           products: m.Products_json ? JSON.parse(m.Products_json) : [],
+          vouchers: m.Vouchers_json ? JSON.parse(m.Vouchers_json) : [],
           suggestions: [],
           time: this.formatTime(m.Created_at),
         }));
@@ -161,7 +163,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
 
     this.chatbotService.sendMessage(this.activeSessionId!, content).subscribe({
       next: (res) => {
-        const { message, products, suggestions } = res.data;
+        const { message, products, vouchers, suggestions } = res.data;
 
         // Cập nhật tiêu đề session trong sidebar
         const session = this.sessions.find(s => s.Session_id === this.activeSessionId);
@@ -174,6 +176,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
           sender: 'ai',
           content: message.Content,
           products: products || [],
+          vouchers: vouchers || [],
           suggestions: [],
           time: this.formatTime(message.Created_at),
         });

@@ -23,26 +23,46 @@
         </div>
 
         <!-- DROPDOWN KẾT QUẢ -->
-        <div class="search-dropdown" *ngIf="showDropdown && smartResults.length > 0">
-          <div
-            *ngFor="let product of smartResults"
-            class="search-dropdown-item"
-            (click)="router.navigate(['/products', product.Product_id])"
-          >
-            <div class="dropdown-img">
-              <img [src]="'/assets/images/' + product.Images[0]" [alt]="product.Product_name"
-                (error)="product.Images = null">
+        <div class="search-dropdown" *ngIf="showDropdown">
+          <ng-container *ngIf="smartResults.length > 0">
+            <div
+              *ngFor="let product of smartResults"
+              class="search-dropdown-item"
+              (click)="router.navigate(['/products', product.Product_id])"
+            >
+              <div class="dropdown-img">
+                <img
+                  [src]="'/assets/images/' + product.Images[0]"
+                  [alt]="product.Product_name"
+                  (error)="product.Images = null"
+                />
+              </div>
+              <div class="dropdown-info">
+                <div class="dropdown-badge">{{ product.aiTag }}</div>
+                <div class="dropdown-name">{{ product.Product_name }}</div>
+                <div class="dropdown-spec">{{ product.Technical_specs?.CPU || product.Technical_specs?.Chipset }}</div>
+              </div>
+              <div class="dropdown-price">
+
+                <span class="curr-price">
+                  {{ formatPrice(getFinalPrice(product.min_price, product.Discount)) }}
+                </span>
+
+                <del
+                  class="old-price"
+                  *ngIf="product.Discount > 0"
+                >
+                  {{ formatPrice(product.min_price) }}
+                </del>
+
+              </div>
             </div>
-            <div class="dropdown-info">
-              <span class="dropdown-badge">{{ product.aiTag }}</span>
-              <p class="dropdown-name">{{ product.Product_name }}</p>
-              <p class="dropdown-spec">{{ product.Technical_specs?.CPU || product.Technical_specs?.Chipset }}</p>
-              <strong>{{ formatPrice(getFinalPrice(product.min_price, product.Discount)) }}</strong>
-            </div>
-            <i class="ph ph-arrow-right"></i>
+          </ng-container>
+          <div class="search-dropdown-empty" *ngIf="smartResults.length === 0">
+            <i class="ph ph-warning-circle empty-icon"></i>
+            <p class="empty-text">{{ searchMessage || 'Không tìm thấy sản phẩm phù hợp.' }}</p> 
           </div>
         </div>
-      </div>
 
       <div class="search-suggestions">
         <span>{{ searchHistory.length > 0 ? 'Gần đây:' : 'Gợi ý:' }}</span>
@@ -73,6 +93,7 @@
         <div class="ai-progress-bar">
           <div class="ai-progress-fill" [style.width.%]="(currentStep + 1) * 25"></div>
         </div>
+      </div>
       </div>
     </div>
 
