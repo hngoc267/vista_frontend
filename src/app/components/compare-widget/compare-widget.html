@@ -1,0 +1,48 @@
+<div *ngIf="isVisible && items.length > 0" class="compare-widget" [class.collapsed]="!isExpanded">
+  
+  <!-- HEADER (bỏ (mousedown) và icon kéo) -->
+  <div class="widget-header" (click)="toggleExpand()">
+    <div class="header-left">
+      <i class="ph ph-git-compare"></i>
+      <span>So sánh ({{ count }}/3)</span>
+    </div>
+    <button class="toggle-btn" (click)="$event.stopPropagation(); toggleExpand();">
+      <i [class]="isExpanded ? 'ph ph-minus' : 'ph ph-plus'"></i>
+    </button>
+  </div>
+
+  <!-- BODY giữ nguyên -->
+  <div class="widget-body" *ngIf="isExpanded">
+    <div class="items-list">
+      <div *ngFor="let item of items" class="item" [routerLink]="['/products', item.productId]">
+        <img 
+          [src]="'/assets/images/' + item.thumbnail" 
+          [alt]="item.productName"
+          (error)="$any($event.target).src = '/assets/images/placeholder.jpg'"
+        >
+        <div class="item-info">
+          <span class="item-name">{{ item.productName }}</span>
+          <span class="item-price">{{ item.price | number }} ₫</span>
+        </div>
+        
+        <button 
+          class="remove-btn" 
+          (click)="$event.stopPropagation(); $event.preventDefault(); removeItem(item.variantId, item.productName)" 
+          title="Xóa"
+        >
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+    </div>
+    <div class="widget-actions">
+      <button class="btn-compare" (click)="goToCompare()" [disabled]="items.length < 2">
+        <i class="ph ph-git-compare"></i>
+        So sánh ngay
+      </button>
+      <button class="btn-clear" (click)="clearAll()" *ngIf="items.length > 0">
+        <i class="ph ph-trash"></i>
+        Xóa tất cả
+      </button>
+    </div>
+  </div>
+</div>

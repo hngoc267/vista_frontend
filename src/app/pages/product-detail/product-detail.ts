@@ -1,10 +1,13 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../services/product';
 import { CartService } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
 import { ReviewService } from '../../services/review';
+import { CompareService, CompareItem } from '../../services/compare';
+import { NotificationService } from '../../components/notification/notification.service';
+import { Subscription } from 'rxjs'
 import Swal from 'sweetalert2';
 
 const REVIEW_PRODUCT_STORAGE_KEY = 'vista_product_reviews_cache';
@@ -42,6 +45,7 @@ export class ProductDetail implements OnInit {
     "Tạm ổn trong tầm giá, mua lúc sale nên thấy khá hời."
   ];
   
+  private compareSubscription?: Subscription;
   
   reviews: any[] = []; // <-- Đã thêm mảng chứa đánh giá
 
@@ -52,7 +56,9 @@ export class ProductDetail implements OnInit {
     private reviewService: ReviewService,
     private route: ActivatedRoute,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private compareService: CompareService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
@@ -60,6 +66,16 @@ export class ProductDetail implements OnInit {
       this.loadProduct(params['id']);
       window.scrollTo(0, 0);
     });
+
+    // Lắng nghe thay đổi danh sách so sánh để cập nhật nút
+    this.compareSubscription = this.compareService.items$.subscribe(() => {
+    // Chỉ cần trigger detectChanges để cập nhật trạng thái nút
+    this.cdr.detectChanges();
+    });
+  }
+
+  ngOnDestroy(): void {
+  this.compareSubscription?.unsubscribe();
   }
 
   loadProduct(id: string) {
@@ -234,6 +250,106 @@ export class ProductDetail implements OnInit {
       categorySlug: checkoutItem.categorySlug,
     }));
     this.router.navigate(['/order']);
+  }
+
+  // ===== PHƯƠNG THỨC XỬ LÝ SO SÁNH =====
+
+/** Kiểm tra xem variant hiện tại đã có trong danh sách so sánh chưa */
+isInCompare(): boolean {
+  if (!this.selectedVariant) return false;
+  return this.compareService.isInCompare(this.selectedVariant.Product_variant_id);
+}
+
+/** Kiểm tra danh sách so sánh đã đầy chưa */
+isCompareFull(): boolean {
+  return this.compareService.isFull();
+}
+
+/** Thêm sản phẩm hiện tại vào danh sách so sánh */
+addToCompare(): void {
+  // --- KIỂM TRA ĐÃ CHỌN BIẾN THỂ CHƯA ---
+  if (!this.selectedVariant) {
+    this.notificationService.error('Vui lòng chọn một phiên bản sản phẩm trước khi thêm vào so sánh.');
+    return;
+  }
+
+    // --- KIỂM TRA DANH SÁCH ĐÃ ĐẦY CHƯA ---
+  if (this.isCompareFull()) {
+
+    this.compareService.openWidget();
+    
+    Swal.fire({
+        icon: 'warning',
+        title: 'Danh sách đã đầy',
+        text: 'Vui lòng xoá bớt sản phẩm để tiếp tục so sánh.',
+        confirmButtonColor: '#2563B0'
+      });
+      return;
+    }
+
+  // --- LOGIC KIỂM TRA CÙNG LOẠI SẢN PHẨM ---
+  const currentItems = this.compareService.getCurrentItems();
+  // ----------------------------------------------------
+
+  const variant = this.selectedVariant;
+  const product = this.product;
+  const compareItem = this.buildCompareItem(product, variant);
+
+  const result = this.compareService.addItem(compareItem);
+
+  if (result.success) {
+    this.notificationService.success('Đã thêm sản phẩm vào danh sách so sánh.');
+
+  } else if (result.needConfirm) {
+    // Lấy loại sản phẩm của item hiện tại và item mới
+    const currentType = currentItems[0]?.productType || '';
+    const newType = this.getNormalizedType(this.product);
+
+    // Dùng tên sản phẩm nếu type không xác định được
+    const currentLabel = (currentType && currentType !== 'Khác')
+      ? currentType
+      : currentItems[0]?.productName || currentItems[0]?.categoryName || '';
+    const newLabel = (newType && newType !== 'Khác')
+      ? newType
+      : this.product?.Product_name || this.category?.Category_name || '';
+
+    Swal.fire({
+      title: 'Thay danh sách so sánh?',
+      html: `
+        Bạn đang so sánh <strong>${currentLabel}</strong>.
+        Thêm sản phẩm này sẽ xóa danh sách cũ và bắt đầu so sánh <strong>${newLabel}</strong>.
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#2563B0',
+      cancelButtonColor: '#94A3B8',
+      confirmButtonText: 'Xóa và thêm mới',
+      cancelButtonText: 'Hủy'
+    }).then((swalResult) => {
+      if (swalResult.isConfirmed) {
+        this.compareService.addItemAfterClear(compareItem);
+        this.notificationService.success('Đã thêm sản phẩm vào danh sách so sánh.');
+      }
+    });
+  } else {
+    this.notificationService.error(result.message || 'Không thể thêm sản phẩm vào so sánh.');
+  }
+}
+
+  // Hàm buildCompareItem để tránh lặp code
+  private buildCompareItem(product: any, variant: any): CompareItem {
+    const productType = this.getNormalizedType(product);
+    return {
+      productId: product.Product_id,
+      variantId: variant.Product_variant_id,
+      productName: product.Product_name,
+      thumbnail: product.Images?.[0] || '',
+      price: this.getFinalPrice(Number(variant.Price), Number(product.Discount)),
+      categoryId: product.Category_id,
+      categoryName: this.category?.Category_name || '',
+      brandName: this.brand?.Brand_name || '',
+      productType: this.getNormalizedType(product)
+    };
   }
 
   setTab(tab: string) {
@@ -968,5 +1084,50 @@ export class ProductDetail implements OnInit {
     }
 
     return '';
+  }
+  // Thêm hàm chuẩn hoá
+  getNormalizedType(product: any): string {
+    const rawType = (product.Technical_specs?.['Type'] || '').trim();
+
+    if (rawType) {
+      const lowerRaw = rawType.toLowerCase();
+      if (lowerRaw.includes('pin sạc') || lowerRaw.includes('sạc dự phòng') || lowerRaw.includes('power bank') || lowerRaw.includes('powerbank')) return 'Pin/Sạc';
+      if (lowerRaw.includes('cổng chuyển đổi') || lowerRaw.includes('usb-c hub') || lowerRaw.includes('usb hub') || lowerRaw.includes('dock')) return 'Hub';
+      if (lowerRaw.includes('tai nghe') || lowerRaw.includes('headphone') || lowerRaw.includes('earbud') || lowerRaw.includes('in-ear')) return 'Tai nghe';
+      if (lowerRaw.includes('bàn phím') || lowerRaw.includes('keyboard')) return 'Bàn phím';
+      if (lowerRaw.includes('tay cầm') || lowerRaw.includes('controller') || lowerRaw.includes('gamepad')) return 'Tay cầm game';
+      if (lowerRaw.includes('màn hình') || lowerRaw.includes('monitor')) return 'Màn hình';
+      if (lowerRaw.includes('chuột') || lowerRaw.includes('mouse')) return 'Chuột';
+      if (lowerRaw.includes('micro') || lowerRaw.includes('microphone')) return 'Micro';
+      if (lowerRaw.includes('loa') || lowerRaw.includes('speaker')) return 'Loa';
+      if (lowerRaw.includes('dây cáp') || lowerRaw.includes('cáp') || lowerRaw.includes('cable')) return 'Cáp sạc';
+      if (lowerRaw.includes('sạc') || lowerRaw.includes('charger') || lowerRaw.includes('adapter')) return 'Pin/Sạc';
+      if (lowerRaw.includes('hub')) return 'Hub';
+      if (lowerRaw.includes('pin')) return 'Pin/Sạc';
+      return rawType;
+    }
+
+    // NHẬN DIỆN MỞ RỘNG THEO TÊN VÀ DANH MỤC
+    const name = (product.Product_name || '').toLowerCase();
+    const catId = product.Category_id || '';
+
+    // Nhận diện thiết bị cốt lõi
+    if (catId === 'CAT_001' || name.includes('laptop') || name.includes('macbook')) return 'Laptop';
+    if (catId === 'CAT_002' || name.includes('điện thoại') || name.includes('iphone') || name.includes('smartphone') || name.includes('galaxy s')) return 'Điện thoại';
+    if (catId === 'CAT_003' || name.includes('tablet') || name.includes('ipad') || name.includes('máy tính bảng')) return 'Máy tính bảng';
+
+    // Nhận diện phụ kiện
+    if (name.includes('tai nghe') || name.includes('headphone') || name.includes('earbud') || name.includes('wh-') || name.includes('wf-') || name.includes('buds') || name.includes('airpods')) return 'Tai nghe';
+    if (name.includes('bàn phím') || name.includes('keyboard') || name.includes('mx keys')) return 'Bàn phím';
+    if (name.includes('chuột') || name.includes('mouse') || name.includes('mx master')) return 'Chuột';
+    if (name.includes('loa') || name.includes('speaker') || name.includes('srs') || name.includes('soundcore') || name.includes('jbl')) return 'Loa';
+    if (name.includes('micro') || name.includes('mic')) return 'Micro';
+    if (name.includes('tay cầm') || name.includes('controller') || name.includes('gamepad')) return 'Tay cầm game';
+    if (name.includes('màn hình') || name.includes('monitor')) return 'Màn hình';
+    if (name.includes('hub') || name.includes('dock')) return 'Hub';
+    if (name.includes('cáp') || name.includes('cable')) return 'Cáp sạc';
+    if (name.includes('sạc') || name.includes('adapter') || name.includes('powerbank') || name.includes('power bank')) return 'Pin/Sạc';
+
+    return 'Khác';
   }
 }

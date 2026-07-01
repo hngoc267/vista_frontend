@@ -1,0 +1,197 @@
+<div class="breadcrumb-bar">
+  <div class="section-container">
+    <a [routerLink]="['/']">Trang chủ</a>
+    <span class="sep">›</span>
+    <a [routerLink]="['/products']" [queryParams]="{category: currentCategoryId}">
+      {{ currentCategoryName || 'Sản phẩm' }}
+    </a>
+    <span class="sep">›</span>
+    <span class="current">So sánh sản phẩm</span>
+  </div>
+</div>
+
+<div class="compare-page">
+  <div class="main-container">
+
+    <!-- HEADER với 2 nút -->
+    <div class="page-header">
+      <h1 class="page-title">So sánh sản phẩm</h1>
+      <div class="header-actions">
+        <!-- Nút Quay lại trang danh mục -->
+        <a class="continue-link" [routerLink]="['/products']">
+          <i class="ph ph-arrow-left"></i>
+          <span>Danh mục sản phẩm</span>
+        </a>
+        <!-- Nút phụ lịch sử phân tích với AI -->
+        <button class="btn-secondary" routerLink="/ai-history">
+          <i class="ph ph-clock"></i> Xem lịch sử phân tích với AI
+        </button>
+        <!-- Nút Phân tích với AI -->
+        <button class="btn-ai-header" (click)="analyzeWithAI()">
+          <i class="ph ph-robot"></i>
+          Phân tích với AI
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="skeleton-wrapper">
+      <div class="skeleton-banner"></div>
+      <div class="skeleton-cards">
+        <div class="skeleton-card" *ngFor="let i of [1,2,3]"></div>
+      </div>
+      <div class="skeleton-table">
+        <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5,6]"></div>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error" class="error-state">
+      <i class="ph ph-warning-circle"></i>
+      <p>{{ error }}</p>
+      <button class="btn-primary" (click)="loadCompareData()">Thử lại</button>
+    </div>
+
+    <!-- Nội dung chính -->
+    <div *ngIf="!error && products.length > 0">
+
+      <!-- Hero + Product Cards -->
+      <div class="hero-bg-wrapper" (mousemove)="onMouseMove($event)" (mouseleave)="onMouseLeave($event)">
+        <div class="hero-bg">
+          <div class="hero-petals-container">
+            <span class="hero-petal" *ngFor="let i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]">
+              {{ i % 3 === 0 ? '🏆' : '⚽' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="floating-container">
+          <div class="spacer-column"></div>
+          <div class="product-card-wrapper" *ngFor="let product of displayProducts; let i = index">
+            
+            <div class="product-card" *ngIf="product">
+              <button class="btn-remove" *ngIf="i < products.length && products.length > 2" 
+                      (click)="removeItem(product.selectedVariantId)" title="Xóa">✕</button>
+              <a [routerLink]="['/products', product.Product_id]" class="product-link">
+                <img [src]="getProductImage(product)"
+                    [alt]="product.Product_name"
+                    class="product-thumb">
+
+                <h3>{{ product.Product_name }}</h3>
+
+                <p class="price">
+                  {{ getSpecValue(product, 'Price') }}
+                </p>
+              </a>
+              <div class="action-buttons">
+                <button class="btn-cart" (click)="addToCart(product)">Thêm vào giỏ hàng</button>
+                <button class="btn-buy" (click)="buyNow(product)">Mua ngay</button>
+              </div>
+            </div>
+
+            <ng-container *ngIf="!product">
+              <div class="product-card add-new-card" *ngIf="i === 2 && products.length < 3" (click)="openAddModal()">
+                <div class="add-icon">+</div>
+                <h3>Thêm sản phẩm</h3>
+              </div>
+              <div class="empty-placeholder" *ngIf="i !== 2 || products.length >= 3">
+                <span class="placeholder-text">—</span>
+              </div>
+            </ng-container>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal thêm sản phẩm -->
+      <div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>Thêm sản phẩm cùng danh mục</h2>
+            <button class="modal-close" (click)="closeAddModal()">✕</button>
+          </div>
+          <div class="modal-body">
+            
+            <div class="search-box" *ngIf="!loadingAvailable">
+              <i class="ph ph-magnifying-glass"></i>
+              <input 
+                type="text" 
+                placeholder="Tìm sản phẩm theo tên..." 
+                [(ngModel)]="searchKeyword"
+                (input)="filterAvailableProducts()"
+              />
+              <button class="clear-search" *ngIf="searchKeyword" (click)="clearSearch()">✕</button>
+            </div>
+
+            <div *ngIf="loadingAvailable" class="loading-spinner">
+              <div class="spinner"></div>
+              <p>Đang tải...</p>
+            </div>
+
+            <div *ngIf="!loadingAvailable && filteredProducts.length === 0" class="empty-message">
+              <p *ngIf="searchKeyword">Không tìm thấy sản phẩm nào khớp với "{{ searchKeyword }}".</p>
+              <p *ngIf="!searchKeyword">Không có sản phẩm nào khác trong danh mục này.</p>
+            </div>
+
+            <div class="product-list-modal" *ngIf="!loadingAvailable && filteredProducts.length > 0">
+              <div class="product-item" *ngFor="let product of filteredProducts">
+                <a [routerLink]="['/products', product.Product_id]" class="item-link" (click)="$event.stopPropagation()">
+                  <img [src]="getProductImage(product)" [alt]="product.Product_name" class="item-thumb">
+                  <div class="item-info">
+                    <h4>{{ product.Product_name }}</h4>
+                    <p class="item-price">{{ formatPrice(getFinalPrice(product.min_price, product.Discount)) }}</p>
+                  </div>
+                </a>
+                <button class="btn-add-item" (click)="$event.stopPropagation(); addProductFromModal(product)">Thêm</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Bảng thông số -->
+      <div class="specs-matrix-wrapper">
+        <div class="specs-matrix">
+          <table class="specs-table">
+            <thead>
+              <tr>
+                <th class="spec-label">Sản phẩm</th>
+                <th *ngFor="let product of displayProducts" class="spec-value-header">
+                  <strong>{{ product ? product.Product_name : '—' }}</strong>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let group of specGroups">
+                <tr class="group-header">
+                  <td [attr.colspan]="displayProducts.length + 1">{{ group.name }}</td>
+                </tr>
+                <tr *ngFor="let key of group.keys">
+                  <td class="spec-label">{{ getDisplayKey(key) }}</td>
+                  <td *ngFor="let product of displayProducts" class="spec-value">
+                    {{ getSpecValue(product, key) }}
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 
+        ======== ĐÃ XÓA ACTION-FOOTER ======== 
+        Nút giờ ở trên header rồi, không cần footer nữa.
+      -->
+
+    </div> 
+
+    <!-- Empty state -->
+    <div *ngIf="!error && products.length === 0" class="empty-state">
+      <i class="ph ph-git-compare"></i>
+      <p>Không có sản phẩm để so sánh.</p>
+      <button class="btn-primary" (click)="goHome()">Tiếp tục mua sắm</button>
+    </div>
+
+  </div>
+</div>
