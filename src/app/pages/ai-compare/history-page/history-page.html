@@ -1,0 +1,117 @@
+<div class="history-page">
+
+  <!-- BANNER HERO -->
+  <section class="history-hero">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <i class="ph ph-clock"></i>
+          <span>AI HISTORY</span>
+        </div>
+        <h1 class="hero-title">
+          Lịch sử phân tích AI<br>
+          <span class="highlight">xem lại các quyết định của bạn</span>
+        </h1>
+        <p class="hero-desc">
+          Những lần bạn đã nhờ AI so sánh và tư vấn sản phẩm
+        </p>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-number">{{ history.length }}</span>
+            <span class="stat-label">Lần phân tích</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-number">{{ getUniqueCategories().length }}</span>
+            <span class="stat-label">Danh mục đã so sánh</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="ai-icon">
+          <i class="ph ph-clock"></i>
+        </div>
+        <div class="floating-dots">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Nội dung chính -->
+  <div class="history-shell">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-bar">
+      <a routerLink="/">Trang chủ</a>
+      <span class="sep">›</span>
+      <a routerLink="/compare">So sánh</a>
+      <span class="sep">›</span>
+      <span class="current">Lịch sử AI</span>
+    </div>
+
+    <!-- ====== SELECTION BAR (GIỐNG CART) ====== -->
+    <div class="selection-bar" *ngIf="history.length > 0">
+      <label class="select-all">
+        <input
+          type="checkbox"
+          [checked]="isAllSelected()"
+          (change)="toggleAll($event)"
+        />
+        <span>Chọn tất cả ({{ history.length }} bản ghi)</span>
+      </label>
+
+      <button
+        class="remove-selected"
+        type="button"
+        (click)="removeSelected()"
+        [disabled]="selectedCount === 0"
+      >
+        <i class="ph ph-trash"></i> Xóa đã chọn
+      </button>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="history.length === 0" class="empty-state">
+      <i class="ph ph-robot"></i>
+      <p>Chưa có lịch sử phân tích nào.</p>
+      <button class="btn-primary" routerLink="/compare">Bắt đầu so sánh</button>
+    </div>
+
+    <!-- Danh sách (có checkbox) -->
+    <div class="history-list" *ngIf="history.length > 0">
+      <div
+        class="history-item"
+        *ngFor="let item of history"
+        [class.is-selected]="item.checked"
+      >
+        <!-- Checkbox -->
+        <label class="item-check" (click)="$event.stopPropagation()">
+          <input
+            type="checkbox"
+            [checked]="item.checked"
+            (change)="toggleItem(item, $event)"
+          />
+        </label>
+
+        <!-- Nội dung (click vào đây để xem chi tiết) -->
+        <div class="item-content" (click)="viewDetail(item)">
+          <div class="item-products">{{ getProductNames(item) }}</div>
+          <div class="item-meta">
+            <span class="category">{{ item.categoryName }}</span>
+            <span class="time">{{ formatDate(item.timestamp) }}</span>
+          </div>
+          <div class="item-recommendation">
+            <i class="ph ph-robot"></i> Khuyến nghị: <strong>{{ item.result.recommendation }}</strong>
+          </div>
+        </div>
+
+        <!-- Nút xóa riêng (giữ lại) -->
+        <button class="btn-remove" (click)="removeItem(item.id, $event)">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

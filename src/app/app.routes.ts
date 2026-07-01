@@ -17,6 +17,10 @@ import { OrderHistory } from './pages/order-history/order-history';
 import { ReturnOrder } from './pages/return-order/return-order';
 import { FlashSale } from './pages/flash-sale/flash-sale';
 import { Review } from './pages/review/review';
+import { ComparePageComponent } from './pages/compare-page/compare-page';
+import { CriteriaPage } from './pages/ai-compare/criteria-page/criteria-page';
+import { ResultPage }   from './pages/ai-compare/result-page/result-page';
+import { HistoryPage }  from './pages/ai-compare/history-page/history-page';
 import { AiAssistantComponent } from './pages/ai-assistant/ai-assistant';
 
 export const routes: Routes = [
@@ -39,6 +43,10 @@ export const routes: Routes = [
   { path: 'return-order', component: ReturnOrder },
   { path: 'flash-sale', component: FlashSale },
   { path: 'review', component: Review, canActivate: [AuthGuard] },
+  { path: 'compare', component: ComparePageComponent },
+  { path: 'ai-compare', component: CriteriaPage },
+  { path: 'ai-result',  component: ResultPage   },
+  { path: 'ai-history', component: HistoryPage  },
   { path: '**', redirectTo: '' },
 
 ];

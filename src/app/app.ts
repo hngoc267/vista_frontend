@@ -8,6 +8,7 @@ import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './components/navbar/navbar';
 import { FooterComponent } from './components/footer/footer';
 import { CommonModule } from '@angular/common';
+import { CompareWidgetComponent } from './components/compare-widget/compare-widget';
 import { HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -19,6 +20,7 @@ import { filter } from 'rxjs/operators';
     RouterOutlet,
     NavbarComponent,
     FooterComponent,
+    CompareWidgetComponent,
     CommonModule
   ],
   templateUrl: './app.html',

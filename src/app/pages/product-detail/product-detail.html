@@ -136,7 +136,13 @@
             <i class="ph ph-arrow-counter-clockwise"></i>
             <span>Đổi trả trong 7 ngày</span>
           </div>
-          <button class="btn-compare">Thêm vào so sánh</button>
+          <button 
+            class="btn-compare" 
+            (click)="addToCompare()" 
+            [disabled]="isInCompare()" 
+          >
+            {{ isInCompare() ? 'Đã thêm' : 'Thêm vào so sánh' }}
+          </button>
         </div>
 
       </div>

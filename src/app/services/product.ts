@@ -21,6 +21,9 @@ export class ProductService {
       retry({ count: 3, delay: 1000 })
     );
   }
+  getCompareProducts(variantIds: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/products/compare?variantIds=${variantIds}`);
+  }
 
   getFeaturedProducts(): Observable<any> {
     return this.http.get(`${this.apiUrl}/products/featured`).pipe(

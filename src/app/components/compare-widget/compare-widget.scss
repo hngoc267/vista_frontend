@@ -1,0 +1,273 @@
+.compare-widget {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;           // Đặt góc trái dưới
+  width: 340px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+  border: 1px solid #E2E8F0;
+  z-index: 1000;
+  font-family: 'Be Vietnam Pro', sans-serif;
+  overflow: hidden;
+
+  &.collapsed {
+    width: auto;
+    min-width: 140px;
+    border: 1px solid #00C2D4;
+    animation: sparkling-glow 3s infinite linear;
+    .widget-header .header-left i {
+      color: #00C2D4;
+      animation: icon-bounce 2s infinite ease-in-out;
+    }
+    .widget-body {
+      display: none;
+    }
+  }
+
+  .widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #F8FAFC;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #F1F5F9;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0F172A;
+
+      i {
+        font-size: 18px;
+        color: #2563B0;
+      }
+    }
+
+    .toggle-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748B;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #E2E8F0;
+        color: #0F172A;
+      }
+
+      i {
+        font-size: 16px;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .widget-body {
+    padding: 12px 16px 16px;
+
+    .items-list {
+      max-height: 220px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+
+      &::-webkit-scrollbar {
+        width: 4px;
+      }
+      &::-webkit-scrollbar-track {
+        background: #F1F5F9;
+        border-radius: 4px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 4px;
+      }
+
+      .item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 8px 8px 4px;
+        border-bottom: 1px solid #F1F5F9;
+        transition: background 0.2s;
+
+        &:hover {
+          background: #F8FAFC;
+          border-radius: 8px;
+        }
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        img {
+          width: 44px;
+          height: 44px;
+          object-fit: contain;
+          border-radius: 8px;
+          background: #F8FAFC;
+          padding: 4px;
+          flex-shrink: 0;
+        }
+
+        .item-info {
+          flex: 1;
+          min-width: 0;
+
+          .item-name {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #0F172A;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .item-price {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #2563B0;
+          }
+        }
+
+        .remove-btn {
+          width: 28px;
+          height: 28px;
+          border: none;
+          background: transparent;
+          border-radius: 6px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #94A3B8;
+          transition: all 0.2s;
+          flex-shrink: 0;
+
+          &:hover {
+            background: #FEE2E2;
+            color: #EF4444;
+          }
+
+          i {
+            font-size: 16px;
+          }
+        }
+      }
+    }
+
+    .widget-actions {
+      display: flex;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #E2E8F0;
+
+      button {
+        flex: 1;
+        padding: 10px 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        font-family: 'Be Vietnam Pro', sans-serif;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+
+        i {
+          font-size: 16px;
+        }
+
+        &.btn-compare {
+          background: #2563B0;
+          color: #FFFFFF;
+
+          &:hover:not(:disabled) {
+            background: #1E4D8C;
+          }
+
+          &:disabled {
+            background: #CBD5E1;
+            color: #94A3B8;
+            cursor: not-allowed;
+          }
+        }
+
+        &.btn-clear {
+          background: #F1F5F9;
+          color: #64748B;
+
+          &:hover {
+            background: #FEE2E2;
+            color: #EF4444;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .compare-widget {
+    bottom: 16px;
+    left: 16px;       // vẫn giữ trái
+    width: 290px;
+
+    .widget-body {
+      .items-list {
+        max-height: 160px;
+      }
+    }
+  }
+}
+
+/* ── HIỆU ỨNG LẤP LÁNH CHO WIDGET THU GỌN ── */
+@keyframes sparkling-glow {
+  0% {
+    box-shadow: 0 0 10px rgba(0, 194, 212, 0.4), inset 0 0 5px rgba(0, 194, 212, 0.2);
+    border-color: #00C2D4; /* Xanh ngọc */
+  }
+  33% {
+    box-shadow: 0 0 20px rgba(231, 214, 122, 0.6), inset 0 0 5px rgba(231, 214, 122, 0.2);
+    border-color: #e7d67a; /* Vàng sáng (Tạo cảm giác tia lửa lấp lánh) */
+  }
+  66% {
+    box-shadow: 0 0 15px rgba(37, 99, 176, 0.5), inset 0 0 5px rgba(37, 99, 176, 0.2);
+    border-color: #2563B0; /* Xanh Navy */
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(0, 194, 212, 0.4), inset 0 0 5px rgba(0, 194, 212, 0.2);
+    border-color: #00C2D4;
+  }
+}
+
+/* Hiệu ứng nhịp đập nhẹ cho icon */
+@keyframes icon-bounce {
+  0%, 100% { 
+    transform: scale(1); 
+  }
+  50% { 
+    transform: scale(1.15); 
+    text-shadow: 0 0 8px rgba(0, 194, 212, 0.6); 
+  }
+}

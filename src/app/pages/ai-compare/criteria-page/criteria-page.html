@@ -1,0 +1,145 @@
+<div class="criteria-page">
+
+  <!-- BANNER HERO -->
+  <section class="criteria-hero">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <i class="ph ph-robot"></i>
+          <span>AI COMPARE</span>
+        </div>
+        <h1 class="hero-title">
+          AI cần hiểu nhu cầu của bạn<br>
+          <span class="highlight">trước khi so sánh chuyên sâu</span>
+        </h1>
+        <p class="hero-desc">
+          Chạm theo thứ tự ưu tiên — chạm trước = quan trọng hơn
+        </p>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-number">{{ products.length }}</span>
+            <span class="stat-label">Sản phẩm so sánh</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-number">{{ selectedKeys.length }}</span>
+            <span class="stat-label">Ưu tiên đã chọn</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="ai-icon">
+          <i class="ph ph-robot"></i>
+        </div>
+        <div class="floating-dots">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Nội dung chính -->
+  <div class="criteria-shell">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-bar">
+      <a routerLink="/">Trang chủ</a>
+      <span class="sep">›</span>
+      <a routerLink="/compare">So sánh</a>
+      <span class="sep">›</span>
+      <span class="current">Tiêu chí AI</span>
+    </div>
+
+    <!-- Priority Selection -->
+    <section class="priority-section">
+      <div class="priority-header">
+        <div>
+          <h2>Chọn ưu tiên của bạn</h2>
+          <p class="hint">Chạm theo thứ tự quan trọng nhất trước — AI sẽ tính trọng số tự động</p>
+        </div>
+        <button 
+          *ngIf="hasSelection" 
+          class="btn-clear-selection" 
+          (click)="clearSelection()"
+          title="Bỏ chọn tất cả"
+        >
+          <i class="ph ph-arrow-counter-clockwise"></i> Đặt lại
+        </button>
+      </div>
+
+      <div class="priority-list">
+        <button
+          *ngFor="let c of getDisplayList()"
+          type="button"
+          class="priority-row"
+          [class.picked]="isSelected(c.key)"
+          [class.picked-first]="getRank(c.key) === 1"
+          (click)="toggleCriterion(c.key)"
+        >
+          <span class="rank-num">
+            <ng-container *ngIf="isSelected(c.key)">
+              <span class="rank-badge rank-{{ getRank(c.key) }}">{{ getRank(c.key) }}</span>
+            </ng-container>
+            <ng-container *ngIf="!isSelected(c.key)">
+              <span class="rank-plus">+</span>
+            </ng-container>
+          </span>
+          <span class="priority-name">{{ c.label }}</span>
+          <span class="priority-pct" *ngIf="isSelected(c.key)">{{ c.weight }}%</span>
+          <span class="priority-hint" *ngIf="!isSelected(c.key)">Chạm để thêm</span>
+          <i class="ph ph-check-circle priority-check" *ngIf="isSelected(c.key)"></i>
+        </button>
+      </div>
+
+      <div class="empty-warning" *ngIf="!hasSelection">
+        <i class="ph ph-info"></i>
+        <span>Chọn ít nhất 1 ưu tiên để AI phân tích chính xác hơn — hoặc bấm <strong>"Bỏ qua (Dùng mặc định)"</strong> bên dưới.</span>
+      </div>
+    </section>
+
+    <!-- AI Summary -->
+    <section class="summary-section" [class.has-selection]="hasSelection">
+      <div class="summary-card">
+        <div class="summary-header">
+          <div class="summary-icon">
+            <i class="ph ph-robot"></i>
+          </div>
+          <h3>Tóm tắt AI</h3>
+          <span class="summary-badge" *ngIf="hasSelection">{{ selectedKeys.length }} ưu tiên</span>
+        </div>
+        <p>AI sẽ tối ưu thuật toán so sánh dựa trên các ưu tiên bạn chọn</p>
+        <div class="selected-purposes" *ngIf="hasSelection">
+          <span class="chip" *ngFor="let label of getSelectedLabels(); let i = index">
+            <span class="chip-rank">{{ i + 1 }}</span>
+            {{ label }}
+            <span class="chip-weight">{{ getWeightByRank(i) }}%</span>
+          </span>
+        </div>
+        <div class="summary-message">
+          <strong>Gợi ý từ AI:</strong>
+          <span *ngIf="hasSelection; else defaultSummary">
+            Với ưu tiên hàng đầu là <strong>“{{ getSelectedLabels()[0] }}”</strong>, chúng tôi sẽ tập trung phân tích các sản phẩm đáp ứng tốt nhất tiêu chí này.
+          </span>
+          <ng-template #defaultSummary>
+            Bạn chưa chọn ưu tiên nào — AI sẽ dùng bộ tiêu chí mặc định của danh mục sản phẩm.
+          </ng-template>
+        </div>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <div class="action-row">
+      <button class="btn-primary" (click)="onAnalyze()" [disabled]="isLoading || !hasSelection">
+        <i class="ph ph-robot" *ngIf="!isLoading"></i>
+        <span *ngIf="!isLoading">Bắt đầu so sánh bằng AI →</span>
+        <span *ngIf="isLoading">
+          <i class="ph ph-spinner ph-spin"></i> Đang phân tích...
+        </span>
+      </button>
+      <button class="btn-secondary" (click)="onSkip()" [disabled]="isLoading">
+        <i class="ph ph-arrow-right"></i> Bỏ qua (Dùng mặc định)
+      </button>
+    </div>
+  </div>
+</div>

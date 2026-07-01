@@ -1,0 +1,185 @@
+<div class="result-page">
+
+  <!-- BANNER HERO -->
+  <section class="result-hero">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <i class="ph ph-robot"></i>
+          <span>AI COMPARE</span>
+        </div>
+        <h1 class="hero-title">
+          Kết quả phân tích AI<br>
+          <span class="highlight">dựa trên nhu cầu của bạn</span>
+        </h1>
+        <p class="hero-desc">
+          AI đã phân tích và đưa ra khuyến nghị phù hợp nhất
+        </p>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-number">{{ result?.products?.length || 0 }}</span>
+            <span class="stat-label">Sản phẩm so sánh</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <span class="stat-number">{{ result?.confidence || 0 }}%</span>
+            <span class="stat-label">Độ tin cậy</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="ai-icon">
+          <i class="ph ph-robot"></i>
+        </div>
+        <div class="floating-dots">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Nội dung chính -->
+  <div class="result-shell">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb-bar">
+      <a routerLink="/">Trang chủ</a>
+      <span class="sep">›</span>
+      <a routerLink="/compare">So sánh</a>
+      <span class="sep">›</span>
+      <a routerLink="/ai-compare">Tiêu chí AI</a>
+      <span class="sep">›</span>
+      <span class="current">Kết quả AI</span>
+    </div>
+
+    <!-- Skeleton Loading -->
+    <div *ngIf="isLoading" class="skeleton-wrapper">
+      
+      <!-- Lời khuyên AI giả lập -->
+      <div class="skeleton-recommendation"></div>
+
+      <!-- Lưới 2 hoặc 3 thẻ sản phẩm giả lập -->
+      <section class="products-grid" [class.has-3]="products.length >= 3">
+        <div class="product-card" *ngFor="let p of products">
+          <div class="skeleton-header">
+            <div class="skeleton-img"></div>
+            <div class="skeleton-text title"></div>
+            <div class="skeleton-text price"></div>
+          </div>
+
+          <div class="skeleton-score"></div>
+
+          <div class="skeleton-actions">
+            <div class="skeleton-btn"></div>
+            <div class="skeleton-btn"></div>
+          </div>
+
+          <div class="skeleton-pros-cons">
+            <div class="skeleton-block"></div>
+            <div class="skeleton-block"></div>
+          </div>
+
+          <div class="skeleton-who-block"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Nội dung khi có kết quả -->
+    <ng-container *ngIf="result && !isLoading">
+      <!-- Recommendation -->
+      <section class="recommendation-section">
+        <div class="rec-card">
+          <div class="rec-badge">
+            <i class="ph ph-robot"></i> AI Recommendation
+            <span class="rec-badge-confidence">Độ tin cậy {{ result.confidence }}%</span>
+          </div>
+          <h2>{{ result.recommendation }}</h2>
+          <div class="rec-meta">
+            <span class="criteria">
+              <i class="ph ph-list"></i> Tiêu chí: {{ result.criteria_used.join(', ') }}
+            </span>
+          </div>
+          <p class="summary">{{ result.summary }}</p>
+        </div>
+      </section>
+
+      <!-- 2 sản phẩm -->
+      <section class="products-grid" [class.has-3]="result.products.length >= 3">
+        <div 
+          class="product-card" 
+          *ngFor="let p of result.products; let i = index"
+          [class.is-recommended]="p.name === result.recommendation"
+        >
+          <div class="card-badge" *ngIf="p.name === result.recommendation">
+            <i class="ph ph-crown"></i> Được đề xuất
+          </div>
+
+          <div class="card-header">
+            <img
+              *ngIf="products.length > i"
+              [src]="getProductImage(i)"
+              alt="{{ p.name }}"
+              class="product-img"
+            />
+            <h3>{{ p.name }}</h3>
+            <div *ngIf="products.length > i" class="price">{{ getProductPrice(i) }}</div>
+          </div>
+
+          <div class="match-score">
+            <span class="score-label">AI Match Score</span>
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="p.match_score"></div>
+            </div>
+            <span class="score-value">{{ p.match_score }}%</span>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn-cart" (click)="addToCart(i)">Thêm vào giỏ hàng</button>
+            <button class="btn-buy" (click)="buyNow(i)">Mua ngay</button>
+          </div>
+
+          <div class="pros-cons">
+            <div class="pros">
+              <h4><i class="ph ph-check-circle"></i> Ưu điểm</h4>
+              <ul>
+                <li *ngFor="let pro of p.pros">{{ pro }}</li>
+              </ul>
+            </div>
+            <div class="cons">
+              <h4><i class="ph ph-x-circle"></i> Nhược điểm</h4>
+              <ul>
+                <li *ngFor="let con of p.cons">{{ con }}</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="who-should-buy">
+            <h4><i class="ph ph-user"></i> Ai nên chọn sản phẩm này?</h4>
+            <p>{{ p.who_should_buy }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <div class="action-row">
+        <button class="btn-primary" (click)="onAdjust()">
+          <i class="ph ph-sliders"></i> Điều chỉnh tiêu chí
+        </button>
+        <button class="btn-secondary" (click)="onChooseOther()">
+          <i class="ph ph-arrow-left"></i> Chọn sản phẩm khác
+        </button>
+        <button class="btn-secondary" (click)="goToHistory()">
+          <i class="ph ph-clock"></i> Lịch sử phân tích
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- Fallback -->
+    <div *ngIf="!result && !isLoading" class="empty-state">
+      <i class="ph ph-robot"></i>
+      <p>Không có kết quả phân tích. Vui lòng quay lại trang so sánh.</p>
+      <button class="btn-primary" routerLink="/compare">Quay lại so sánh</button>
+    </div>
+  </div>
+</div>
