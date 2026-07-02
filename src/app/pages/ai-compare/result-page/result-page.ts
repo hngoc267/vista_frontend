@@ -180,6 +180,25 @@ getProductImage(index: number): string {
     this.router.navigate(['/ai-history']);
   }
 
+  goToProductDetail(index: number): void {
+    const product = this.products[index];
+    const productId = product?.Product_id;
+
+    if (!productId) {
+      // Trường hợp sản phẩm được phục hồi từ lịch sử (AiSavedProduct)
+      // không lưu Product_id nên không thể điều hướng tới trang chi tiết.
+      Swal.fire({
+        icon: 'info',
+        title: 'Không thể xem chi tiết',
+        text: 'Sản phẩm này được phục hồi từ lịch sử nên thiếu thông tin để mở trang chi tiết.',
+        confirmButtonColor: '#2563B0'
+      });
+      return;
+    }
+
+    this.router.navigate(['/products', productId]);
+  }
+
   // ===== THÊM VÀO GIỎ HÀNG =====
   addToCart(index: number): void {
     const product = this.products[index];

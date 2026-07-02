@@ -371,10 +371,12 @@ export class AiCompareService {
         weightedSum += criterionScore * (criterion.weight / totalWeight);
 
         // Ngưỡng điều chỉnh theo range 40→100:
-        // strengths: ≥ 85 (tương đương top 25% của range)
-        // weaknesses: ≤ 55 (tương đương bottom 25% của range)
-        if (criterionScore >= 85) strengths.push(criterion.label);
-        if (criterionScore <= 55) weaknesses.push(criterion.label);
+        // strengths: ≥ 75 (nới từ 85 để nhiều tiêu chí được coi là "nổi
+        // bật" hơn, tránh mảng strengths rỗng khi sản phẩm không quá
+        // chênh lệch nhau)
+        // weaknesses: ≤ 65 (nới từ 55, cùng lý do)
+        if (criterionScore >= 75) strengths.push(criterion.label);
+        if (criterionScore <= 65) weaknesses.push(criterion.label);
       }
 
       return {
@@ -428,12 +430,18 @@ export class AiCompareService {
               (np: any) => np.variant_id === scoring[i].variant_id
             ) ?? narrative.products?.[i] ?? {};
 
+            // Lưới an toàn: nếu Gemini vẫn lỡ trả mảng rỗng dù đã yêu cầu
+            // trong prompt, dùng câu mặc định để card không bao giờ thiếu
+            // hẳn 1 trong 2 phần ưu/nhược điểm.
+            const pros = aiProduct.pros?.length ? aiProduct.pros : ['Đáp ứng tốt nhu cầu sử dụng cơ bản'];
+            const cons = aiProduct.cons?.length ? aiProduct.cons : ['Không có điểm yếu nổi bật so với đối thủ'];
+
             return {
               name: p.Product_name,
               variant_id: scoring[i].variant_id,
               match_score: scoring[i].score, // rule-based, không lấy từ AI
-              pros: aiProduct.pros ?? [],
-              cons: aiProduct.cons ?? [],
+              pros,
+              cons,
               who_should_buy: aiProduct.who_should_buy ?? '',
             };
           }),
@@ -499,6 +507,10 @@ ${productsText}`;
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const systemInstruction = `Bạn là chuyên gia tư vấn công nghệ. Dựa trên điểm số và dữ liệu đã được tính toán sẵn (KHÔNG tự ý đổi điểm), hãy viết phần phân tích bằng tiếng Việt tự nhiên và trả về JSON đúng format sau, KHÔNG kèm bất kỳ text giải thích nào ngoài JSON:
+
+QUY TẮC BẮT BUỘC:
+- Mỗi sản phẩm PHẢI có ít nhất 2 pros VÀ ít nhất 2 cons, không được để mảng nào rỗng.
+- Nếu dữ liệu ghi "không nổi bật" hoặc "không có điểm yếu rõ rệt", hãy TỰ SO SÁNH TƯƠNG ĐỐI giữa các sản phẩm đang xét để tìm ra ít nhất 1 ưu điểm và 1 nhược điểm hợp lý (ví dụ: giá nhỉnh hơn một chút, thiết kế dày hơn đối thủ, thiếu 1 tính năng phụ...). Không được để trống.
 {
   "recommendation": "tên sản phẩm có điểm phù hợp cao nhất",
   "confidence": 90,
