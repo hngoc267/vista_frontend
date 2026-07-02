@@ -115,7 +115,7 @@
             <i class="ph ph-crown"></i> Được đề xuất
           </div>
 
-          <div class="card-header">
+          <div class="card-header" (click)="goToProductDetail(i)" style="cursor: pointer;">
             <img
               *ngIf="products.length > i"
               [src]="getProductImage(i)"
@@ -135,8 +135,8 @@
           </div>
 
           <div class="card-actions">
-            <button class="btn-cart" (click)="addToCart(i)">Thêm vào giỏ hàng</button>
-            <button class="btn-buy" (click)="buyNow(i)">Mua ngay</button>
+            <button class="btn-cart" (click)="addToCart(i); $event.stopPropagation()">Thêm vào giỏ hàng</button>
+            <button class="btn-buy" (click)="buyNow(i); $event.stopPropagation()">Mua ngay</button>
           </div>
 
           <div class="pros-cons">
