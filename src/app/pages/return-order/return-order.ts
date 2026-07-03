@@ -832,9 +832,6 @@ export class ReturnOrder implements OnInit {
       return 'Vui lòng nhập đầy đủ thông tin trả hàng.';
     }
 
-    if (!this.isSpecificAddressRealistic(this.returnInfo.specificAddress)) {
-      return 'Địa chỉ chi tiết cần có số nhà và tên đường/ấp/hẻm/thôn/xóm/tổ/khu thực tế, không chỉ nhập mỗi số.';
-    }
 
     if (this.selectedReasonValues.length === 0) {
       return 'Vui lòng chọn ít nhất một lý do hoàn trả.';
@@ -876,46 +873,10 @@ export class ReturnOrder implements OnInit {
       return 'Vui lòng nhập đầy đủ họ tên, số điện thoại, email và địa chỉ trả hàng.';
     }
 
-    if (!this.isSpecificAddressRealistic(this.returnInfoDraft.specificAddress)) {
-      return 'Địa chỉ chi tiết cần có số nhà và tên đường/ấp/hẻm/thôn/xóm/tổ/khu thực tế, không chỉ nhập mỗi số.';
-    }
 
     return '';
   }
 
-  private isSpecificAddressRealistic(value?: string | null): boolean {
-    const text = String(value || '').replace(/\s+/g, ' ').trim();
-    const normalized = this.normalizeText(text);
-    const compact = normalized.replace(/[,.#-]/g, ' ').replace(/\s+/g, ' ').trim();
-
-    if (text.length < 5 || /^\d+$/.test(text) || /^(so\s*)?\d+[a-z]?(\/\d+[a-z]?)?$/.test(compact)) {
-      return false;
-    }
-
-    const hasNumber = /\d/.test(text);
-    const hasLetter = /[a-zA-ZÀ-ỹ]/.test(text);
-    const hasAddressKeyword = [
-      'duong',
-      'pho',
-      'hem',
-      'ngo',
-      'thon',
-      'xom',
-      'ap',
-      'ban',
-      'khu',
-      'toa',
-      'chung cu',
-      'quoc lo',
-      'tinh lo',
-    ].some((keyword) => compact.includes(keyword));
-    const namedPart = compact
-      .replace(/^(so\s*)?\d+[a-z]?(\/\d+[a-z]?)?\s*/, '')
-      .split(' ')
-      .filter((part) => part.length >= 2 && !/^\d+$/.test(part));
-
-    return hasNumber && hasLetter && (hasAddressKeyword || namedPart.length >= 2);
-  }
 
   private loadSavedReturnAddresses(): void {
     if (typeof localStorage === 'undefined') {

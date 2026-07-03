@@ -231,10 +231,9 @@ export class OrderHistory implements OnInit, OnDestroy {
 
   getStatusLabel(order: any): string {
     const status = this.normalizeStatus(order.Status);
-    
-    // Dù ở Tab "Tất cả" hay Tab "Đánh giá", cứ hễ nhận hàng xong là biến thành Đánh Giá hết!
+
     if (status === 'review' || status === 'delivered') {
-      return this.isReviewedOrder(order) ? 'Đã đánh giá' : 'Chưa đánh giá';
+      return this.isReviewedOrder(order) ? 'Đã được đánh giá' : 'Chưa đánh giá';
     }
 
     const tab = this.tabs.find(t => t?.value === status);
@@ -271,7 +270,12 @@ export class OrderHistory implements OnInit, OnDestroy {
   }
 
   isReviewedOrder(order: any): boolean {
-    return this.normalizeReviewStatus(order?.Review_status) === 'reviewed';
+    if (this.normalizeReviewStatus(order?.Review_status) === 'reviewed') {
+      return true;
+    }
+
+    const items: any[] = Array.isArray(order?.Items) ? order.Items : [];
+  return items.length > 0 && items.every((item: any) => this.isReviewedOrderItem(item));
   }
 
   isCancelledOrder(order: any): boolean {
@@ -497,11 +501,13 @@ export class OrderHistory implements OnInit, OnDestroy {
       },
       {
         key: 'completed',
-        title: 'Hoàn tất đơn hàng',
+        title: this.isReviewedOrder(order) ? 'Đã được đánh giá' : 'Hoàn tất đơn hàng',
         description:
-          status === 'delivered' || status === 'review'
+          this.isReviewedOrder(order)
             ? 'Đơn hàng đã hoàn tất và đã được đánh giá.'
-            : 'Bạn có thể đánh giá hoặc yêu cầu trả hàng.',
+            : (status === 'delivered' || status === 'review')
+              ? 'Đơn hàng đã hoàn tất. Bạn có thể đánh giá sản phẩm hoặc yêu cầu hoàn hàng.'
+              : 'Bạn có thể đánh giá hoặc yêu cầu trả hàng sau khi nhận hàng.',
       },
     ];
 
@@ -965,25 +971,26 @@ export class OrderHistory implements OnInit, OnDestroy {
       return 'reviewed';
     }
 
+    if (value === false || value === null || value === undefined) {
+      return 'not_reviewed';
+    }
+
     const normalized = String(value || '')
       .trim()
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/_/g, ' ');
 
-    if (
-      ['reviewed', 'da danh gia', 'da_danh_gia', 'approved', 'completed', 'true'].includes(normalized)
-    ) {
+    if (['reviewed', 'da danh gia', 'da duoc danh gia', 'true'].includes(normalized)) {
       return 'reviewed';
     }
 
-    if (
-      ['not_reviewed', 'chua danh gia', 'chua_danh_gia', 'pending', 'false', ''].includes(normalized)
-    ) {
+    if (['not reviewed', 'unreviewed', 'chua danh gia', 'chua duoc danh gia', 'pending', 'false', ''].includes(normalized)) {
       return 'not_reviewed';
     }
 
-    return normalized ? 'reviewed' : 'not_reviewed';
+    return 'not_reviewed';
   }
 
 
