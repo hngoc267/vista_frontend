@@ -746,10 +746,6 @@ export class Order implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.isSpecificAddressRealistic(this.tempReceiver.specificAddress)) {
-      this.addressFormError = 'Địa chỉ chi tiết cần có số nhà và tên đường/thôn/xóm/tổ/khu thực tế, không chỉ nhập mỗi số.';
-      return;
-    }
 
     this.receiver = { ...this.tempReceiver };
     if (this.receiver.saveForNext) {
@@ -1688,39 +1684,6 @@ export class Order implements OnInit, OnDestroy {
     );
   }
 
-  private isSpecificAddressRealistic(value?: string | null): boolean {
-    const text = this.cleanText(value);
-    const normalized = this.normalizeText(text);
-    const compact = normalized.replace(/[,.#-]/g, ' ').replace(/\s+/g, ' ').trim();
-
-    if (text.length < 5 || /^\d+$/.test(text) || /^(so\s*)?\d+[a-z]?(\/\d+[a-z]?)?$/.test(compact)) {
-      return false;
-    }
-
-    const hasNumber = /\d/.test(text);
-    const hasLetter = /[a-z]/.test(compact);
-    const hasAddressKeyword = [
-      'duong',
-      'pho',
-      'hem',
-      'ngo',
-      'thon',
-      'xom',
-      'ap',
-      'ban',
-      'khu',
-      'toa',
-      'chung cu',
-      'quoc lo',
-      'tinh lo',
-    ].some((keyword) => compact.includes(keyword));
-    const namedPart = compact
-      .replace(/^(so\s*)?\d+[a-z]?(\/\d+[a-z]?)?\s*/, '')
-      .split(' ')
-      .filter((part) => part.length >= 2 && !/^\d+$/.test(part));
-
-    return hasNumber && hasLetter && (hasAddressKeyword || namedPart.length >= 2);
-  }
 
   private isVoucherStillValid(voucher: VoucherItem): boolean {
     const expiryNumber = this.getVoucherExpiryDateNumber(voucher.expiry);
@@ -1843,13 +1806,16 @@ export class Order implements OnInit, OnDestroy {
       return false;
     }
 
-    if (!this.receiver.fullName || !this.receiver.phone || !this.receiver.email || !this.receiver.province || !this.receiver.district || !this.receiver.ward || !this.receiver.specificAddress) {
+    if (
+      !this.cleanText(this.receiver.fullName) ||
+      !this.cleanText(this.receiver.phone) ||
+      !this.cleanText(this.receiver.email) ||
+      !this.cleanText(this.receiver.province) ||
+      !this.cleanText(this.receiver.district) ||
+      !this.cleanText(this.receiver.ward) ||
+      !this.cleanText(this.receiver.specificAddress)
+    ) {
       this.errorMessage = 'Vui lòng chọn hoặc nhập đầy đủ họ tên, số điện thoại, email và địa chỉ nhận hàng.';
-      return false;
-    }
-
-    if (!this.isSpecificAddressRealistic(this.receiver.specificAddress)) {
-      this.errorMessage = 'Địa chỉ chi tiết cần có số nhà và tên đường/thôn/xóm/tổ/khu thực tế, không chỉ nhập mỗi số.';
       return false;
     }
 
