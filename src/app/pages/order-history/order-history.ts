@@ -170,7 +170,14 @@ export class OrderHistory implements OnInit, OnDestroy {
 
     if (this.searchKeyword && this.searchKeyword.trim() !== '') {
       const keyword = this.searchKeyword.trim().toLowerCase();
-      temp = temp.filter(o => o.Order_code.toLowerCase().includes(keyword));
+      temp = temp.filter(o => {
+        const matchCode = (o.Order_code || '').toLowerCase().includes(keyword);
+        const items: any[] = Array.isArray(o?.Items) ? o.Items : [];
+        const matchName = items.some(item =>
+          (item?.Product_name || '').toLowerCase().includes(keyword)
+        );
+        return matchCode || matchName;
+      });
     }
 
     this.filteredOrders = temp;
