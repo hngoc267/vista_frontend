@@ -10,7 +10,6 @@ import { CartStateService } from '../../services/cart-state.service';
 import { AiCompareService } from '../../services/ai-compare';
 import Swal from 'sweetalert2';
 
-// Định nghĩa interface Product
 interface Product {
   Product_id: string;
   Product_name: string;
@@ -147,13 +146,13 @@ export class ComparePageComponent implements OnInit {
    * @param variantId - ID của biến thể được chọn
    */
   private addProductLocally(product: Product, variantId: string): void {
-    // 1. Gán selectedVariantId cho sản phẩm
+
     const newProduct = {
       ...product,
       selectedVariantId: variantId,
     };
 
-      // ✅ Cập nhật cache: loại bỏ sản phẩm đã thêm khỏi danh sách khả dụng
+      
     if (this.isCacheLoaded) {
       this.cachedAvailableProducts = this.cachedAvailableProducts.filter(
         p => p.Product_id !== product.Product_id
@@ -162,22 +161,22 @@ export class ComparePageComponent implements OnInit {
       this.filteredProducts = [...this.availableProducts];
     }
 
-    // 2. Thêm vào mảng products
+
     this.products = [...this.products, newProduct];
 
-    // 3. Cập nhật displayProducts
+
     this.buildDisplayProducts();
 
-    // 4. Xóa cache spec để xây dựng lại
+
     this.specValueCache.clear();
 
-    // 5. Xây dựng lại specGroups dựa trên tất cả sản phẩm
+
     this.buildSpecGroups();
 
-    // 6. Cập nhật tổng số spec keys (nếu cần)
+
     this.totalSpecKeys = this.specGroups.reduce((acc, g) => acc + g.keys.length, 0);
 
-    // 7. Cập nhật category hiện tại (nếu chưa có)
+
     if (!this.currentCategoryId && this.products.length > 0) {
       this.currentCategoryId = this.products[0]?.Category_id || '';
       this.currentCategoryName = this.products[0]?.category?.Category_name || '';
@@ -185,7 +184,7 @@ export class ComparePageComponent implements OnInit {
     }
 
     this.items = this.compareService.getCurrentItems();
-    // 8. Đánh dấu cập nhật UI
+
     this.cdr.markForCheck();
     this.cdr.detectChanges();
   }
@@ -253,7 +252,7 @@ export class ComparePageComponent implements OnInit {
     this.specGroups = finalGroups;
   }
 
-  // ✅ LỖI 3: đã sửa phương thức isRowDifferent()
+
   isRowDifferent(key: string): boolean {
     const values = this.displayProducts
       .filter(p => p !== null)
@@ -269,7 +268,7 @@ export class ComparePageComponent implements OnInit {
   removeItem(variantId?: string): void {
     if (!variantId) return;
     
-    // Lưu productId để cập nhật cache
+
     const removedProduct = this.products.find(p => p.selectedVariantId === variantId);
     
     this.compareService.removeItem(variantId);
@@ -286,7 +285,7 @@ export class ComparePageComponent implements OnInit {
 
   clearAll(): void {
     this.compareService.clearAll();
-    // ✅ Reset cache khi xóa tất cả
+
     this.isCacheLoaded = false;
     this.cachedAvailableProducts = [];
     this.cachedCategoryId = '';
@@ -341,12 +340,12 @@ export class ComparePageComponent implements OnInit {
   }
 
   loadAvailableProducts(): void {
-    // Nếu cache đã có và cùng category, dùng cache luôn
+
     if (this.isCacheLoaded && this.cachedCategoryId === this.currentCategoryId) {
       this.availableProducts = [...this.cachedAvailableProducts];
       this.filteredProducts = [...this.availableProducts];
       this.loadingAvailable = false;
-      this.cdr.markForCheck(); // Cập nhật UI
+      this.cdr.markForCheck(); 
       return;
     }
 
@@ -359,7 +358,7 @@ export class ComparePageComponent implements OnInit {
     }
 
     this.loadingAvailable = true;
-    this.cdr.markForCheck(); // Báo Angular hiện spinner
+    this.cdr.markForCheck(); 
 
     this.productService.getAllProducts({
       category: this.currentCategoryId,
@@ -379,7 +378,7 @@ export class ComparePageComponent implements OnInit {
           return true;
         });
 
-        // ✅ ĐÃ SỬA: Lưu danh sách vừa lấy vào cache (chứ không phải lấy cache rỗng gán ngược lại)
+
         this.cachedCategoryId = this.currentCategoryId;
         this.cachedAvailableProducts = [...this.availableProducts]; 
         this.isCacheLoaded = true;
@@ -387,7 +386,7 @@ export class ComparePageComponent implements OnInit {
         this.filteredProducts = [...this.availableProducts];
         this.loadingAvailable = false;
         
-        // ✅ QUAN TRỌNG: Gọi hàm này để Angular biết data đã về và tắt spinner
+
         this.cdr.markForCheck(); 
       },
       error: (err) => {
@@ -395,7 +394,7 @@ export class ComparePageComponent implements OnInit {
         this.loadingAvailable = false;
         this.availableProducts = [];
         this.filteredProducts = [];
-        this.cdr.markForCheck(); // Tắt spinner ngay cả khi có lỗi
+        this.cdr.markForCheck(); 
       }
     });
   }
@@ -437,7 +436,6 @@ export class ComparePageComponent implements OnInit {
       this.notificationService.success('Đã thêm sản phẩm vào danh sách so sánh.');
       this.closeAddModal();
       this.items = this.compareService.getCurrentItems();
-      // ✅ Thay vì gọi loadCompareData(), thêm sản phẩm trực tiếp
       this.addProductLocally(product, variant.Product_variant_id);
     } else if (result.needConfirm) {
       const currentItems = this.compareService.getCurrentItems();
@@ -465,7 +463,6 @@ export class ComparePageComponent implements OnInit {
           this.compareService.addItemAfterClear(compareItem);
           this.notificationService.success('Đã thêm sản phẩm vào danh sách so sánh.');
           this.closeAddModal();
-          // ✅ Xóa toàn bộ danh sách cũ và thêm sản phẩm mới
           this.products = [];
           this.specValueCache.clear();
           this.addProductLocally(product, variant.Product_variant_id);
@@ -546,7 +543,7 @@ export class ComparePageComponent implements OnInit {
     return price.toLocaleString('vi-VN') + ' ₫';
   }
 
-  // UI METHODS
+
   onMouseMove(event: MouseEvent): void {
     const target = event.currentTarget as HTMLElement;
     if (!target) return;
@@ -733,16 +730,16 @@ export class ComparePageComponent implements OnInit {
       return rawType;
     }
 
-    // NHẬN DIỆN MỞ RỘNG THEO TÊN VÀ DANH MỤC
+
     const name = (product.Product_name || '').toLowerCase();
     const catId = product.Category_id || '';
 
-    // Nhận diện thiết bị cốt lõi
+
     if (catId === 'CAT_001' || name.includes('laptop') || name.includes('macbook')) return 'Laptop';
     if (catId === 'CAT_002' || name.includes('điện thoại') || name.includes('iphone') || name.includes('smartphone') || name.includes('galaxy s')) return 'Điện thoại';
     if (catId === 'CAT_003' || name.includes('tablet') || name.includes('ipad') || name.includes('máy tính bảng')) return 'Máy tính bảng';
 
-    // Nhận diện phụ kiện
+
     if (name.includes('tai nghe') || name.includes('headphone') || name.includes('earbud') || name.includes('wh-') || name.includes('wf-') || name.includes('buds') || name.includes('airpods')) return 'Tai nghe';
     if (name.includes('bàn phím') || name.includes('keyboard') || name.includes('mx keys')) return 'Bàn phím';
     if (name.includes('chuột') || name.includes('mouse') || name.includes('mx master')) return 'Chuột';

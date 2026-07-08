@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core'; // <-- Thêm OnInit
+import { Component, OnInit } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router'; // <-- Thêm ActivatedRoute
+import { Router, ActivatedRoute } from '@angular/router'; 
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../services/auth'; // <-- Import AuthService
+import { AuthService } from '../../services/auth'; 
 import Swal from 'sweetalert2';
 
 @Component({
@@ -26,7 +26,6 @@ export class ResetPassword implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Đọc email và mã OTP từ URL để làm tham số gửi lên API
     this.route.queryParams.subscribe(params => {
       this.email = params['email'] || '';
       this.otpCode = params['code'] || '';

@@ -9,7 +9,6 @@
   background: #F8FAFC;
 }
 
-// ========== BANNER HERO ==========
 .criteria-hero {
   background: linear-gradient(135deg, #1A3A6B, #1E3A5F);
   padding: 60px 0 40px;
@@ -178,7 +177,6 @@
   50% { transform: translateY(-12px) scale(1.3); opacity: 0.9; }
 }
 
-// ========== BREADCRUMB ==========
 .breadcrumb-bar {
   background: transparent;
   padding: 16px 0 8px;
@@ -204,14 +202,12 @@
   }
 }
 
-// ========== NỘI DUNG CHÍNH ==========
 .criteria-shell {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 120px 32px;
 }
 
-// ========== PRIORITY SECTION ==========
 .priority-section {
   margin: 32px 0 28px;
   background: #FFFFFF;
@@ -417,7 +413,6 @@
   }
 }
 
-// ========== SUMMARY SECTION ==========
 .summary-section {
   margin-bottom: 28px;
   transition: all 0.3s;
@@ -529,7 +524,6 @@
   }
 }
 
-// ========== ACTIONS ==========
 .action-row {
   display: flex;
   gap: 16px;
@@ -607,7 +601,6 @@
   }
 }
 
-// ========== RESPONSIVE ==========
 @media (max-width: 1280px) {
   .criteria-hero .hero-container,
   .criteria-shell {

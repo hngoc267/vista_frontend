@@ -266,7 +266,6 @@
   font-weight: 500;
 }
 
-/* Sửa lại item-price để giá thẳng hàng */
 .item-price {
   display: flex;
   flex-direction: column;
@@ -319,7 +318,6 @@
   }
 }
 
-/* Biến span thành dạng hiển thị giống ô input */
 .qty-input {
   flex: 1;
   width: 100%;
@@ -597,7 +595,7 @@
 
   .item-price {
     text-align: left;
-    align-items: flex-start; /* Sửa lại dóng lề trên mobile */
+    align-items: flex-start; 
   }
 }
 

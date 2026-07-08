@@ -44,7 +44,6 @@ export class ResultPage implements OnInit, OnDestroy {
       this.aiCompareService.result$.subscribe(r => {
         this.result = r;
         this.hasResult = !!r;
-        // Chỉ lưu nếu có kết quả, có sản phẩm và chưa lưu
         if (r && this.hasProducts && !this.saved) {
           this.saveHistory(r);
         }
@@ -56,7 +55,6 @@ export class ResultPage implements OnInit, OnDestroy {
       this.aiCompareService.products$.subscribe(p => {
         this.products = p;
         this.hasProducts = p.length > 0;
-        // Nếu đã có result và chưa lưu
         if (this.hasResult && this.hasProducts && !this.saved && this.result) {
           this.saveHistory(this.result);
         }
@@ -71,7 +69,6 @@ export class ResultPage implements OnInit, OnDestroy {
     })
   );
 
-    // Nếu chưa có kết quả, quay lại trang so sánh
     if (!this.aiCompareService.getResult() && !this.isLoading) {
       this.router.navigate(['/compare']);
     }
@@ -90,19 +87,13 @@ export class ResultPage implements OnInit, OnDestroy {
     console.log('✅ Đã lưu lịch sử:', result.recommendation);
   }
 
-  // ===== HELPER: lấy variantId từ mọi shape product có thể có =====
-  // compare-page có thể truyền product với selectedVariant (object đơn)
-  // hoặc variants (array) hoặc cả hai — cần thử tất cả path.
   private resolveVariantId(product: any): string | null {
-    // 1. Field rõ ràng nhất
     if (product.selectedVariantId) return product.selectedVariantId;
 
-    // 2. selectedVariant là object đơn (phổ biến khi đến từ compare-page)
     if (product.selectedVariant?.Product_variant_id) {
       return product.selectedVariant.Product_variant_id;
     }
 
-    // 3. variants là array — lấy phần tử đầu tiên
     if (Array.isArray(product.variants) && product.variants.length > 0) {
       return product.variants[0]?.Product_variant_id ?? null;
     }
@@ -110,16 +101,15 @@ export class ResultPage implements OnInit, OnDestroy {
     return null;
   }
 
-  // ===== HELPER: lấy variant object đầy đủ (để lấy Price, Stock...) =====
   private resolveVariant(product: any, variantId: string | null): any {
-    // Ưu tiên selectedVariant nếu id khớp hoặc không có id nào khác
+    
     if (product.selectedVariant) {
       if (!variantId || product.selectedVariant.Product_variant_id === variantId) {
         return product.selectedVariant;
       }
     }
 
-    // Tìm trong array variants
+    
     if (Array.isArray(product.variants) && product.variants.length > 0) {
       if (variantId) {
         const found = product.variants.find((v: any) => v.Product_variant_id === variantId);
@@ -128,7 +118,7 @@ export class ResultPage implements OnInit, OnDestroy {
       return product.variants[0];
     }
 
-    // Fallback: trả ngay selectedVariant dù id không khớp
+    
     return product.selectedVariant ?? null;
   }
 
@@ -141,16 +131,13 @@ getProductImage(index: number): string {
   return 'assets/default-product.png';
 }
 
-  // ===== Lấy giá sản phẩm =====
+  
   getProductPrice(index: number): string {
     const p = this.products[index];
     if (!p) return '0đ';
 
     let price: number;
 
-    // Sản phẩm phục hồi từ history đã có sẵn field "price" (đã resolve
-    // đúng lúc lưu) → dùng thẳng, không cần đoán lại variant từ snapshot
-    // rút gọn (snapshot không giữ đủ shape gốc nên đoán lại dễ sai/0đ).
     if (typeof p.price === 'number' && p.price > 0) {
       price = p.price;
     } else {
@@ -185,8 +172,6 @@ getProductImage(index: number): string {
     const productId = product?.Product_id;
 
     if (!productId) {
-      // Trường hợp sản phẩm được phục hồi từ lịch sử (AiSavedProduct)
-      // không lưu Product_id nên không thể điều hướng tới trang chi tiết.
       Swal.fire({
         icon: 'info',
         title: 'Không thể xem chi tiết',
@@ -199,7 +184,6 @@ getProductImage(index: number): string {
     this.router.navigate(['/products', productId]);
   }
 
-  // ===== THÊM VÀO GIỎ HÀNG =====
   addToCart(index: number): void {
     const product = this.products[index];
     if (!product) return;
@@ -248,7 +232,6 @@ getProductImage(index: number): string {
     });
   }
 
-  // ===== MUA NGAY =====
   buyNow(index: number): void {
     const product = this.products[index];
     if (!product) return;
@@ -277,7 +260,6 @@ getProductImage(index: number): string {
 
     const variant = this.resolveVariant(product, variantId);
 
-    // Tính giá cuối cùng để đưa vào giỏ
     let price = Number(variant?.Price) || Number(product.min_price) || 0;
     const discount = Number(product.Discount) || 0;
     const finalPrice = discount > 0 ? price * (1 - discount / 100) : price;

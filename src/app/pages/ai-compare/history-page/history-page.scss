@@ -9,7 +9,6 @@
   background: #F8FAFC;
 }
 
-// ========== BANNER HERO ==========
 .history-hero {
   background: linear-gradient(135deg, #1A3A6B, #1E3A5F);
   padding: 60px 0 40px;
@@ -178,7 +177,6 @@
   50% { transform: translateY(-12px) scale(1.3); opacity: 0.9; }
 }
 
-// ========== BREADCRUMB ==========
 .breadcrumb-bar {
   background: transparent;
   padding: 16px 0 20px;
@@ -204,14 +202,14 @@
   }
 }
 
-// ========== HISTORY SHELL ==========
+
 .history-shell {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 120px 32px;
 }
 
-// ========== SELECTION BAR (GIỐNG CART) ==========
+
 .selection-bar {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
@@ -261,11 +259,11 @@
   }
 }
 
-// ========== HISTORY LIST ==========
+
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 24px;                    // khoảng cách giữa các card
+  gap: 24px;                    
   margin-bottom: 32px;
 }
 
@@ -273,10 +271,10 @@
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: 12px;
-  padding: 24px 28px;           // padding rộng hơn
+  padding: 24px 28px;           
   display: flex;
   align-items: center;
-  gap: 28px;                    // khoảng cách giữa checkbox, content, nút xóa
+  gap: 28px;                    
   transition: all 0.2s;
 
   &.is-selected {
@@ -284,7 +282,7 @@
     border-color: #2563B0;
   }
 
-  // Checkbox
+
   .item-check {
     display: flex;
     align-items: center;
@@ -299,7 +297,7 @@
     }
   }
 
-  // Nội dung
+
   .item-content {
     flex: 1;
     cursor: pointer;
@@ -341,7 +339,7 @@
     }
   }
 
-  // Nút xóa
+
   .btn-remove {
     background: transparent;
     border: none;
@@ -360,7 +358,7 @@
   }
 }
 
-// ========== EMPTY STATE ==========
+
 .empty-state {
   max-width: 1440px;
   margin: 80px auto;
@@ -396,7 +394,7 @@
   }
 }
 
-// ========== RESPONSIVE ==========
+
 @media (max-width: 1280px) {
   .history-hero .hero-container,
   .history-shell {

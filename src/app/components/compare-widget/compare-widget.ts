@@ -35,7 +35,6 @@ export class CompareWidgetComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     });
 
-    // 🔥 Lắng nghe sự kiện vừa thêm → tự động mở rộng widget
     this.justAddedSubscription = this.compareService.justAdded$.subscribe(justAdded => {
       if (justAdded && this.items.length > 0) {
         this.isExpanded = true;

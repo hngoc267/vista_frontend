@@ -4,14 +4,12 @@
     <div class="content-box">
   <h2>Thành viên</h2>
   
-  <!-- Thêm ngClass để đổi màu động theo tierLevel (0, 1, 2, 3...) -->
   <div class="membership-card" [ngClass]="'tier-' + tierLevel">
     <div class="watermark-text">VISTA</div>
     
     <div class="card-top">
       <div class="tier-info">
         <div class="tier-badge">
-          <!-- Thay thế số bằng icon huy chương -->
           <ng-container [ngSwitch]="tierLevel">
             <i *ngSwitchCase="0" class="ph-fill ph-medal medal-bronze"></i>
             <i *ngSwitchCase="1" class="ph-fill ph-medal medal-silver"></i>
@@ -76,7 +74,7 @@
     [class.used]="voucher.status === 'used'"
     (click)="openVoucherDetail(voucher)"
   >
-    <!-- NỬA BÊN TRÁI: Chỉ để Logo và Tiêu đề chính -->
+
     <div class="voucher-left" [ngClass]="voucher.type === 'shipping' ? 'bg-green' : 'bg-blue'">
       <i *ngIf="voucher.type === 'percent'" class="ph ph-percent bg-watermark"></i>
       <i *ngIf="voucher.type === 'shipping'" class="ph ph-truck bg-watermark"></i>
@@ -93,7 +91,7 @@
 
     <div class="voucher-divider"></div>
 
-    <!-- NỬA BÊN PHẢI: Chứa Điều kiện, Code và HSD -->
+
     <div class="voucher-right">
       <span *ngIf="voucher.status === 'expiring' && getDaysLeft(voucher) > 0" class="expiry-badge">
         Sắp hết hạn
@@ -103,7 +101,7 @@
         Đã sử dụng
       </span>
 
-      <!-- Đưa phần Điều kiện sang đây để rộng rãi hơn -->
+
       <h4 class="voucher-condition">{{ voucher.condition }}</h4>
 
       <div class="voucher-code-row">

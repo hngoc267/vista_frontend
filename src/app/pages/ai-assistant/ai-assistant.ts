@@ -24,7 +24,7 @@ interface ChatMessage {
 export class AiAssistantComponent implements OnInit, AfterViewChecked {
   @ViewChild('chatBody') chatBody!: ElementRef;
 
-  // Sidebar
+
   sessions: any[] = [];
   activeSessionId: string | null = null;
   sidebarWidth = 260;
@@ -34,7 +34,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     private readonly SIDEBAR_MIN = 180;
     private readonly SIDEBAR_MAX = 420;
 
-  // Chat
+
   messages: ChatMessage[] = [];
   inputText = '';
   isLoading = false;
@@ -50,7 +50,6 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
   ) {}
 
   ngOnInit() {
-    // Redirect nếu chưa đăng nhập
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/login']);
       return;
@@ -65,7 +64,6 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  // ── Sessions ──────────────────────────────
 
   loadSessions() {
     this.chatbotService.getSessions().subscribe({
@@ -93,7 +91,6 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
 
     this.chatbotService.getSessionMessages(sessionId).subscribe({
       next: (res) => {
-        // Chuyển đổi Message từ DB sang định dạng hiển thị
         this.messages = res.data.map((m: any) => ({
           id: m.Message_id,
           sender: m.Sender_type,
@@ -110,7 +107,7 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
   }
 
   deleteSession(sessionId: string, event: Event) {
-    event.stopPropagation(); // không trigger openSession
+    event.stopPropagation(); 
     if (!confirm('Xóa cuộc trò chuyện này?')) return;
 
     this.chatbotService.deleteSession(sessionId).subscribe({
@@ -125,13 +122,11 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     });
   }
 
-  // ── Gửi tin nhắn ─────────────────────────
 
   sendMessage(text?: string) {
     const content = (text || this.inputText).trim();
     if (!content || this.isLoading) return;
 
-    // Nếu chưa có session thì tạo mới rồi gửi
     if (!this.activeSessionId) {
       this.chatbotService.createSession().subscribe({
         next: (res) => {
@@ -148,7 +143,6 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
   }
 
   private doSend(content: string) {
-    // Hiện tin nhắn user ngay lập tức
     this.messages.push({
       id: 'temp-user-' + Date.now(),
       sender: 'user',
@@ -165,7 +159,6 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
       next: (res) => {
         const { message, products, vouchers, suggestions } = res.data;
 
-        // Cập nhật tiêu đề session trong sidebar
         const session = this.sessions.find(s => s.Session_id === this.activeSessionId);
         if (session && session.Title === 'Cuộc trò chuyện mới') {
           session.Title = content.length > 50 ? content.slice(0, 50) + '...' : content;
@@ -199,12 +192,10 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     });
   }
 
-  // Bấm nút gợi ý nhanh
   sendSuggestion(text: string) {
     this.sendMessage(text);
   }
 
-  // Enter để gửi
   onKeydown(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -212,7 +203,6 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  // ── Helpers ───────────────────────────────
 
   private scrollToBottom() {
     try {
@@ -258,7 +248,6 @@ export class AiAssistantComponent implements OnInit, AfterViewChecked {
 
     searchQuery = '';
 
-    // Thêm getter lọc session theo searchQuery
     get filteredSessions() {
     if (!this.searchQuery.trim()) return this.sessions;
     return this.sessions.filter(s =>

@@ -25,7 +25,7 @@ export class ProductDetail implements OnInit {
   category: any = null;
   brand: any = null;
   relatedProducts: any[] = [];
-  visibleReviewsCount = 5; // Mặc định chỉ hiện 5 đánh giá
+  visibleReviewsCount = 5; 
   selectedVariant: any = null;
   selectedImageIndex = 0;
   quantity = 1;
@@ -47,7 +47,7 @@ export class ProductDetail implements OnInit {
   
   private compareSubscription?: Subscription;
   
-  reviews: any[] = []; // <-- Đã thêm mảng chứa đánh giá
+  reviews: any[] = []; // 
 
   constructor(
     private productService: ProductService,
@@ -67,9 +67,9 @@ export class ProductDetail implements OnInit {
       window.scrollTo(0, 0);
     });
 
-    // Lắng nghe thay đổi danh sách so sánh để cập nhật nút
+
     this.compareSubscription = this.compareService.items$.subscribe(() => {
-    // Chỉ cần trigger detectChanges để cập nhật trạng thái nút
+
     this.cdr.detectChanges();
     });
   }
@@ -90,7 +90,7 @@ export class ProductDetail implements OnInit {
         }
         this.selectedImageIndex = 0;
         
-        // <-- GỌI HÀM SINH ĐÁNH GIÁ Ở ĐÂY
+
         const productId = this.product?.Product_id || id;
         const cachedReviews = this.getCachedProductReviews(
           productId,
@@ -252,28 +252,26 @@ export class ProductDetail implements OnInit {
     this.router.navigate(['/order']);
   }
 
-  // ===== PHƯƠNG THỨC XỬ LÝ SO SÁNH =====
 
-/** Kiểm tra xem variant hiện tại đã có trong danh sách so sánh chưa */
 isInCompare(): boolean {
   if (!this.selectedVariant) return false;
   return this.compareService.isInCompare(this.selectedVariant.Product_variant_id);
 }
 
-/** Kiểm tra danh sách so sánh đã đầy chưa */
+
 isCompareFull(): boolean {
   return this.compareService.isFull();
 }
 
-/** Thêm sản phẩm hiện tại vào danh sách so sánh */
+
 addToCompare(): void {
-  // --- KIỂM TRA ĐÃ CHỌN BIẾN THỂ CHƯA ---
+
   if (!this.selectedVariant) {
     this.notificationService.error('Vui lòng chọn một phiên bản sản phẩm trước khi thêm vào so sánh.');
     return;
   }
 
-    // --- KIỂM TRA DANH SÁCH ĐÃ ĐẦY CHƯA ---
+
   if (this.isCompareFull()) {
 
     this.compareService.openWidget();
@@ -287,9 +285,9 @@ addToCompare(): void {
       return;
     }
 
-  // --- LOGIC KIỂM TRA CÙNG LOẠI SẢN PHẨM ---
+  
   const currentItems = this.compareService.getCurrentItems();
-  // ----------------------------------------------------
+
 
   const variant = this.selectedVariant;
   const product = this.product;
@@ -301,11 +299,11 @@ addToCompare(): void {
     this.notificationService.success('Đã thêm sản phẩm vào danh sách so sánh.');
 
   } else if (result.needConfirm) {
-    // Lấy loại sản phẩm của item hiện tại và item mới
+
     const currentType = currentItems[0]?.productType || '';
     const newType = this.getNormalizedType(this.product);
 
-    // Dùng tên sản phẩm nếu type không xác định được
+
     const currentLabel = (currentType && currentType !== 'Khác')
       ? currentType
       : currentItems[0]?.productName || currentItems[0]?.categoryName || '';
@@ -336,7 +334,7 @@ addToCompare(): void {
   }
 }
 
-  // Hàm buildCompareItem để tránh lặp code
+
   private buildCompareItem(product: any, variant: any): CompareItem {
     const productType = this.getNormalizedType(product);
     return {
@@ -568,9 +566,9 @@ addToCompare(): void {
       .map(([key, value]) => ({ key, value: String(value) }));
   }
 
-  // <-- THUẬT TOÁN ĐÃ ĐƯỢC TÍCH HỢP
+
   generateMockReviews(totalReviews: number, averageRating: number): any[] {
-    this.visibleReviewsCount = 5; // Reset về 5 khi đổi sang sản phẩm khác
+    this.visibleReviewsCount = 5; 
     if (!totalReviews || totalReviews <= 0) {
       return [];
     }
@@ -600,10 +598,10 @@ addToCompare(): void {
 
       const randomHo = hoList[Math.floor(Math.random() * hoList.length)];
       const randomLot = lotList[Math.floor(Math.random() * lotList.length)];
-      const maskedName = `${randomHo} ${randomLot} ***`; // Kết quả: "Trần Minh ***"
+      const maskedName = `${randomHo} ${randomLot} ***`; 
 
       return {
-        user: maskedName, // Gán tên đã che vào đây
+        user: maskedName, 
         rating: rating,
         comment: sampleComments[index % sampleComments.length],
         date: `${randomDay < 10 ? '0'+randomDay : randomDay}/06/2026`
@@ -1085,7 +1083,7 @@ addToCompare(): void {
 
     return '';
   }
-  // Thêm hàm chuẩn hoá
+
   getNormalizedType(product: any): string {
     const rawType = (product.Technical_specs?.['Type'] || '').trim();
 
@@ -1107,16 +1105,16 @@ addToCompare(): void {
       return rawType;
     }
 
-    // NHẬN DIỆN MỞ RỘNG THEO TÊN VÀ DANH MỤC
+
     const name = (product.Product_name || '').toLowerCase();
     const catId = product.Category_id || '';
 
-    // Nhận diện thiết bị cốt lõi
+
     if (catId === 'CAT_001' || name.includes('laptop') || name.includes('macbook')) return 'Laptop';
     if (catId === 'CAT_002' || name.includes('điện thoại') || name.includes('iphone') || name.includes('smartphone') || name.includes('galaxy s')) return 'Điện thoại';
     if (catId === 'CAT_003' || name.includes('tablet') || name.includes('ipad') || name.includes('máy tính bảng')) return 'Máy tính bảng';
 
-    // Nhận diện phụ kiện
+
     if (name.includes('tai nghe') || name.includes('headphone') || name.includes('earbud') || name.includes('wh-') || name.includes('wf-') || name.includes('buds') || name.includes('airpods')) return 'Tai nghe';
     if (name.includes('bàn phím') || name.includes('keyboard') || name.includes('mx keys')) return 'Bàn phím';
     if (name.includes('chuột') || name.includes('mouse') || name.includes('mx master')) return 'Chuột';

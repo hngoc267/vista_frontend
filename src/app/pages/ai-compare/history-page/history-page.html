@@ -1,6 +1,5 @@
 <div class="history-page">
 
-  <!-- BANNER HERO -->
   <section class="history-hero">
     <div class="hero-container">
       <div class="hero-content">
@@ -40,9 +39,7 @@
     </div>
   </section>
 
-  <!-- Nội dung chính -->
   <div class="history-shell">
-    <!-- Breadcrumb -->
     <div class="breadcrumb-bar">
       <a routerLink="/">Trang chủ</a>
       <span class="sep">›</span>
@@ -51,7 +48,6 @@
       <span class="current">Lịch sử AI</span>
     </div>
 
-    <!-- ====== SELECTION BAR (GIỐNG CART) ====== -->
     <div class="selection-bar" *ngIf="history.length > 0">
       <label class="select-all">
         <input
@@ -72,21 +68,19 @@
       </button>
     </div>
 
-    <!-- Empty state -->
     <div *ngIf="history.length === 0" class="empty-state">
       <i class="ph ph-robot"></i>
       <p>Chưa có lịch sử phân tích nào.</p>
       <button class="btn-primary" routerLink="/compare">Bắt đầu so sánh</button>
     </div>
 
-    <!-- Danh sách (có checkbox) -->
     <div class="history-list" *ngIf="history.length > 0">
       <div
         class="history-item"
         *ngFor="let item of history"
         [class.is-selected]="item.checked"
       >
-        <!-- Checkbox -->
+        
         <label class="item-check" (click)="$event.stopPropagation()">
           <input
             type="checkbox"
@@ -95,7 +89,7 @@
           />
         </label>
 
-        <!-- Nội dung (click vào đây để xem chi tiết) -->
+        
         <div class="item-content" (click)="viewDetail(item)">
           <div class="item-products">{{ getProductNames(item) }}</div>
           <div class="item-meta">
@@ -107,7 +101,7 @@
           </div>
         </div>
 
-        <!-- Nút xóa riêng (giữ lại) -->
+        
         <button class="btn-remove" (click)="removeItem(item.id, $event)">
           <i class="ph ph-x"></i>
         </button>

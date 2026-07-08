@@ -1,4 +1,3 @@
-/* ── BREADCRUMB ── */
 @use 'sass:math';
 
 .breadcrumb-bar {
@@ -27,7 +26,7 @@
   }
 }
 
-/* ── PAGE WRAPPER ── */
+
 .compare-page {
   font-family: 'Be Vietnam Pro', sans-serif;
   background-color: #F8FAFC;
@@ -41,7 +40,7 @@
   padding: 0 120px;
 }
 
-/* ── HEADER & TITLE ── */
+
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -65,7 +64,7 @@
   flex-wrap: wrap;
 }
 
-/* Nút Quay lại trang chủ (giống Continue link trong cart) */
+
 .continue-link {
   display: inline-flex;
   align-items: center;
@@ -90,7 +89,7 @@
   }
 }
 
-/* Nút Phân tích với AI (riêng cho header) */
+
 .btn-ai-header {
   display: inline-flex;
   align-items: center;
@@ -118,7 +117,7 @@
   }
 }
 
-/* Nút phụ Lịch sử phân tích AI */
+
 .btn-secondary {
   display: inline-flex;
   align-items: center;
@@ -127,7 +126,7 @@
   color: #2563B0;
   border: 2px solid #2563B0;
   padding: 10px 20px;
-  border-radius: 30px; /* Bo góc tròn đồng bộ với nút AI */
+  border-radius: 30px; 
   font-size: 14px;
   font-weight: 600;
   font-family: 'Be Vietnam Pro', sans-serif;
@@ -143,12 +142,7 @@
     font-size: 18px;
   }
 }
-/* ── SKELETON ── (giữ nguyên) */
-/* ... (phần skeleton, error, empty, hero, floating container, product card, table, footer, modal, responsive giữ nguyên từ file cũ) ... */
 
-/* Tôi sẽ chèn lại toàn bộ nội dung còn lại, nhưng vì dài, bạn có thể giữ nguyên phần SCSS cũ và chỉ thêm các style trên vào đầu file (sau breadcrumb). */
-
-/* Dưới đây là toàn bộ nội dung còn lại của file SCSS cũ (giữ nguyên) */
 @keyframes shimmer {
   0%   { background-position: -600px 0; }
   100% { background-position:  600px 0; }
@@ -215,7 +209,7 @@
   100% { opacity: 0.4; }
 }
 
-/* ── LOADING ── */
+
 .loading-state {
   display: flex;
   flex-direction: column;
@@ -236,7 +230,6 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── ERROR & EMPTY ── */
 .error-state, .empty-state {
   display: flex;
   flex-direction: column;
@@ -268,7 +261,6 @@
   }
 }
 
-/* ── HERO BANNER ── */
 .hero-bg-wrapper {
   position: relative;
   margin-bottom: 40px;
@@ -295,7 +287,6 @@
   z-index: 0;
 }
 
-/* ── HIỆU ỨNG CÁNH HOA BAY TOÀN BANNER ── */
 .hero-petals-container {
   .hero-petal {
     position: absolute;
@@ -331,7 +322,6 @@
   }
 }
 
-/* ── HERO BANNER & GRID ĐỒNG BỘ ── */
 .floating-container {
   display: grid;
   grid-template-columns: 220px repeat(3, 1fr);
@@ -347,7 +337,7 @@
   padding: 0 12px; 
 }
 
-/* Thẻ Thêm Sản Phẩm (Placeholder) */
+
 .product-card.add-new-card {
   border: 2px dashed #94A3B8;
   background: #F8FAFC;
@@ -379,7 +369,6 @@
   .placeholder-text { color: #CBD5E1; font-size: 24px; }
 }
 
-/* ── PRODUCT CARD ── */
 .product-card {
   background: #FFFFFF;
   border-radius: 12px;
@@ -494,7 +483,7 @@
   }
 }
 
-/* ── BẢNG THÔNG SỐ ── */
+
 .specs-matrix-wrapper {
   background: #FFFFFF;
   border-radius: 12px;
@@ -612,7 +601,6 @@
   }
 }
 
-/* ── ACTION FOOTER ── */
 .action-footer {
   display: flex;
   justify-content: flex-end;
@@ -648,7 +636,6 @@
   }
 }
 
-/* ── MODAL OVERLAY ── */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -720,7 +707,6 @@
   overflow: hidden;
 }
 
-/* ── Search box ── */
 .search-box {
   display: flex;
   align-items: center;
@@ -775,7 +761,6 @@
   }
 }
 
-/* ── Loading & Empty ── */
 .loading-spinner {
   display: flex;
   flex-direction: column;
@@ -806,7 +791,6 @@
   padding: 20px 0;
 }
 
-/* ── Danh sách sản phẩm ── */
 .product-list-modal {
   display: flex;
   flex-direction: column;
@@ -908,7 +892,6 @@
   }
 }
 
-/* ── RESPONSIVE ── */
 @media (max-width: 1200px) {
   .main-container { padding: 0 40px; }
   .breadcrumb-bar .section-container { padding: 0 40px; }
@@ -968,7 +951,6 @@
   }
 }
 
-/* ── Modal responsive ── */
 @media (max-width: 640px) {
   .modal-content {
     max-width: 100%;

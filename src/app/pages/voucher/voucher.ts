@@ -44,7 +44,6 @@ export class Voucher implements OnInit {
   vouchers: VoucherItem[] = [];
   isLoading = false;
 
-  // --- CÁC BIẾN CHO THẺ THÀNH VIÊN ---
   currentPoints = 0;
   tierName = 'Bronze';
   tierLevel = 0;
@@ -77,10 +76,8 @@ export class Voucher implements OnInit {
         this.tierLevel = user.tierLevel || 0;
         this.calculateProgress();
         
-        // SỬA CHỖ NÀY: Truyền thẳng mã User_id vào hàm
         this.loadVouchers(user.User_id); 
       } else {
-        // SỬA CHỖ NÀY: Nếu chưa đăng nhập thì gửi chuỗi rỗng
         this.loadVouchers(''); 
       }
     });
@@ -107,11 +104,9 @@ export class Voucher implements OnInit {
     }
   }
 
-  // SỬA CHỖ NÀY: Khai báo nhận tham số userId
   loadVouchers(userId: string): void {
     this.isLoading = true;
 
-    // SỬA CHỖ NÀY: Bỏ userId vào trong ngoặc để gọi Service
     this.voucherService.getMyVouchers(userId).subscribe({
       next: (res: VoucherResponse) => {
         this.vouchers = [...(res.data || [])].filter((voucher) => this.isVoucherStillValid(voucher));

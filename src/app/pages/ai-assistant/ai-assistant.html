@@ -1,6 +1,6 @@
 <div class="ai-page">
 
-  <!-- ── SIDEBAR ── -->
+
   <aside class="ai-sidebar" [style.width.px]="sidebarWidth">
     <div class="sidebar-header">
       <div class="sidebar-title-row">
@@ -48,10 +48,10 @@
     <div class="sidebar-resize-handle" (mousedown)="onResizeStart($event)"></div>
   </aside>
 
-  <!-- ── CHAT AREA ── -->
+
   <main class="ai-main">
 
-    <!-- Header chat -->
+    
     <div class="chat-header">
       <div class="chat-header-info">
         <div class="ai-avatar">
@@ -67,10 +67,10 @@
       </div>
     </div>
 
-    <!-- Body chat -->
+    
     <div class="chat-body" #chatBody>
 
-      <!-- Màn hình chào mừng khi chưa có session -->
+      
       <div class="chat-welcome" *ngIf="!activeSessionId && messages.length === 0">
         <div class="welcome-icon"><i class="ph ph-robot"></i></div>
         <h2>Chào bạn! Tôi là trợ lý VISTA AI.</h2>
@@ -80,27 +80,27 @@
         </button>
       </div>
 
-      <!-- Màn hình welcome khi mở session rỗng -->
+      
       <div class="chat-welcome" *ngIf="activeSessionId && messages.length === 0 && !isLoading">
         <div class="welcome-icon"><i class="ph ph-robot"></i></div>
         <p>Hãy đặt câu hỏi đầu tiên cho VISTA AI!</p>
       </div>
 
-      <!-- Danh sách tin nhắn -->
+      
       <div *ngFor="let msg of messages" class="message-wrapper" [class.user-wrapper]="msg.sender === 'user'">
 
-        <!-- Tin nhắn USER -->
+        
         <div *ngIf="msg.sender === 'user'" class="bubble bubble-user">
           {{ msg.content }}
         </div>
 
-        <!-- Tin nhắn AI -->
+        
         <div *ngIf="msg.sender === 'ai'" class="ai-message-group">
           <div class="ai-avatar-sm"><i class="ph ph-robot"></i></div>
           <div class="ai-message-body">
             <div class="bubble bubble-ai">{{ msg.content }}</div>
 
-            <!-- Card sản phẩm AI gợi ý -->
+            
             <div class="product-cards" *ngIf="msg.products && msg.products.length > 0">
               <div
                 *ngFor="let product of msg.products"
@@ -124,7 +124,7 @@
               </div>
             </div>
 
-            <!-- Card voucher -->
+            
             <div class="voucher-cards" *ngIf="msg.vouchers && msg.vouchers.length > 0">
               <div *ngFor="let v of msg.vouchers" class="voucher-card">
                 <div class="voucher-icon"><i class="ph ph-ticket"></i></div>
@@ -142,7 +142,7 @@
         </div>
       </div>
 
-      <!-- Loading indicator -->
+      
       <div class="ai-message-group" *ngIf="isLoading">
         <div class="ai-avatar-sm"><i class="ph ph-robot"></i></div>
         <div class="bubble bubble-ai bubble-loading">
@@ -152,7 +152,7 @@
 
     </div>
 
-    <!-- Suggestion chips -->
+    
     <div class="suggestion-chips" *ngIf="suggestions.length > 0">
       <button
         *ngFor="let s of suggestions"
@@ -161,7 +161,7 @@
       >{{ s }}</button>
     </div>
 
-    <!-- Input area -->
+    
     <div class="chat-input-area">
       <div class="chat-input-wrap">
         <i class="ph ph-chat-text input-icon"></i>

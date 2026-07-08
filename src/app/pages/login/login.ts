@@ -15,10 +15,10 @@ export class Login implements OnInit {
   email = '';
   password = '';
   
-  // Biến cho con mắt
+
   showPassword = false;
 
-  // Biến cho logic khóa 1 phút
+
   failedAttempts = 0;
   isLocked = false;
   countdown = 0;
@@ -28,13 +28,13 @@ export class Login implements OnInit {
 
   ngOnInit() {
     if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/']); // Nếu đã đăng nhập, đá văng về trang chủ
+      this.router.navigate(['/']); 
       return; 
     }
-    this.checkLockout(); // Kiểm tra xem user có đang bị khóa từ trước không
+    this.checkLockout(); 
   }
 
-  // Hàm đếm ngược thời gian khóa
+
   checkLockout() {
     const lockUntil = localStorage.getItem('lockUntil');
     if (lockUntil) {
@@ -43,7 +43,6 @@ export class Login implements OnInit {
         this.isLocked = true;
         this.startCountdown(Math.ceil(timeLeft / 1000));
       } else {
-        // Đã hết 1 phút -> Mở khóa
         localStorage.removeItem('lockUntil');
         localStorage.setItem('failedAttempts', '0');
         this.failedAttempts = 0;
@@ -75,7 +74,6 @@ export class Login implements OnInit {
     this.authService.login(loginData).subscribe({
       next: (res) => {
         if (res.success) {
-          // Đăng nhập đúng -> Xóa lịch sử nhập sai
           localStorage.setItem('failedAttempts', '0');
           
           Swal.fire({
@@ -90,12 +88,10 @@ export class Login implements OnInit {
         }
       },
       error: (err) => {
-        // Xử lý khi nhập sai mật khẩu
         this.failedAttempts++;
         localStorage.setItem('failedAttempts', this.failedAttempts.toString());
 
         if (this.failedAttempts >= 5) {
-          // Phạt khóa 1 phút (60,000 milliseconds)
           const lockTime = Date.now() + 60 * 1000;
           localStorage.setItem('lockUntil', lockTime.toString());
           this.isLocked = true;

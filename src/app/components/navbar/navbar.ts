@@ -18,7 +18,7 @@ import { ProductService } from '../../services/product';
 export class NavbarComponent implements OnInit, OnDestroy {
   isLoggedIn: boolean = false;
   searchQuery: string = ''; 
-  userName: string = ''; // Khai báo biến hứng tên khách hàng để HTML không bị lỗi
+  userName: string = ''; 
   cartCount = 0;
   categories: any[] = [];
   private subscriptions = new Subscription();
@@ -39,7 +39,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.isLoggedIn = !!user; 
       
       if (user) {
-        // Lấy tên hiển thị của khách (Dựa vào trường Full_name trong DB của bạn)
         this.userName = user.Full_name || 'Khách hàng'; 
         this.syncCartCount(user.User_id);
       } else {
@@ -47,7 +46,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.cartState.setCount(0);
       }
       
-      // Ép Angular render lại giao diện Navbar lập tức
       this.cdr.detectChanges(); 
     }));
 

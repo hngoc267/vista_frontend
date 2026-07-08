@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // Bắt buộc để dùng [(ngModel)] sửa hồ sơ
+import { FormsModule } from '@angular/forms'; 
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import Swal from 'sweetalert2';
@@ -12,10 +12,10 @@ import Swal from 'sweetalert2';
   styleUrl: './profile.scss'
 })
 export class Profile implements OnInit {
-  activeTab = 'info'; // Tab mặc định
-  user: any = null;   // Biến chứa dữ liệu user đang đăng nhập
+  activeTab = 'info'; 
+  user: any = null;   
 
-  // Các biến dùng cho form Đổi mật khẩu
+
   oldPassword = '';
   newPassword = '';
   confirmPassword = '';
@@ -26,29 +26,27 @@ export class Profile implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Lấy thông tin user thật từ luồng dữ liệu của AuthService
+
     this.authService.currentUser$.subscribe(currentUser => {
       if (currentUser) {
-        this.user = { ...currentUser }; // Copy dữ liệu ra để đổ lên form
+        this.user = { ...currentUser }; 
       } else {
-        // Nếu chưa đăng nhập mà cố tình vào trang profile -> đá ra trang login
         this.router.navigate(['/login']);
       }
     });
   }
 
-  // HÀM LƯU THAY ĐỔI HỒ SƠ
+
   saveProfile() {
     const updateData = {
       Full_name: this.user.Full_name,
       Phone_number: this.user.Phone_number
     };
 
-    // Gọi API update từ Service của bạn
+
     this.authService.updateProfile(updateData).subscribe({
       next: (res) => {
         if (res.success) {
-          // Cập nhật lại dữ liệu mới vào localStorage để đồng bộ toàn app
           localStorage.setItem('user', JSON.stringify(res.data));
           Swal.fire({
             icon: 'success',
@@ -64,7 +62,6 @@ export class Profile implements OnInit {
     });
   }
 
-  // HÀM ĐỔI MẬT KHẨU
   updatePassword() {
     if (this.newPassword !== this.confirmPassword) {
       Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Mật khẩu xác nhận mới không khớp!', confirmButtonColor: '#2563B0' });
@@ -85,7 +82,7 @@ export class Profile implements OnInit {
             text: 'Vui lòng sử dụng mật khẩu mới cho lần đăng nhập sau.',
             confirmButtonColor: '#2563B0'
           });
-          // Xóa trắng form mật khẩu
+
           this.oldPassword = '';
           this.newPassword = '';
           this.confirmPassword = '';
@@ -97,7 +94,7 @@ export class Profile implements OnInit {
     });
   }
 
-  // HÀM ĐĂNG XUẤT
+
   logout() {
     Swal.fire({
       title: 'Bạn muốn đăng xuất?',
@@ -110,8 +107,8 @@ export class Profile implements OnInit {
       cancelButtonText: 'Hủy'
     }).then((result) => {
       if (result.isConfirmed) {
-        this.authService.logout(); // Gọi hàm xóa sạch token và user trong localStorage
-        this.router.navigate(['/login']); // Đá về trang login
+        this.authService.logout(); 
+        this.router.navigate(['/login']); 
       }
     });
   }

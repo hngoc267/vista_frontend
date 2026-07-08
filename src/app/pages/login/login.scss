@@ -1,6 +1,6 @@
 .auth-page {
   background: #F8FAFC;
-  min-height: calc(100vh - 64px); // Loại trừ chiều cao Navbar
+  min-height: calc(100vh - 64px); 
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,16 +10,16 @@
 
 .auth-card {
   background: #FFFFFF;
-  width: 480px; /* Độ rộng thẻ form */
-  border-radius: 16px; /* Bo góc 16 */
-  border: 1px solid #E2E8F0; /* Đường viền nhẹ dày 1px */
-  padding: 32px; /* Auto Layout Padding 32 */
+  width: 480px; 
+  border-radius: 16px; 
+  border: 1px solid #E2E8F0; 
+  padding: 32px; 
   display: flex;
   flex-direction: column;
-  gap: 16px; /* Khoảng cách gap tổng thể là 16 */
+  gap: 16px; 
   box-sizing: border-box;
 
-  /* Chiều cao biến đổi chính xác theo từng màn hình */
+  
   &.register-card {
     height: 620px;
   }
@@ -34,7 +34,7 @@
   justify-content: center;
   
   .logo-img {
-    height: 40px; /* Chiều cao logo cố định 40px */
+    height: 40px; 
     width: auto;
     object-fit: contain;
   }
@@ -48,7 +48,7 @@
 
   h2 {
     font-size: 24px;
-    font-weight: 600; /* SemiBold */
+    font-weight: 600; 
     color: #0F172A;
     margin: 0;
   }
@@ -69,7 +69,7 @@
   .inputs-container {
     display: flex;
     flex-direction: column;
-    gap: 12px; /* Gap giữa các ô input là 12px */
+    gap: 12px; 
   }
 
   .form-group {
@@ -81,7 +81,7 @@
     position: relative;
     display: flex;
     align-items: center;
-    width: 416px; /* Chiều rộng thành phần trong lòng card: 480 - 32*2 = 416px */
+    width: 416px; 
 
     i {
       position: absolute;
@@ -131,7 +131,7 @@
   }
 
   .btn-submit {
-    width: 416px; /* Chiều rộng Button đồng bộ 416px */
+    width: 416px;
     padding: 12px;
     background: #2563B0;
     color: #FFFFFF;

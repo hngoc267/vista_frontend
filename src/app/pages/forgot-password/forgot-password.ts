@@ -16,14 +16,14 @@ export class ForgotPassword {
   email = '';
 
   constructor(
-    private authService: AuthService, // <-- Nhớ inject thêm AuthService vào đây nha
+    private authService: AuthService, 
     private router: Router
   ) {}
 
   onSubmit() {
     if (!this.email) return;
 
-    // Hiện hiệu ứng loading trong lúc chờ Backend gửi mail (tránh user bấm liên tục)
+  
     Swal.fire({
       title: 'Đang gửi mã...',
       text: 'Vui lòng đợi trong giây lát',
@@ -31,7 +31,7 @@ export class ForgotPassword {
       didOpen: () => { Swal.showLoading(); }
     });
 
-    // Gọi API thật từ Backend
+    
     this.authService.forgotPassword({ Email: this.email }).subscribe({
       next: (res) => {
         Swal.fire({

@@ -1,6 +1,5 @@
 <div class="result-page">
 
-  <!-- BANNER HERO -->
   <section class="result-hero">
     <div class="hero-container">
       <div class="hero-content">
@@ -40,9 +39,7 @@
     </div>
   </section>
 
-  <!-- Nội dung chính -->
   <div class="result-shell">
-    <!-- Breadcrumb -->
     <div class="breadcrumb-bar">
       <a routerLink="/">Trang chủ</a>
       <span class="sep">›</span>
@@ -53,13 +50,10 @@
       <span class="current">Kết quả AI</span>
     </div>
 
-    <!-- Skeleton Loading -->
     <div *ngIf="isLoading" class="skeleton-wrapper">
       
-      <!-- Lời khuyên AI giả lập -->
       <div class="skeleton-recommendation"></div>
 
-      <!-- Lưới 2 hoặc 3 thẻ sản phẩm giả lập -->
       <section class="products-grid" [class.has-3]="products.length >= 3">
         <div class="product-card" *ngFor="let p of products">
           <div class="skeleton-header">
@@ -85,9 +79,7 @@
       </section>
     </div>
 
-    <!-- Nội dung khi có kết quả -->
     <ng-container *ngIf="result && !isLoading">
-      <!-- Recommendation -->
       <section class="recommendation-section">
         <div class="rec-card">
           <div class="rec-badge">
@@ -104,7 +96,6 @@
         </div>
       </section>
 
-      <!-- 2 sản phẩm -->
       <section class="products-grid" [class.has-3]="result.products.length >= 3">
         <div 
           class="product-card" 
@@ -161,7 +152,6 @@
         </div>
       </section>
 
-      <!-- Actions -->
       <div class="action-row">
         <button class="btn-primary" (click)="onAdjust()">
           <i class="ph ph-sliders"></i> Điều chỉnh tiêu chí
@@ -175,7 +165,6 @@
       </div>
     </ng-container>
 
-    <!-- Fallback -->
     <div *ngIf="!result && !isLoading" class="empty-state">
       <i class="ph ph-robot"></i>
       <p>Không có kết quả phân tích. Vui lòng quay lại trang so sánh.</p>

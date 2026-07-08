@@ -1,6 +1,5 @@
 <div class="criteria-page">
 
-  <!-- BANNER HERO -->
   <section class="criteria-hero">
     <div class="hero-container">
       <div class="hero-content">
@@ -40,9 +39,7 @@
     </div>
   </section>
 
-  <!-- Nội dung chính -->
   <div class="criteria-shell">
-    <!-- Breadcrumb -->
     <div class="breadcrumb-bar">
       <a routerLink="/">Trang chủ</a>
       <span class="sep">›</span>
@@ -51,7 +48,6 @@
       <span class="current">Tiêu chí AI</span>
     </div>
 
-    <!-- Priority Selection -->
     <section class="priority-section">
       <div class="priority-header">
         <div>
@@ -98,7 +94,6 @@
       </div>
     </section>
 
-    <!-- AI Summary -->
     <section class="summary-section" [class.has-selection]="hasSelection">
       <div class="summary-card">
         <div class="summary-header">
@@ -128,7 +123,6 @@
       </div>
     </section>
 
-    <!-- Actions -->
     <div class="action-row">
       <button class="btn-primary" (click)="onAnalyze()" [disabled]="isLoading || !hasSelection">
         <i class="ph ph-robot" *ngIf="!isLoading"></i>

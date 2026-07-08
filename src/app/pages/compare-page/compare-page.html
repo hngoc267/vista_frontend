@@ -13,20 +13,20 @@
 <div class="compare-page">
   <div class="main-container">
 
-    <!-- HEADER với 2 nút -->
+    
     <div class="page-header">
       <h1 class="page-title">So sánh sản phẩm</h1>
       <div class="header-actions">
-        <!-- Nút Quay lại trang danh mục -->
+        
         <a class="continue-link" [routerLink]="['/products']">
           <i class="ph ph-arrow-left"></i>
           <span>Danh mục sản phẩm</span>
         </a>
-        <!-- Nút phụ lịch sử phân tích với AI -->
+        
         <button class="btn-secondary" routerLink="/ai-history">
           <i class="ph ph-clock"></i> Xem lịch sử phân tích với AI
         </button>
-        <!-- Nút Phân tích với AI -->
+        
         <button class="btn-ai-header" (click)="analyzeWithAI()">
           <i class="ph ph-robot"></i>
           Phân tích với AI
@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    <!-- Loading -->
+    
     <div *ngIf="loading" class="skeleton-wrapper">
       <div class="skeleton-banner"></div>
       <div class="skeleton-cards">
@@ -45,17 +45,17 @@
       </div>
     </div>
 
-    <!-- Error -->
+    
     <div *ngIf="error" class="error-state">
       <i class="ph ph-warning-circle"></i>
       <p>{{ error }}</p>
       <button class="btn-primary" (click)="loadCompareData()">Thử lại</button>
     </div>
 
-    <!-- Nội dung chính -->
+    
     <div *ngIf="!error && products.length > 0">
 
-      <!-- Hero + Product Cards -->
+      
       <div class="hero-bg-wrapper" (mousemove)="onMouseMove($event)" (mouseleave)="onMouseLeave($event)">
         <div class="hero-bg">
           <div class="hero-petals-container">
@@ -103,7 +103,7 @@
         </div>
       </div>
 
-      <!-- Modal thêm sản phẩm -->
+      
       <div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
         <div class="modal-content" (click)="$event.stopPropagation()">
           <div class="modal-header">
@@ -150,7 +150,7 @@
         </div>
       </div>
 
-      <!-- Bảng thông số -->
+      
       <div class="specs-matrix-wrapper">
         <div class="specs-matrix">
           <table class="specs-table">
@@ -179,14 +179,9 @@
         </div>
       </div>
 
-      <!-- 
-        ======== ĐÃ XÓA ACTION-FOOTER ======== 
-        Nút giờ ở trên header rồi, không cần footer nữa.
-      -->
 
     </div> 
 
-    <!-- Empty state -->
     <div *ngIf="!error && products.length === 0" class="empty-state">
       <i class="ph ph-git-compare"></i>
       <p>Không có sản phẩm để so sánh.</p>

@@ -10,7 +10,7 @@
   margin: 0 auto;
   padding: 0 120px;
   display: flex;
-  gap: 24px; /* Cột trái + cột phải -> Flow ngang -> Gap 24 */
+  gap: 24px; 
 }
 
 .divider {
@@ -19,7 +19,7 @@
   margin: 16px 0;
 }
 
-// ── CỘT TRÁI: SIDEBAR (W: 280) ──
+
 .profile-sidebar {
   width: 280px;
   background: #FFFFFF;
@@ -38,7 +38,7 @@
     .avatar-circle {
       width: 80px;
       height: 80px;
-      background: #2563B0; // Đổi sang màu web cho đồng bộ thương hiệu
+      background: #2563B0; 
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -55,7 +55,7 @@
   .sidebar-menu {
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Menu dọc: Gap 8 */
+    gap: 8px; 
 
     .menu-item {
       display: flex;
@@ -79,20 +79,20 @@
 
       &.active {
         background: #F0F9FF;
-        color: #2563B0; /* Đang chọn: màu #2563B0 */
+        color: #2563B0; 
         font-weight: 600;
       }
     }
 
     .logout-btn {
-      color: #EF4444; /* Đăng xuất — màu #EF4444 */
+      color: #EF4444; 
       margin-top: 16px;
       &:hover { background: #FEECEC; color: #EF4444; }
     }
   }
 }
 
-// ── CỘT PHẢI: FORM THÔNG TIN (W: 880) ──
+
 .profile-content {
   width: 880px;
   box-sizing: border-box;
@@ -102,7 +102,7 @@
   background: #FFFFFF;
   border-radius: 12px;
   border: 1px solid #E2E8F0;
-  padding: 32px; /* Padding 32 */
+  padding: 32px; 
 
   h2 { font-size: 20px; font-weight: 600; color: #0F172A; margin: 0; }
   .subtitle { font-size: 13px; color: #64748B; margin-top: 4px; margin-bottom: 0; }
@@ -111,7 +111,7 @@
 .profile-form {
   display: flex;
   flex-direction: column;
-  gap: 16px; /* Flow dọc -> Gap 16 */
+  gap: 16px; 
   width: 100%;
 
   .form-group {
@@ -139,7 +139,7 @@
   }
 
   .btn-save {
-    width: 200px; /* Button: W 200px */
+    width: 200px; 
     padding: 12px;
     background: #2563B0;
     color: #FFFFFF;

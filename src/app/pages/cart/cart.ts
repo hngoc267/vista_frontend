@@ -65,12 +65,12 @@ export class Cart implements OnInit {
   }
 
   formatPrice(value: number): string {
-    // Nếu giá trị là 0 hoặc không có, trả về "0 đ"
+
     if (value === 0 || value === undefined || value === null) {
       return '0 đ';
     }
 
-    // Nếu có giá trị, định dạng bình thường
+
     return value.toLocaleString('vi-VN').replace(/,/g, '.') + ' đ';
   }
 

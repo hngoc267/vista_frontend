@@ -7,7 +7,6 @@ import { OrderService } from '../../services/order';
 import { NotificationService } from '../../components/notification/notification.service';
 import Swal from 'sweetalert2';
 
-// 1. IMPORT AUTHO SERVICE VÀO ĐÂY
 import { AuthService } from '../../services/auth';
 
 @Component({
@@ -84,7 +83,6 @@ export class OrderHistory implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
-    // 2. TIÊM AUTHO SERVICE VÀO CONSTRUCTOR
     private authService: AuthService
   ) {}
 
@@ -221,7 +219,7 @@ export class OrderHistory implements OnInit, OnDestroy {
   trackByEvidence(index: number, evidence: string): string {
     return `${index}-${String(evidence || '').slice(0, 80)}`;
   }
-  // --- CÁC HÀM TIỆN ÍCH HIỂN THỊ HTML ---
+
   getTotalQuantity(order: any): number {
     const items = this.isReturningOrder(order) ? this.getReturningItems(order) : (order.Items || []);
     return items.reduce((sum: number, item: any) => sum + this.getDisplayItemQuantity(order, item), 0);
@@ -649,7 +647,7 @@ export class OrderHistory implements OnInit, OnDestroy {
     return `${mime || 'Tệp đính kèm'} ${index + 1}`;
   }
 
-  // 2. Các hàm kiểm soát Modal hủy đơn hàng từ file main của bạn
+
   openCancelOrderModal(order: any): void {
     if (!this.canCancelOrder(order)) {
       this.notificationService.info('Đơn hàng này không thể hủy.');
@@ -732,7 +730,7 @@ export class OrderHistory implements OnInit, OnDestroy {
     });
   }
 
-  // 3. Các hàm Handler thật kết nối trực tiếp với sự kiện click trên giao diện HTML
+
   handleCancelOrder(order: any): void {
     this.openCancelOrderModal(order);
   }

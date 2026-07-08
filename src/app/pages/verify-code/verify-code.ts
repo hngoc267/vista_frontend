@@ -17,12 +17,11 @@ export class VerifyCode implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private authService: AuthService, // <-- Inject thêm AuthService
+    private authService: AuthService, 
     private router: Router
   ) {}
 
   ngOnInit() {
-    // Đọc email từ URL truyền qua
     this.route.queryParams.subscribe(params => {
       this.email = params['email'] || '';
     });
@@ -47,7 +46,6 @@ export class VerifyCode implements OnInit {
           showConfirmButton: false,
           timer: 1500
         }).then(() => {
-          // Gửi kèm cả Email và OTP sang trang reset để làm bằng chứng xác thực
           this.router.navigate(['/reset-password'], { queryParams: { email: this.email, code: this.otpCode } });
         });
       },

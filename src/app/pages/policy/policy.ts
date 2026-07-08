@@ -14,7 +14,6 @@ export class Policy implements OnInit {
   constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
-    // Đọc URL xem người dùng muốn mở tab nào (ví dụ: /policy?tab=warranty)
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'];
@@ -22,7 +21,6 @@ export class Policy implements OnInit {
     });
   }
 
-  // Hàm chuyển tab khi người dùng bấm
   setTab(tabName: string) {
     this.activeTab = tabName;
   }

@@ -34,7 +34,7 @@ export class HistoryPage implements OnInit {
     });
   }
 
-  // ===== CHECKBOX LOGIC =====
+
   toggleItem(item: HistoryItem, event: Event): void {
     event.stopPropagation();
     const input = event.target as HTMLInputElement;
@@ -57,7 +57,7 @@ export class HistoryPage implements OnInit {
     this.selectedCount = this.history.filter(item => item.checked).length;
   }
 
-  // ===== REMOVE SELECTED (giống cart) =====
+
   removeSelected(): void {
     if (this.selectedCount === 0) return;
 
@@ -72,17 +72,13 @@ export class HistoryPage implements OnInit {
     }
   }
 
-  // ===== VIEW DETAIL =====
+
   viewDetail(item: AiHistoryItem): void {
     this.aiCompareService['_result$'].next(item.result);
 
     if (item.savedProducts && item.savedProducts.length > 0) {
-      // Restore snapshot products → result-page hiển thị đúng ảnh và giá
       this.aiCompareService['_products$'].next(item.savedProducts);
     } else {
-      // Fallback cho lịch sử cũ chưa có savedProducts:
-      // tạo placeholder tối thiểu để result-page không crash,
-      // ảnh sẽ dùng default, giá hiển thị 0đ.
       const placeholders = item.productNames.map(name => ({
         Product_name: name,
         Category_id: '',
@@ -98,7 +94,6 @@ export class HistoryPage implements OnInit {
     this.router.navigate(['/ai-result']);
   }
 
-  // ===== REMOVE SINGLE =====
   removeItem(id: string, event: Event): void {
     event.stopPropagation();
     if (confirm('Bạn có chắc muốn xóa bản ghi này?')) {
@@ -108,7 +103,6 @@ export class HistoryPage implements OnInit {
     }
   }
 
-  // ===== CLEAR ALL =====
   clearAll(): void {
     if (this.history.length === 0) return;
     if (confirm('Bạn có chắc muốn xóa toàn bộ lịch sử?')) {
@@ -118,7 +112,6 @@ export class HistoryPage implements OnInit {
     }
   }
 
-  // ===== HELPERS =====
   getProductNames(item: AiHistoryItem): string {
     return item.productNames.join(' vs ');
   }

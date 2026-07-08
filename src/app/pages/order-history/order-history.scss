@@ -64,14 +64,14 @@ $white: #FFFFFF;
 
 .history-toolbar {
   display: flex;
-  align-items: flex-start; /* Đổi thành flex-start để lỡ màn hình nhỏ quá bị rớt dòng thì ô search không bị xô lệch */
+  align-items: flex-start; 
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 22px;
 }
 
 .search-box {
-  width: 300px; /* Thu nhỏ từ 430px xuống 300px để nhường chỗ cho các tab */
+  width: 300px; 
   height: 42px;
   display: flex;
   align-items: center;
@@ -81,7 +81,7 @@ $white: #FFFFFF;
   border-radius: 12px;
   padding: 0 14px;
   transition: 0.2s ease;
-  flex-shrink: 0; /* Giữ ô search không bị bóp méo */
+  flex-shrink: 0; 
 
   &:focus-within {
     border-color: $primary;
@@ -110,14 +110,14 @@ $white: #FFFFFF;
 .status-tabs {
   display: flex;
   align-items: center;
-  gap: 6px; /* Thu hẹp khoảng cách các tab từ 8px xuống 6px */
+  gap: 6px; 
   flex-wrap: wrap;
   justify-content: flex-end;
 
   button {
-    min-width: unset; /* Bỏ min-width để nút co giãn tự nhiên */
+    min-width: unset; 
     height: 38px;
-    padding: 0 12px; /* Dùng 12px vừa đủ đẹp, 16px hơi to */
+    padding: 0 12px; 
     white-space: nowrap; 
     background: $white;
     border: 1px solid $border;

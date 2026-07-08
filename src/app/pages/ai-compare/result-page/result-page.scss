@@ -1,4 +1,3 @@
-// src/app/pages/ai-compare/result-page/result-page.scss
 :host {
   display: block;
   font-family: 'Be Vietnam Pro', sans-serif;
@@ -10,7 +9,7 @@
   background: #F8FAFC;
 }
 
-// ========== BANNER HERO ==========
+
 .result-hero {
   background: linear-gradient(135deg, #1A3A6B, #1E3A5F);
   padding: 60px 0 40px;
@@ -179,7 +178,6 @@
   50% { transform: translateY(-12px) scale(1.3); opacity: 0.9; }
 }
 
-// ========== BREADCRUMB ==========
 .breadcrumb-bar {
   background: transparent;
   padding: 16px 0 8px;
@@ -205,14 +203,12 @@
   }
 }
 
-// ========== NỘI DUNG CHÍNH ==========
 .result-shell {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 120px 32px;
 }
 
-// ========== LOADING ==========
 .loading-overlay {
   max-width: 1440px;
   margin: 60px auto;
@@ -238,7 +234,6 @@
   to { transform: rotate(360deg); }
 }
 
-// ========== RECOMMENDATION ==========
 .recommendation-section {
   margin: 32px 0 28px;
 }
@@ -299,7 +294,6 @@
   }
 }
 
-// ========== PRODUCTS GRID ==========
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -516,7 +510,6 @@
     }
   }
 
-  /* 3. THÊM STYLE CHO KHỐI NÚT BẤM  */
   .card-actions {
     width: 100%;
     display: flex;
@@ -557,7 +550,6 @@
   }
 }
 
-// ========== ACTION ROW ==========
 .action-row {
   display: flex;
   gap: 16px;
@@ -609,7 +601,7 @@
   }
 }
 
-// ========== SKELETON LOADING ==========
+
 @keyframes shimmer {
   0%   { background-position: -600px 0; }
   100% { background-position:  600px 0; }
@@ -633,7 +625,6 @@
   margin-bottom: 32px;
 }
 
-// Bên trong product-card đang load
 .product-card {
   .skeleton-header {
     display: flex;
@@ -660,7 +651,7 @@
   .skeleton-score {
     @extend %skeleton-base;
     width: 100%;
-    height: 46px; /* Bằng cả label + thanh + % */
+    height: 46px; 
     margin-bottom: 20px;
   }
 
@@ -699,13 +690,11 @@
   }
 }
 
-// Cho trường hợp 3 sản phẩm, ép pros-cons thành 1 cột
 .products-grid.has-3 .skeleton-pros-cons {
   grid-template-columns: 1fr;
   gap: 12px;
 }
 
-// ========== RESPONSIVE ==========
 @media (max-width: 768px) {
   .action-row {
     flex-direction: column;
@@ -723,7 +712,6 @@
   }
 }
 
-// ========== EMPTY STATE ==========
 .empty-state {
   max-width: 1440px;
   margin: 80px auto;
@@ -743,7 +731,6 @@
   }
 }
 
-// ========== RESPONSIVE ==========
 @media (max-width: 1280px) {
   .result-hero .hero-container,
   .result-shell {

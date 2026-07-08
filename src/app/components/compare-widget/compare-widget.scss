@@ -1,7 +1,7 @@
 .compare-widget {
   position: fixed;
   bottom: 24px;
-  left: 24px;           // Đặt góc trái dưới
+  left: 24px;           
   width: 340px;
   background: #FFFFFF;
   border-radius: 16px;
@@ -230,7 +230,7 @@
 @media (max-width: 768px) {
   .compare-widget {
     bottom: 16px;
-    left: 16px;       // vẫn giữ trái
+    left: 16px;       
     width: 290px;
 
     .widget-body {
@@ -241,19 +241,18 @@
   }
 }
 
-/* ── HIỆU ỨNG LẤP LÁNH CHO WIDGET THU GỌN ── */
 @keyframes sparkling-glow {
   0% {
     box-shadow: 0 0 10px rgba(0, 194, 212, 0.4), inset 0 0 5px rgba(0, 194, 212, 0.2);
-    border-color: #00C2D4; /* Xanh ngọc */
+    border-color: #00C2D4; 
   }
   33% {
     box-shadow: 0 0 20px rgba(231, 214, 122, 0.6), inset 0 0 5px rgba(231, 214, 122, 0.2);
-    border-color: #e7d67a; /* Vàng sáng (Tạo cảm giác tia lửa lấp lánh) */
+    border-color: #e7d67a; 
   }
   66% {
     box-shadow: 0 0 15px rgba(37, 99, 176, 0.5), inset 0 0 5px rgba(37, 99, 176, 0.2);
-    border-color: #2563B0; /* Xanh Navy */
+    border-color: #2563B0; 
   }
   100% {
     box-shadow: 0 0 10px rgba(0, 194, 212, 0.4), inset 0 0 5px rgba(0, 194, 212, 0.2);
@@ -261,7 +260,6 @@
   }
 }
 
-/* Hiệu ứng nhịp đập nhẹ cho icon */
 @keyframes icon-bounce {
   0%, 100% { 
     transform: scale(1); 

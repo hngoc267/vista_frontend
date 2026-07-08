@@ -17,11 +17,10 @@
     justify-content: space-between;
   }
 
-  /* --- BÊN TRÁI --- */
   .nav-left {
     display: flex;
     align-items: center;
-    gap: 32px; /* Trả lại gap rộng rãi cho bên trái */
+    gap: 32px; 
 
     .navbar-logo {
       display: flex;
@@ -67,18 +66,18 @@
           z-index: 1100;
 
         li a {
-          display: flex;         // Căn icon và chữ nằm ngang
-          align-items: center;   // Căn giữa theo chiều dọc
-          gap: 12px;             // Khoảng cách giữa icon và chữ
+          display: flex;         
+          align-items: center;   
+          gap: 12px;             
           padding: 12px 20px;
-          color: #0F172A;        // Màu chữ mặc định
+          color: #0F172A;        
           text-decoration: none;
           font-size: 14px;
           font-weight: 500;
 
           i {
-            color: #2563b0;      // Đổ màu xanh đậm cho icon giống hình sếp gửi
-            font-size: 18px;     // Chỉnh to nhỏ icon tùy ý
+            color: #2563b0;      
+            font-size: 18px;     
           }
 
     &:hover {
@@ -95,7 +94,7 @@
     }
   }
 
-  /* --- BÊN GIỮA: Thanh lời chào động --- */
+
   .nav-center.greeting-wrapper {
     flex: 1;
     max-width: 650px;
@@ -105,50 +104,49 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.1) !important; /* Nền kính mờ nhẹ nhàng */
+    background: rgba(255, 255, 255, 0.1) !important; 
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     overflow: hidden; 
     cursor: default;
-    transition: all 0.3s ease; /* Lệnh tạo độ mượt 0.3 giây khi đổi màu */
+    transition: all 0.3s ease; 
 
     .greeting-text {
-      color: #c9cef7 !important; /* Chữ xám bạc sang trọng, không bị chói */
+      color: #c9cef7 !important;
       font-size: 14px;
       font-family: 'Be Vietnam Pro', sans-serif;
       font-weight: 500;
       z-index: 2;
       text-align: center;
       white-space: nowrap;
-      transition: all 0.3s ease; /* Tạo độ mượt cho chữ */
+      transition: all 0.3s ease; 
       
       strong {
-        color: #00C2D4 !important; /* Tên màu xanh ngọc đặc trưng của VISTA */
+        color: #00C2D4 !important; 
         font-weight: 700;
         transition: all 0.3s ease;
       }
     }
 
-    /* 🔥 HIỆU ỨNG KHI ĐƯA CHUỘT VÀO KHUNG (HOVER) 🔥 */
     &:hover {
-      background: rgba(0, 194, 212, 0.15) !important; /* Khung bừng sáng màu xanh ngọc mờ */
+      background: rgba(0, 194, 212, 0.15) !important; 
       border-color: rgba(0, 194, 212, 0.4);
       box-shadow: 0 0 15px rgba(0, 194, 212, 0.2);
 
       .greeting-text {
-        color: #FFFFFF !important; /* Chữ chuyển sang trắng tinh phát sáng */
+        color: #FFFFFF !important; 
         text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
         
         strong {
-          color: #e7d67a !important; /* Tên khách hàng đổi sang VÀNG GOLD cực VIP */
+          color: #e7d67a !important; 
           text-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
-          transform: scale(1.05); /* Tên hơi phóng to nhẹ lên một chút */
+          transform: scale(1.05); 
           display: inline-block;
         }
       }
     }
 
-    /* --- CÁNH HOA BAY --- */
+   
     .petals-container {
       position: absolute;
       width: 100%;
@@ -172,7 +170,7 @@
   }
 
 
-  /* --- BÊN PHẢI --- */
+
   .nav-right {
     display: flex;
     align-items: center;
@@ -312,7 +310,7 @@
   }
 }
 
-/* HIỆU ỨNG CÁNH HOA RƠI */
+
 @keyframes falling-petals {
   0% {
     top: -15px;

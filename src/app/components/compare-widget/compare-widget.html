@@ -1,6 +1,5 @@
 <div *ngIf="isVisible && items.length > 0" class="compare-widget" [class.collapsed]="!isExpanded">
   
-  <!-- HEADER (bỏ (mousedown) và icon kéo) -->
   <div class="widget-header" (click)="toggleExpand()">
     <div class="header-left">
       <i class="ph ph-git-compare"></i>
@@ -11,7 +10,6 @@
     </button>
   </div>
 
-  <!-- BODY giữ nguyên -->
   <div class="widget-body" *ngIf="isExpanded">
     <div class="items-list">
       <div *ngFor="let item of items" class="item" [routerLink]="['/products', item.productId]">

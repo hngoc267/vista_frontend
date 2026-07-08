@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth';
-import Swal from 'sweetalert2'; // <-- 1. Thêm dòng import này
+import Swal from 'sweetalert2'; 
 
 @Component({
   selector: 'app-register',
@@ -57,7 +57,6 @@ export class Register {
         }
       },
       error: (err) => {
-        // 3. Popup Đăng ký lỗi (Email/Username trùng)
         Swal.fire({
           icon: 'error',
           title: 'Đăng ký thất bại',

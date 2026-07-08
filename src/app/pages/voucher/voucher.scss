@@ -1,11 +1,10 @@
-/* BIẾN MÀU SẮC ĐỒNG BỘ TỪ HOME */
 $primary-dark: #1A3A6B;
 $primary: #2563B0;
 $cyan: #00C2D4;
 $text-main: #0F172A;
-$text-muted: #94A3B8; // Đồng bộ chuẩn theo search-icon, section-desc
+$text-muted: #94A3B8; 
 $text-light: #CBD5E1;
-$primary-hover: #1E4D8C; // Đồng bộ chuẩn theo hero-desc
+$primary-hover: #1E4D8C; 
 $bg-page: #F8FAFC;
 $border: #E2E8F0;
 $white: #FFFFFF;
@@ -14,12 +13,12 @@ $gold: #F59E0B;
 .voucher-page {
   min-height: calc(100vh - 64px);
   background: $bg-page;
-  padding: 48px 0; // Đồng bộ padding với các section ở Home
+  padding: 48px 0;
   font-family: 'Be Vietnam Pro', sans-serif;
 }
 
 .voucher-wrapper {
-  max-width: 1440px; // Đồng bộ chiều rộng của section-container
+  max-width: 1440px; 
   margin: 0 auto;
   padding: 0 120px;
   display: flex;
@@ -35,23 +34,21 @@ $gold: #F59E0B;
   box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 
   h2 {
-    font-size: 22px; // Chuẩn theo section-title
-    font-weight: 600; // Chuẩn theo section-title
-    color: $text-main; // Chuẩn theo section-title
+    font-size: 22px; 
+    font-weight: 600; 
+    color: $text-main; 
     margin: 0 0 24px;
   }
 }
 
-/* =========================================
-   THÀNH VIÊN (PREMIUM VIP CARD DYNAMIC EFFECTS)
-   ========================================= */
+
 .membership-card {
   border-radius: 20px;
   padding: 36px 40px;
   position: relative;
   overflow: hidden;
   
-  /* --- CÁC BIẾN MÀU MẶC ĐỊNH (Sẽ tự đổi theo từng hạng) --- */
+
   --card-text-main: #FFFFFF;
   --card-text-muted: rgba(255, 255, 255, 0.8);
   --card-accent: #F59E0B;
@@ -61,7 +58,7 @@ $gold: #F59E0B;
   --glow-color: rgba(26, 58, 107, 0.4); 
   --card-badge-shadow: rgba(0, 0, 0, 0.3);
 
-  /* Áp dụng màu chữ tổng thể */
+
   color: var(--card-text-main);
   animation: pulseGlow 4s infinite alternate ease-in-out;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s;
@@ -104,7 +101,7 @@ $gold: #F59E0B;
     bottom: -35px;
     font-size: 160px;
     font-weight: 900;
-    /* Lấy màu chữ chính làm watermark để tệp màu với thẻ Bạc/Vàng */
+
     color: var(--card-text-main);
     opacity: 0.06; 
     line-height: 1;
@@ -114,49 +111,49 @@ $gold: #F59E0B;
     letter-spacing: -4px;
   }
 
-  /* --- MÀU SẮC RIÊNG CHO TỪNG HẠNG --- */
+
   
   &.tier-0 {
-    /* Hạng Đồng: Giữ nguyên màu tối, chữ trắng/vàng */
+
     --glow-color: rgba(184, 90, 40, 0.5);
     --card-accent: #FFD700;
     background: linear-gradient(135deg, #E2955B 0%, #B85A28 50%, #70330D 100%);
   }
 
   &.tier-1 {
-    /* Hạng Bạc: Đổi sang Thép xám đen (Gunmetal) để nổi bật trên nền trắng */
+
     --glow-color: rgba(137, 150, 167, 0.6);
-    --card-text-main: #FFFFFF; /* Chữ trắng sáng bừng trên nền xám tối */
-    --card-text-muted: #CBD5E1; /* Xám nhạt */
-    --card-accent: #d7effa; /* Xanh Icy Blue (xanh lơ lạnh) cực kỳ hợp với tone thép */
+    --card-text-main: #FFFFFF; 
+    --card-text-muted: #CBD5E1;
+    --card-accent: #d7effa; 
     --card-glass-bg: rgba(255, 255, 255, 0.08);
     --card-glass-border: rgba(255, 255, 255, 0.15);
     --card-progress-track: rgba(102, 102, 102, 0.445);
     --card-badge-shadow: rgba(0, 0, 0, 0.3);
     
-    /* Nền xám đậm sành điệu */
+
     background: linear-gradient(135deg, #8da0bc 0%, #8c9aad 50%, #464b52 100%);
     box-shadow: 0 20px 40px -10px rgba(51, 65, 85, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
   &.tier-2 {
-    /* Hạng Vàng: Chuyển sang Vàng sậm (Rich Gold) để dùng chữ trắng */
+
     --glow-color: rgba(202, 138, 4, 0.5);
-    --card-text-main: #FFFFFF; /* Chữ trắng sang trọng */
-    --card-text-muted: #FEF08A; /* Chữ phụ màu vàng nhạt */
-    --card-accent: #f2a100; /* Điểm nhấn dùng luôn màu trắng cho thanh lịch */
+    --card-text-main: #FFFFFF; 
+    --card-text-muted: #FEF08A; 
+    --card-accent: #f2a100;
     --card-glass-bg: rgba(255, 255, 255, 0.15);
     --card-glass-border: rgba(255, 255, 255, 0.3);
     --card-progress-track: rgba(113, 63, 18, 0.4);
     --card-badge-shadow: rgba(113, 63, 18, 0.2);
     
-    /* Vàng trầm, sâu và có độ bóng */
+
     background: linear-gradient(135deg, #ffde7c 0%, #e2a625 50%, #bd6500 100%);
     box-shadow: 0 20px 40px -10px rgba(133, 77, 14, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
 
   &.tier-3 {
-    /* Hạng Kim Cương: Black Diamond (Đen ánh xanh mượt mà) */
+
     --glow-color: rgba(0, 194, 212, 0.6);
     --card-accent: #00C2D4; /* Sáng màu Xanh lơ */
     --card-glass-bg: rgba(0, 194, 212, 0.15);
@@ -165,7 +162,7 @@ $gold: #F59E0B;
   }
 }
 
-/* --- ĐỒNG BỘ CÁC THÀNH PHẦN CON THEO BIẾN MÀU --- */
+
 
 .card-top {
   display: flex;
@@ -209,7 +206,7 @@ $gold: #F59E0B;
       filter: drop-shadow(0 2px 4px var(--card-badge-shadow));
       
       &.medal-bronze { color: #FFBFA3; } 
-      &.medal-silver { color: #475569; } /* Icon trên nền bạc cần đậm một chút */
+      &.medal-silver { color: #475569; } 
       &.medal-gold { color: #FFF59D; }   
       &.medal-diamond { color: #B2FFFF; } 
     }
@@ -354,9 +351,7 @@ $gold: #F59E0B;
   }
 }
 
-/* =========================================
-   TABS MÃ GIẢM GIÁ
-   ========================================= */
+
 .voucher-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -371,8 +366,8 @@ $gold: #F59E0B;
   border-radius: 8px;
   background: $white;
   color: $primary;
-  font-size: 13px; // Chuẩn theo .search-btn
-  font-weight: 500; // Chuẩn theo .search-btn
+  font-size: 13px; 
+  font-weight: 500; 
   font-family: inherit;
   cursor: pointer;
   transition: all 0.2s;
@@ -387,13 +382,11 @@ $gold: #F59E0B;
   }
 }
 
-/* =========================================
-   VOUCHER CARD 
-   ========================================= */
+
 .voucher-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px; // Đồng bộ gap với product-grid
+  gap: 24px; 
 }
 
 .voucher-card {
@@ -419,7 +412,7 @@ $gold: #F59E0B;
     pointer-events: none;
   }
 
-  /* 2 Vòng tròn khoét lỗ */
+
   &::before,
   &::after {
     content: '';
@@ -439,7 +432,7 @@ $gold: #F59E0B;
   &::after { bottom: -11px; }
 }
 
-/* --- TRÁI --- */
+
 .voucher-left {
   width: 130px;
   flex-shrink: 0;
@@ -473,7 +466,7 @@ $gold: #F59E0B;
   }
 
   .voucher-icon {
-    font-size: 28px; // Đồng bộ với category-icon
+    font-size: 28px; 
     line-height: 1;
     margin-bottom: 8px;
     z-index: 1;
@@ -484,7 +477,7 @@ $gold: #F59E0B;
     z-index: 1;
     h3 {
       margin: 0;
-      font-size: 16px; // Size trung bình gọn gàng
+      font-size: 16px; 
       font-weight: 600;
       line-height: 1.4;
       display: -webkit-box;
@@ -502,7 +495,7 @@ $gold: #F59E0B;
   z-index: 2;
 }
 
-/* --- PHẢI --- */
+
 .voucher-right {
   flex: 1;
   padding: 16px 20px;
@@ -514,14 +507,14 @@ $gold: #F59E0B;
 .voucher-condition {
   margin: 0 0 12px;
   font-size: 13px; 
-  font-weight: 600; /* In đậm vừa phải */
-  color: #0284C7; /* Màu cam đậm */
-  background-color: #d6ecf8; /* Nền vàng nhạt */
-  padding: 6px 12px; /* Tạo không gian xung quanh chữ */
-  border-radius: 6px; /* Bo góc mềm mại */
-  display: inline-block; /* Ôm sát nội dung */
+  font-weight: 600; 
+  color: #0284C7; 
+  background-color: #d6ecf8; 
+  padding: 6px 12px; 
+  border-radius: 6px; 
+  display: inline-block; 
   width: fit-content;
-  max-width: calc(100% - 80px); /* Tránh đè vào badge hết hạn */
+  max-width: calc(100% - 80px); 
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -534,7 +527,7 @@ $gold: #F59E0B;
 
   .code-label {
     color: $text-muted;
-    font-size: 11px; // Chuẩn theo product-spec
+    font-size: 11px; 
     font-weight: 500;
   }
 
@@ -574,13 +567,13 @@ $gold: #F59E0B;
 .voucher-type {
   display: inline-block;
   width: fit-content;
-  padding: 3px 8px; // Chuẩn theo badge
+  padding: 3px 8px; 
   margin-bottom: 12px;
-  background: #E0F7FA; // Chuẩn theo badge-ai
+  background: #E0F7FA; 
   color: $cyan;
-  border-radius: 20px; // Chuẩn theo badge
-  font-size: 11px; // Chuẩn theo badge
-  font-weight: 500; // Chuẩn theo badge
+  border-radius: 20px; 
+  font-size: 11px; 
+  font-weight: 500; 
 }
 
 .voucher-bottom {
@@ -594,7 +587,7 @@ $gold: #F59E0B;
     align-items: center;
     gap: 6px;
     color: $text-muted;
-    font-size: 11px; // Chuẩn theo product-spec
+    font-size: 11px; 
 
     i { font-size: 13px; }
   }
@@ -603,19 +596,19 @@ $gold: #F59E0B;
     border: 0;
     background: transparent;
     color: $primary;
-    font-size: 13px; // Chuẩn theo view-all
-    font-weight: 500; // Chuẩn theo view-all
+    font-size: 13px; 
+    font-weight: 500; 
     cursor: pointer;
     padding: 0;
     font-family: inherit;
 
     &:hover {
-      text-decoration: underline; // Chuẩn theo view-all
+      text-decoration: underline; 
     }
   }
 }
 
-/* --- BADGES (Sắp hết hạn / Đã dùng) --- */
+
 .expiry-badge,
 .used-badge {
   position: absolute;
@@ -628,8 +621,8 @@ $gold: #F59E0B;
 }
 
 .expiry-badge {
-  background: #FEECEC; // Chuẩn badge-sale
-  color: #EF4444; // Chuẩn badge-sale
+  background: #FEECEC; 
+  color: #EF4444; 
 }
 
 .used-badge {
@@ -637,9 +630,7 @@ $gold: #F59E0B;
   color: $text-muted;
 }
 
-/* =========================================
-   MODAL CHI TIẾT & TOAST COMPONENT
-   ========================================= */
+
 .copy-toast {
   position: fixed;
   top: 88px;
@@ -776,25 +767,23 @@ $gold: #F59E0B;
 
 .apply-btn {
   min-width: 128px;
-  padding: 10px 20px; // Chuẩn theo search-btn
+  padding: 10px 20px; 
   border: 0;
-  border-radius: 8px; // Chuẩn theo search-btn
-  background: $primary; // Chuẩn theo search-btn
-  color: $white; // Chuẩn theo search-btn
+  border-radius: 8px;
+  background: $primary; 
+  color: $white; 
   font-family: inherit;
-  font-size: 14px; // Chuẩn theo search-btn
-  font-weight: 500; // Chuẩn theo search-btn
+  font-size: 14px;
+  font-weight: 500; 
   cursor: pointer;
   transition: 0.2s;
 
   &:hover {
-    background: $primary-hover; // Chuẩn theo search-btn
+    background: $primary-hover; 
   }
 }
 
-/* =========================================
-   RESPONSIVE
-   ========================================= */
+
 @media (max-width: 900px) {
   .voucher-wrapper {
     padding: 0 16px;
@@ -815,7 +804,7 @@ $gold: #F59E0B;
   
   .points-info {
     text-align: left;
-    width: 100%; /* Căng ngang cho đẹp trên điện thoại */
+    width: 100%; 
     box-sizing: border-box;
   }
 }

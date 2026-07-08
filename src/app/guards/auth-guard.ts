@@ -10,9 +10,9 @@ export class AuthGuard implements CanActivate {
 
   canActivate(): boolean {
     if (this.authService.isLoggedIn()) {
-      return true; // Có Token -> Cho phép đi tiếp vào trang
+      return true; 
     } else {
-      this.router.navigate(['/login']); // Chưa có Token -> Đá văng ra trang Login
+      this.router.navigate(['/login']); 
       return false;
     }
   }

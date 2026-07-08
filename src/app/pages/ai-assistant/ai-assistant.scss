@@ -1,4 +1,4 @@
-// ── Variables (theo màu VISTA từ navbar) ──────────────────────
+
 $navy: #1a2e4a;
 $navy-dark: #12213a;
 $blue: #2563b0;
@@ -12,7 +12,7 @@ $radius: 12px;
 $radius-sm: 8px;
 @use "sass:color";
 
-// ── Layout ────────────────────────────────────────────────────
+
 .ai-page {
   display: flex;
   height: calc(100vh - 64px); // trừ navbar
@@ -20,7 +20,7 @@ $radius-sm: 8px;
   overflow: hidden;
 }
 
-// ── SIDEBAR ──────────────────────────────────────────────────
+
 .ai-sidebar {
   width: 260px;
   min-width: 260px;
@@ -144,7 +144,6 @@ $radius-sm: 8px;
   font-style: italic;
 }
 
-// ── MAIN CHAT ─────────────────────────────────────────────────
 .ai-main {
   flex: 1;
   display: flex;
@@ -208,7 +207,6 @@ $radius-sm: 8px;
   50% { opacity: 0.4; }
 }
 
-// ── CHAT BODY ─────────────────────────────────────────────────
 .chat-body {
   flex: 1;
   overflow-y: auto;
@@ -219,7 +217,6 @@ $radius-sm: 8px;
   scroll-behavior: smooth;
 }
 
-// Welcome screen
 .chat-welcome {
   display: flex;
   flex-direction: column;
@@ -272,7 +269,7 @@ $radius-sm: 8px;
   }
 }
 
-// ── Bubbles ───────────────────────────────────────────────────
+
 .message-wrapper {
   display: flex;
   &.user-wrapper { justify-content: flex-end; }
@@ -299,7 +296,7 @@ $radius-sm: 8px;
   }
 }
 
-// Loading dots
+
 .bubble-loading {
   display: flex;
   align-items: center;
@@ -323,7 +320,7 @@ $radius-sm: 8px;
   40% { transform: translateY(-6px); opacity: 1; }
 }
 
-// AI message group (avatar + bubble + cards)
+
 .ai-message-group {
   display: flex;
   align-items: flex-start;
@@ -355,7 +352,7 @@ $radius-sm: 8px;
   margin: 0;
 }
 
-// ── Product Cards ─────────────────────────────────────────────
+
 .product-cards {
   display: flex;
   flex-direction: column;
@@ -453,7 +450,7 @@ $radius-sm: 8px;
   }
 }
 
-// ── Suggestion Chips ──────────────────────────────────────────
+
 .suggestion-chips {
   display: flex;
   flex-wrap: wrap;
@@ -479,7 +476,7 @@ $radius-sm: 8px;
   }
 }
 
-// ── Input Area ────────────────────────────────────────────────
+
 .chat-input-area {
   padding: 12px 24px 16px;
   border-top: 1px solid $border;
@@ -550,7 +547,7 @@ $radius-sm: 8px;
   margin: 8px 0 0;
 }
 
-// ── Scrollbar tùy chỉnh ───────────────────────────────────────
+
 .chat-body::-webkit-scrollbar,
 .ai-sidebar::-webkit-scrollbar {
   width: 4px;

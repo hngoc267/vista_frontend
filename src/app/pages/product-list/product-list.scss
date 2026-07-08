@@ -1,4 +1,3 @@
-// ── BREADCRUMB ─────────────────────────────────
 .breadcrumb-bar {
   background: #FFFFFF;
   border-bottom: 1px solid #E2E8F0;
@@ -24,7 +23,7 @@
   }
 }
 
-// ── LAYOUT ─────────────────────────────────────
+
 .page-layout {
   padding: 32px 0 64px;
   background: #F8FAFC;
@@ -43,7 +42,7 @@
   align-items: flex-start;
 }
 
-// ── BỘ LỌC ─────────────────────────────────────
+
 .filter-panel {
   width: 260px;
   flex-shrink: 0;
@@ -120,7 +119,7 @@
   }
 }
 
-// ── PRODUCT AREA ───────────────────────────────
+
 .product-area {
   flex: 1;
 
@@ -143,7 +142,7 @@
   }
 }
 
-// ── PRODUCT GRID ───────────────────────────────
+
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -193,7 +192,7 @@
     padding: 12px;
     display: flex;
     flex-direction: column;
-    flex-grow: 1; /* Cực kỳ quan trọng để kéo giãn thẻ */
+    flex-grow: 1; 
     
     .product-name {
       font-size: 13px;
@@ -205,7 +204,7 @@
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      min-height: 36px; /* Cố định chiều cao 2 dòng cho tên */
+      min-height: 36px;
     }
 
     .product-spec {
@@ -217,14 +216,14 @@
       text-overflow: ellipsis;
     }
 
-    // ── PHẦN GIÁ ÉP XUỐNG ĐÁY ──
+
     .price-wrap {
-      margin-top: auto; /* QUAN TRỌNG: Đẩy cụm giá và nút xuống sát đáy */
-      min-height: 48px; /* Tăng thành 48px để đồng bộ với trang Chủ và Chi tiết */
+      margin-top: auto; 
+      min-height: 48px; 
       margin-bottom: 12px;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start; /* Luôn ép nội dung giá sát xuống dưới */
+      justify-content: flex-start; 
       gap: 2px;
 
       .product-price {
@@ -257,14 +256,13 @@
       cursor: pointer;
       font-family: 'Be Vietnam Pro', sans-serif;
       transition: background 0.2s;
-      /* Không cần margin-top: auto ở đây nữa */
 
       &:hover { background: #1E4D8C; }
     }
   }
 }
 
-// ── EMPTY STATE ────────────────────────────────
+
 .empty-state {
   text-align: center;
   padding: 80px 0;
@@ -281,7 +279,7 @@
   }
 }
 
-// ── PAGINATION ─────────────────────────────────
+
 .pagination {
   display: flex;
   justify-content: center;
