@@ -7,8 +7,8 @@ import { Register } from './pages/register/register';
 import { Policy } from './pages/policy/policy';
 import { ForgotPassword } from './pages/forgot-password/forgot-password';
 import { Profile } from './pages/profile/profile';
-import { VerifyCode } from './pages/verify-code/verify-code'; // <-- Thêm dòng này
-import { ResetPassword } from './pages/reset-password/reset-password'; // <-- Thêm dòng này
+import { VerifyCode } from './pages/verify-code/verify-code'; 
+import { ResetPassword } from './pages/reset-password/reset-password'; 
 import { AuthGuard } from './guards/auth-guard';
 import {Cart} from "./pages/cart/cart";
 import { Voucher } from './pages/voucher/voucher';
@@ -34,8 +34,8 @@ export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'register', component: Register },
   { path: 'forgot-password', component: ForgotPassword },
-  { path: 'verify-code', component: VerifyCode }, // <-- Thêm dòng này
-  { path: 'reset-password', component: ResetPassword }, // <-- Thêm dòng này
+  { path: 'verify-code', component: VerifyCode }, 
+  { path: 'reset-password', component: ResetPassword }, 
   { path: 'profile', component: Profile },
   { path: 'ai-assistant', component: AiAssistantComponent, canActivate: [AuthGuard] },
   { path: 'policy', component: Policy },

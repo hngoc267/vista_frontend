@@ -1,15 +1,9 @@
-// ============================================================
-// AI COMPARE SERVICE — HYBRID: Rule-based scoring + Gemini API
-// Đặt tại: src/app/services/ai-compare.service.ts
-// ============================================================
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of, from } from 'rxjs';
 import { delay, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
-// ============================================================
-// INTERFACES — để thẳng ở đây, không cần folder models/
-// ============================================================
+
 export interface AiProductResult {
   name: string;
   variant_id: string;
@@ -34,19 +28,14 @@ export interface AiCriterion {
   enabled: boolean;
 }
 
-// Snapshot nhẹ của product — chỉ lưu đủ để result-page hiển thị
-// lại ảnh, giá, tên khi xem từ lịch sử (không lưu toàn bộ product)
+
 export interface AiSavedProduct {
   Product_name: string;
   Category_id: string;
   Images: string[];
   Discount: number;
   min_price: number;
-  // Giá gốc (chưa trừ discount) đã được resolve sẵn tại thời điểm lưu.
-  // KHÔNG dựng lại giá từ selectedVariant/variants nữa vì shape sản phẩm
-  // gốc (selectedVariant object đơn vs variants mảng) không đồng nhất và
-  // rất dễ mất dữ liệu khi snapshot → gây hiện 0đ khi mở lại từ history.
-  // Lưu sẵn con số cuối cùng là cách chắc chắn nhất.
+
   price: number;
   selectedVariantId: string | null;
   selectedVariant: { Price: number; Variant_name: string; Product_variant_id?: string } | null;
@@ -59,26 +48,17 @@ export interface AiHistoryItem {
   categoryName: string;
   criteria: AiCriterion[];
   result: AiResult;
-  savedProducts?: AiSavedProduct[]; // để restore lại ảnh/giá khi xem từ history-page
+  savedProducts?: AiSavedProduct[]; 
 }
 
-// ============================================================
-// SCORING METADATA — mô tả cách rule-based chấm điểm từng tiêu chí
-// specPath: field cần lấy trong Technical_specs (hoặc 'price' đặc biệt,
-//           lấy từ variant.Price, không nằm trong Technical_specs)
-// direction: higher_better | lower_better
-// extractPattern: regex để bóc đúng con số cần thiết khi field là chuỗi
-//                 hỗn hợp (vd "52.6Wh (~18 giờ)" muốn lấy số giờ thì
-//                 regex khác với muốn lấy Wh)
-// ============================================================
 interface CriterionScoringMeta {
   specPath: string;
   direction: 'higher_better' | 'lower_better';
-  extractPattern?: RegExp; // mặc định: lấy số đầu tiên xuất hiện trong chuỗi
+  extractPattern?: RegExp; 
 }
 
 const SCORING_META: Record<string, Record<string, CriterionScoringMeta>> = {
-  // ---------------- Laptop ----------------
+
   CAT_001: {
     performance: { specPath: 'CPU', direction: 'higher_better', extractPattern: /(\d+)\s*-?core/i },
     price:       { specPath: 'price', direction: 'lower_better' },
@@ -86,7 +66,7 @@ const SCORING_META: Record<string, Record<string, CriterionScoringMeta>> = {
     battery:     { specPath: 'Battery', direction: 'higher_better', extractPattern: /~?\s*(\d+)\s*giờ/i },
     brand:       { specPath: 'Performance_Level', direction: 'higher_better' }, // xử lý riêng (text scale), xem note bên dưới
   },
-  // ---------------- Smartphone ----------------
+
   CAT_002: {
     performance: { specPath: 'Performance_Level', direction: 'higher_better' },
     camera:      { specPath: 'Camera', direction: 'higher_better', extractPattern: /(\d+)\s*MP/i },
@@ -94,27 +74,27 @@ const SCORING_META: Record<string, Record<string, CriterionScoringMeta>> = {
     price:       { specPath: 'price', direction: 'lower_better' },
     design:      { specPath: 'Portability', direction: 'higher_better' },
   },
-  // ---------------- Tablet ----------------
+
   CAT_003: {
     display:     { specPath: 'Display_Size', direction: 'higher_better', extractPattern: /([\d.]+)\s*inch/i },
     performance: { specPath: 'Performance_Level', direction: 'higher_better' },
     battery:     { specPath: 'Battery', direction: 'higher_better', extractPattern: /~?\s*(\d+)\s*giờ/i },
     price:       { specPath: 'price', direction: 'lower_better' },
   },
-  // ---------------- Thiết bị âm thanh ----------------
+
   CAT_004: {
     sound:    { specPath: 'Driver', direction: 'higher_better', extractPattern: /(\d+)\s*mm/i },
     anc:      { specPath: 'ANC', direction: 'higher_better' }, // text scale, xử lý riêng
     battery:  { specPath: 'Battery', direction: 'higher_better', extractPattern: /(\d+)\s*giờ/i },
     price:    { specPath: 'price', direction: 'lower_better' },
   },
-  // ---------------- Phụ kiện ----------------
+
   CAT_005: {
     price:       { specPath: 'price', direction: 'lower_better' },
     durability:  { specPath: 'Security', direction: 'higher_better' }, // text scale
     performance: { specPath: 'MaxOutput', direction: 'higher_better', extractPattern: /(\d+)\s*W/i },
   },
-  // ---------------- Gaming ----------------
+
   CAT_006: {
     performance: { specPath: 'Sensor', direction: 'higher_better', extractPattern: /(\d+)\s*K\s*DPI/i },
     price:       { specPath: 'price', direction: 'lower_better' },
@@ -123,8 +103,7 @@ const SCORING_META: Record<string, Record<string, CriterionScoringMeta>> = {
   },
 };
 
-// Một số field không phải số mà là thang chữ (vd "Cao", "Rất cao", "Flagship")
-// — quy ước điểm cố định để so sánh tương đối giữa các mức.
+
 const TEXT_SCALE_RANK: Record<string, number> = {
   'thấp': 1, 'trung bình': 2, 'khá': 3, 'cao': 4, 'rất cao': 5,
   'premium cao cấp': 4, 'đỉnh cao': 5, 'đỉnh cao phụ kiện': 5, 'đỉnh cao chuột gaming': 5,
@@ -133,9 +112,7 @@ const TEXT_SCALE_RANK: Record<string, number> = {
   'hệ thống bảo vệ nhiệt thông minh activeshield 2.0': 4,
 };
 
-// ============================================================
-// MOCK DATA — shape này = format JSON AI thật phải trả về
-// ============================================================
+
 const MOCK_RESULT: AiResult = {
   recommendation: 'MacBook Air M5 13 inch 2026',
   confidence: 93,
@@ -174,10 +151,7 @@ const MOCK_RESULT: AiResult = {
   ],
 };
 
-// ============================================================
-// PRESET TIÊU CHÍ THEO CATEGORY (giữ nguyên như cũ — UI tap-to-rank
-// dùng key/label/weight/enabled, KHÔNG cần biết gì về SCORING_META)
-// ============================================================
+
 const CRITERIA_PRESETS: Record<string, AiCriterion[]> = {
   default: [
     { key: 'price',       label: 'Giá cả',     weight: 70, enabled: true },
@@ -185,38 +159,38 @@ const CRITERIA_PRESETS: Record<string, AiCriterion[]> = {
     { key: 'design',      label: 'Thiết kế',   weight: 50, enabled: true },
     { key: 'durability',  label: 'Độ bền',     weight: 50, enabled: true },
   ],
-  CAT_001: [ // Laptop
+  CAT_001: [ 
     { key: 'performance', label: 'Hiệu năng (CPU/GPU)',  weight: 80, enabled: true },
     { key: 'price',       label: 'Giá cả',               weight: 60, enabled: true },
     { key: 'design',      label: 'Thiết kế / Độ mỏng nhẹ', weight: 40, enabled: true },
     { key: 'battery',     label: 'Thời lượng Pin',       weight: 50, enabled: true },
     { key: 'brand',       label: 'Thương hiệu',          weight: 30, enabled: true },
   ],
-  CAT_002: [ // Smartphone
+  CAT_002: [ 
     { key: 'performance', label: 'Hiệu năng',  weight: 75, enabled: true },
     { key: 'camera',      label: 'Camera',     weight: 70, enabled: true },
     { key: 'battery',     label: 'Pin',        weight: 65, enabled: true },
     { key: 'price',       label: 'Giá cả',     weight: 60, enabled: true },
     { key: 'design',      label: 'Thiết kế',   weight: 40, enabled: true },
   ],
-  CAT_003: [ // Tablet
+  CAT_003: [ 
     { key: 'display',     label: 'Màn hình',   weight: 75, enabled: true },
     { key: 'performance', label: 'Hiệu năng',  weight: 65, enabled: true },
     { key: 'battery',     label: 'Pin',        weight: 60, enabled: true },
     { key: 'price',       label: 'Giá cả',     weight: 55, enabled: true },
   ],
-  CAT_004: [ // Thiết bị âm thanh
+  CAT_004: [ 
     { key: 'sound',       label: 'Chất lượng âm thanh', weight: 85, enabled: true },
     { key: 'anc',         label: 'Chống ồn',            weight: 70, enabled: true },
     { key: 'battery',     label: 'Pin',                 weight: 55, enabled: true },
     { key: 'price',       label: 'Giá cả',              weight: 50, enabled: true },
   ],
-  CAT_005: [ // Phụ kiện
+  CAT_005: [ 
     { key: 'price',       label: 'Giá cả',     weight: 75, enabled: true },
     { key: 'durability',  label: 'Độ bền',     weight: 65, enabled: true },
     { key: 'performance', label: 'Hiệu năng',  weight: 60, enabled: true },
   ],
-  CAT_006: [ // Gaming
+  CAT_006: [ 
     { key: 'performance', label: 'Hiệu năng',      weight: 90, enabled: true },
     { key: 'price',       label: 'Giá cả',         weight: 55, enabled: true },
     { key: 'design',      label: 'Thiết kế / RGB', weight: 45, enabled: true },
@@ -224,25 +198,22 @@ const CRITERIA_PRESETS: Record<string, AiCriterion[]> = {
   ],
 };
 
-// Kết quả chấm điểm rule-based cho 1 sản phẩm
+
 interface ProductScoring {
   variant_id: string;
-  score: number;          // 0-100, weighted theo criteria
-  strengths: string[];    // label tiêu chí mà sản phẩm này nổi trội
-  weaknesses: string[];   // label tiêu chí mà sản phẩm này yếu
+  score: number;          
+  strengths: string[];    
+  weaknesses: string[];   
 }
 
-// ============================================================
-// SERVICE
-// ============================================================
+
 @Injectable({ providedIn: 'root' })
 export class AiCompareService {
 
-  // Đổi thành false khi cần demo AI thật — giữ true ngoài lúc demo
-  // để tiết kiệm quota free tier của Gemini
+
   private USE_MOCK = false;
 
-  // State dùng chung giữa criteria-page và result-page
+
   private _products$ = new BehaviorSubject<any[]>([]);
   private _criteria$ = new BehaviorSubject<AiCriterion[]>([]);
   private _result$   = new BehaviorSubject<AiResult | null>(null);
@@ -253,33 +224,30 @@ export class AiCompareService {
   result$   = this._result$.asObservable();
   loading$  = this._loading$.asObservable();
 
-  // Nhận products[] từ compare-page truyền sang
+  
   setProducts(products: any[]): void {
     this._products$.next(products);
-    this._result$.next(null); // reset kết quả cũ
+    this._result$.next(null); 
   }
 
   getProducts(): any[] {
     return this._products$.getValue();
   }
 
-  // Lấy preset tiêu chí theo category của sản phẩm
+ 
   getPresetCriteria(categoryId: string): AiCriterion[] {
     const preset = CRITERIA_PRESETS[categoryId] ?? CRITERIA_PRESETS['default'];
-    return preset.map(c => ({ ...c })); // trả bản sao, không mutate gốc
+    return preset.map(c => ({ ...c })); 
   }
 
-  // ============================================================
-  // RULE-BASED SCORING — không gọi AI, tính match_score + điểm
-  // mạnh/yếu để feed cho Gemini viết pros/cons bám sát số liệu
-  // ============================================================
+
   private getEffectivePrice(product: any): number {
     const rawPrice = product.selectedVariant?.Price ?? product.min_price ?? 0;
     const discount = product.Discount ?? 0;
     return discount > 0 ? rawPrice * (1 - discount / 100) : rawPrice;
   }
 
-  // Lấy giá trị thô (số) cho 1 tiêu chí của 1 sản phẩm theo SCORING_META
+
   private extractRawValue(product: any, meta: CriterionScoringMeta): number | null {
     if (meta.specPath === 'price') {
       return this.getEffectivePrice(product);
@@ -291,13 +259,11 @@ export class AiCompareService {
 
     const fieldStr = String(rawField).trim();
 
-    // Field dạng thang chữ (vd "Cao", "Rất cao", "Flagship")
     const normalized = fieldStr.toLowerCase();
     if (TEXT_SCALE_RANK[normalized] !== undefined) {
       return TEXT_SCALE_RANK[normalized];
     }
 
-    // Field dạng số lẫn trong chuỗi — bóc bằng extractPattern hoặc số đầu tiên
     const pattern = meta.extractPattern ?? /([\d.]+)/;
     const match = fieldStr.match(pattern);
     if (!match) return null;
@@ -306,14 +272,10 @@ export class AiCompareService {
     return isNaN(num) ? null : num;
   }
 
-  // Chuẩn hóa tương đối trong nhóm sản phẩm đang so sánh.
-  // Dùng compressed range 40→100 (thay vì 0→100) để tránh sản phẩm
-  // bị điểm cực đoan (0%) khi chỉ thua kém 1-2 tiêu chí so với nhóm —
-  // đặc biệt quan trọng khi chỉ so 2-3 sản phẩm với nhau.
-  // Ví dụ: S25 Ultra (1st) = 100, Z Fold6 (last) = 40 thay vì 0.
-  private static readonly SCORE_FLOOR = 40;  // điểm sàn tối thiểu
-  private static readonly SCORE_CEIL  = 100; // điểm trần tối đa
-  private static readonly SCORE_MID   = 70;  // giữa range, dùng khi không phân biệt được
+
+  private static readonly SCORE_FLOOR = 40;  
+  private static readonly SCORE_CEIL  = 100; 
+  private static readonly SCORE_MID   = 70;  
 
   private normalizeToScore(
     value: number,
@@ -326,11 +288,10 @@ export class AiCompareService {
     const min = Math.min(...validValues);
     const max = Math.max(...validValues);
 
-    // Tất cả sản phẩm specs bằng nhau → không có sản phẩm nào nổi trội,
-    // chia đều điểm giữa range, không phạt ai.
+
     if (min === max) return AiCompareService.SCORE_MID;
 
-    const ratio = (value - min) / (max - min); // 0.0 → 1.0
+    const ratio = (value - min) / (max - min);
     const adjustedRatio = direction === 'higher_better' ? ratio : 1 - ratio;
 
     const range = AiCompareService.SCORE_CEIL - AiCompareService.SCORE_FLOOR;
@@ -342,7 +303,7 @@ export class AiCompareService {
     const totalWeight = enabledCriteria.reduce((s, c) => s + c.weight, 0) || 1;
     const metaMap = SCORING_META[categoryId] ?? {};
 
-    // Bước 1: lấy raw value của từng tiêu chí cho từng sản phẩm
+
     const rawValuesByCriterion: Record<string, (number | null)[]> = {};
     for (const criterion of enabledCriteria) {
       const meta = metaMap[criterion.key];
@@ -351,7 +312,7 @@ export class AiCompareService {
       );
     }
 
-    // Bước 2: tính điểm từng sản phẩm
+
     return products.map((product, idx) => {
       let weightedSum = 0;
       const strengths: string[] = [];
@@ -359,22 +320,18 @@ export class AiCompareService {
 
       for (const criterion of enabledCriteria) {
         const meta = metaMap[criterion.key];
-        if (!meta) continue; // category này không có mapping cho tiêu chí -> bỏ qua, không cộng điểm
+        if (!meta) continue; 
 
         const rawValue = rawValuesByCriterion[criterion.key][idx];
         const allValues = rawValuesByCriterion[criterion.key];
 
         const criterionScore = rawValue === null
-          ? AiCompareService.SCORE_MID // thiếu dữ liệu → điểm trung tính, không phạt cũng không cộng
+          ? AiCompareService.SCORE_MID 
           : this.normalizeToScore(rawValue, allValues, meta.direction);
 
         weightedSum += criterionScore * (criterion.weight / totalWeight);
 
-        // Ngưỡng điều chỉnh theo range 40→100:
-        // strengths: ≥ 75 (nới từ 85 để nhiều tiêu chí được coi là "nổi
-        // bật" hơn, tránh mảng strengths rỗng khi sản phẩm không quá
-        // chênh lệch nhau)
-        // weaknesses: ≤ 65 (nới từ 55, cùng lý do)
+        
         if (criterionScore >= 75) strengths.push(criterion.label);
         if (criterionScore <= 65) weaknesses.push(criterion.label);
       }
@@ -388,7 +345,7 @@ export class AiCompareService {
     });
   }
 
-  // Gọi phân tích — mock hoặc AI thật tùy USE_MOCK
+ 
   analyze(products: any[], criteria: AiCriterion[], categoryId: string): Observable<AiResult> {
     this._loading$.next(true);
     this._criteria$.next(criteria);
@@ -403,7 +360,7 @@ export class AiCompareService {
           ...p,
           variant_id: scoring[i]?.variant_id ?? '',
           name: products[i]?.Product_name ?? p.name,
-          match_score: scoring[i]?.score ?? p.match_score, // mock cũng dùng score rule-based
+          match_score: scoring[i]?.score ?? p.match_score, 
         })),
       };
       return of(mockResult).pipe(
@@ -418,8 +375,6 @@ export class AiCompareService {
 
     return from(this.callGeminiApi(products, criteria, scoring)).pipe(
       map(narrative => {
-        // Gộp: match_score luôn lấy từ rule-based, KHÔNG lấy từ Gemini
-        // dù response có lỡ trả kèm field này.
         const result: AiResult = {
           recommendation: narrative.recommendation,
           confidence: narrative.confidence,
@@ -430,16 +385,14 @@ export class AiCompareService {
               (np: any) => np.variant_id === scoring[i].variant_id
             ) ?? narrative.products?.[i] ?? {};
 
-            // Lưới an toàn: nếu Gemini vẫn lỡ trả mảng rỗng dù đã yêu cầu
-            // trong prompt, dùng câu mặc định để card không bao giờ thiếu
-            // hẳn 1 trong 2 phần ưu/nhược điểm.
+
             const pros = aiProduct.pros?.length ? aiProduct.pros : ['Đáp ứng tốt nhu cầu sử dụng cơ bản'];
             const cons = aiProduct.cons?.length ? aiProduct.cons : ['Không có điểm yếu nổi bật so với đối thủ'];
 
             return {
               name: p.Product_name,
               variant_id: scoring[i].variant_id,
-              match_score: scoring[i].score, // rule-based, không lấy từ AI
+              match_score: scoring[i].score, 
               pros,
               cons,
               who_should_buy: aiProduct.who_should_buy ?? '',
@@ -454,8 +407,7 @@ export class AiCompareService {
     );
   }
 
-  // Tạo prompt gửi AI — rút gọn: KHÔNG yêu cầu AI tính match_score,
-  // chỉ đưa kết quả đã tính sẵn + specs liên quan tiêu chí để AI viết văn bản
+
   buildPrompt(products: any[], criteria: AiCriterion[], scoring: ProductScoring[]): string {
     const activeCriteria = criteria.filter(c => c.enabled);
     const criteriaText = activeCriteria
@@ -467,8 +419,7 @@ export class AiCompareService {
       const price = this.getEffectivePrice(p);
       const priceText = price ? Math.round(price).toLocaleString('vi-VN') + 'đ' : 'N/A';
 
-      // Chỉ đưa specs liên quan tới tiêu chí đã chọn — không nhồi toàn bộ
-      // Technical_specs để tiết kiệm token.
+
       const relevantKeys = new Set(
         activeCriteria.map(c => SCORING_META[p.Category_id]?.[c.key]?.specPath).filter(Boolean)
       );
@@ -494,10 +445,7 @@ Kết quả so sánh đã được tính điểm sẵn (KHÔNG được tự đ�
 ${productsText}`;
   }
 
-  // ============================================================
-  // GỌI GEMINI API — chỉ để viết phần văn bản (pros/cons/recommendation/
-  // who_should_buy/confidence/summary), KHÔNG yêu cầu tính match_score
-  // ============================================================
+
   private async callGeminiApi(
     products: any[],
     criteria: AiCriterion[],
@@ -548,8 +496,7 @@ QUY TẮC BẮT BUỘC:
         const data = await response.json();
         const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 
-        // Dù đã ép responseMimeType: application/json, vẫn giữ clean
-        // làm fallback phòng khi model chèn text/markdown thừa.
+
         const clean = rawText.replace(/```json|```/g, '').trim();
         const parsed = JSON.parse(clean);
 

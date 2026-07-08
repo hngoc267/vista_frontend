@@ -15,17 +15,15 @@ export class ChatbotService {
     return new HttpHeaders({ 'Authorization': `Bearer ${token}` });
   }
 
-  // Tạo session mới
   createSession(): Observable<any> {
     return this.http.post(`${this.apiUrl}/sessions`, {}, { headers: this.getAuthHeaders() });
   }
 
-  // Lấy danh sách session (sidebar)
   getSessions(): Observable<any> {
     return this.http.get(`${this.apiUrl}/sessions`, { headers: this.getAuthHeaders() });
   }
 
-  // Lấy tin nhắn của 1 session
+
   getSessionMessages(sessionId: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/sessions/${sessionId}/messages`, { headers: this.getAuthHeaders() });
   }
@@ -34,7 +32,7 @@ export class ChatbotService {
   return this.http.post(`${this.apiUrl}/sessions/guest-message`, { content, history });
   }
 
-  // Gửi tin nhắn và nhận phản hồi AI
+
   sendMessage(sessionId: string, content: string): Observable<any> {
     return this.http.post(
       `${this.apiUrl}/sessions/${sessionId}/messages`,
@@ -43,7 +41,7 @@ export class ChatbotService {
     );
   }
 
-  // Xóa session
+
   deleteSession(sessionId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/sessions/${sessionId}`, { headers: this.getAuthHeaders() });
   }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs'; // Thêm throwError và of vào đây
+import { Observable, throwError, of } from 'rxjs'; 
 
 @Injectable({
   providedIn: 'root',
@@ -16,13 +16,12 @@ export class OrderHistory {
       params = params.set('status', status);
     }
 
-    // 1. Lấy userId từ hàm tiện ích bên dưới (đã xử lý sẵn localStorage)
+
     const userId = this.getCurrentUserId();
 
-    // 2. Nếu không có userId thì chặn gọi API
+
     if (!userId) {
       console.error('Không tìm thấy userId, chặn gọi API.');
-      // Trả về mảng rỗng như cách bạn định làm ban đầu để giao diện không bị sụp
       return of({
         success: true,
         data: [],
@@ -30,7 +29,7 @@ export class OrderHistory {
       });
     }
 
-    // 3. Nếu có userId hợp lệ thì gọi API
+
     return this.http.get<any>(`${this.apiUrl}/${encodeURIComponent(userId)}`, { params });
   }
 

@@ -29,7 +29,7 @@ backdrop-filter: blur(20px);
     text-align: center;
   }
 
-  /* LOGO EFFECT */
+
   .splash-logo {
   height: 120px;
   margin-bottom: 16px;
@@ -40,7 +40,7 @@ backdrop-filter: blur(20px);
     logoReveal 1s ease-out forwards,
     logoFloat 4.5s ease-in-out infinite;
 }
-  /* TEXT EFFECT */
+
   .splash-slogan {
     font-size: 18px;
     color: #94A3B8;
@@ -53,7 +53,7 @@ letter-spacing: 1px;
     animation-delay: 0.4s;
   }
 
-  /* LOADING BAR */
+
   .loading-bar {
     width: 220px;
     height: 4px;
@@ -98,7 +98,7 @@ box-shadow: 0 0 15px rgba(255,255,255,.35);
   }
 }
 
-/* LOGO bật ra */
+
 @keyframes logoReveal {
   0% {
     opacity: 0;
@@ -113,7 +113,7 @@ box-shadow: 0 0 15px rgba(255,255,255,.35);
   }
 }
 
-/* Logo lơ lửng nhẹ */
+
 @keyframes logoFloat {
   0%,100% {
     transform: translateY(0);
@@ -124,7 +124,7 @@ box-shadow: 0 0 15px rgba(255,255,255,.35);
   }
 }
 
-/* Text hiện từ dưới lên */
+
 @keyframes textReveal {
   from {
     opacity: 0;
@@ -137,14 +137,14 @@ box-shadow: 0 0 15px rgba(255,255,255,.35);
   }
 }
 
-/* Fade chung */
+
 @keyframes fadeIn {
   to {
     opacity: 1;
   }
 }
 
-/* Loading chạy */
+
 @keyframes loadingAnim {
   0% {
     transform: translateX(-120%);
@@ -155,7 +155,7 @@ box-shadow: 0 0 15px rgba(255,255,255,.35);
   }
 }
 
-/* Fade out toàn splash */
+
 .fade-out {
   animation: splashFadeOut 0.7s ease forwards;
 }

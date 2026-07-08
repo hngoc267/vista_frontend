@@ -31,7 +31,7 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-// 4. Hàm đọc dữ liệu an toàn (THAY THẾ HÀM CŨ BẰNG HÀM NÀY)
+
   private getUserFromStorage(): any {
     if (typeof localStorage === 'undefined') {
       return null;
@@ -43,7 +43,7 @@ export class AuthService {
       try {
         let parsedUser = JSON.parse(user);
         if (parsedUser) {
-          // Khớp lệnh: Lấy Total_spent từ MongoDB gán cho Angular
+          
           parsedUser.totalSpent = parsedUser.Total_spent || parsedUser.totalSpent || 0;
           const tierInfo = this.calculateTier(parsedUser.totalSpent);
           parsedUser.tierName = tierInfo.name;
@@ -235,9 +235,7 @@ export class AuthService {
   }
 
 
-// =======================================================
-  // THÊM LOGIC: QUẢN LÝ ĐIỂM VÀ HẠNG THÀNH VIÊN
-  // =======================================================
+
 
   public calculateTier(spent: number) {
     if (spent >= 100000000) return { name: 'Diamond', level: 3 };
@@ -246,12 +244,12 @@ export class AuthService {
     return { name: 'Bronze', level: 0 };
   }
 
-  // 1. Sửa addPoints thành Observable để đợi API trả về
+
   public addPoints(amount: number): Observable<any> {
     const user = this.currentUserSubject.value;
     if (!user) throw new Error('Vui lòng đăng nhập!');
 
-    // Cập nhật local
+
     user.totalSpent = (user.totalSpent || 0) + amount;
     const newTier = this.calculateTier(user.totalSpent);
     user.tierName = newTier.name;
@@ -259,11 +257,11 @@ export class AuthService {
 
     this.updateLocalUser(user);
 
-    // QUAN TRỌNG: Trả về kết quả API để Component kia subscribe
+
     return this.updateProfile({ totalSpent: user.totalSpent });
   }
 
-  // 2. Thêm hàm load lại data từ DB (Rất hữu ích khi cần chốt số liệu chuẩn)
+
   public reloadUserProfile(): void {
     this.getMe().subscribe({
       next: () => console.log('Đã làm mới dữ liệu User từ MongoDB'),

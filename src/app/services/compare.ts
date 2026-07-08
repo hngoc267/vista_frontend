@@ -20,12 +20,12 @@ export interface CompareItem {
 export class CompareService {
 
   private readonly MAX_ITEMS = 3;
-  // ĐÃ XÓA BIẾN STORAGE_KEY CŨ BỊ CỐ ĐỊNH Ở ĐÂY
+
 
   private itemsSubject = new BehaviorSubject<CompareItem[]>([]);
   public items$ = this.itemsSubject.asObservable();
 
-  // Subject để báo hiệu vừa thêm sản phẩm (dùng cho widget mở rộng)
+
   private justAddedSubject = new BehaviorSubject<boolean>(false);
   public justAdded$ = this.justAddedSubject.asObservable();
 
@@ -33,20 +33,16 @@ export class CompareService {
     this.loadFromStorage();
   }
 
-  // ==========================================
-  // 1. TẠO KEY LƯU TRỮ ĐỘNG THEO USER
-  // ==========================================
+
   private getStorageKey(): string {
     const userId = this.cartService.getCurrentUserId(); 
     if (userId) {
-      return `vista_compare_items_${userId}`; // Lưu riêng cho user đăng nhập
+      return `vista_compare_items_${userId}`; 
     }
-    return 'vista_compare_items_guest';       // Lưu cho khách vãng lai
+    return 'vista_compare_items_guest';       
   }
 
-  // ==========================================
-  // 2. CÁC HÀM LẤY DỮ LIỆU & KIỂM TRA
-  // ==========================================
+
   getCurrentItems(): CompareItem[] {
     const key = this.getStorageKey();
     try {
@@ -76,23 +72,21 @@ export class CompareService {
     return items[0].categoryId === categoryId;
   }
   
-  // ==========================================
-  // 3. CÁC HÀM THAO TÁC THÊM / XÓA
-  // ==========================================
+
   addItem(item: CompareItem): { success: boolean; message?: string; needConfirm?: boolean; typeMismatch?: boolean } {
     const currentItems = this.getCurrentItems();
 
-    // 3.1. Kiểm tra đã đầy 3 sản phẩm chưa
+    
     if (currentItems.length >= this.MAX_ITEMS) {
       return { success: false, message: `Chỉ được so sánh tối đa ${this.MAX_ITEMS} sản phẩm.` };
     }
 
-    // 3.2. Kiểm tra trùng lặp
+    
     if (this.isInCompare(item.variantId)) {
       return { success: false, message: 'Sản phẩm này đã có trong danh sách so sánh.' };
     }
 
-    // 3.3. Xử lý Logic Loại thiết bị và Danh mục
+    
     if (currentItems.length > 0) {
       const existingType = currentItems[0].productType || 'Khác';
       const newType = item.productType || 'Khác';
@@ -105,11 +99,10 @@ export class CompareService {
         };
       }
 
-      // 2. NẾU CÙNG LOẠI -> Bỏ qua check danh mục
+      
       if (existingType !== 'Khác' && newType !== 'Khác' && existingType === newType) {
         // Hợp lệ, cho phép qua
       } 
-      // 3. Nếu chưa rõ loại, mới dùng Category để cảnh báo
       else if (currentItems[0].categoryId !== item.categoryId) {
         return {
           success: false,
@@ -119,7 +112,7 @@ export class CompareService {
       }
     }
 
-    // 3.4. Thêm mới thành công
+
     const newItems = [...currentItems, item];
     this.updateItems(newItems);
     this.justAddedSubject.next(true); 
@@ -138,7 +131,7 @@ export class CompareService {
   }
 
   addItemAfterClear(item: CompareItem): void {
-    this.updateItems([item]); // Xóa sạch và thêm 1 item mới
+    this.updateItems([item]); 
     this.justAddedSubject.next(true);
   }
 
@@ -150,17 +143,15 @@ export class CompareService {
     this.justAddedSubject.next(true);
   }
 
-  // ==========================================
-  // 4. LÕI XỬ LÝ LƯU TRỮ DỮ LIỆU ĐÃ ĐƯỢC GỘP CHUNG
-  // ==========================================
+
   private updateItems(items: CompareItem[]): void {
-    this.saveToStorage(items);     // Lưu vào trình duyệt trước
-    this.itemsSubject.next(items); // Rồi mới cập nhật ra giao diện
+    this.saveToStorage(items);     
+    this.itemsSubject.next(items); 
   }
 
   private saveToStorage(items: CompareItem[]): void {
     try {
-      const key = this.getStorageKey(); // Luôn lấy đúng chìa khóa của User hiện tại
+      const key = this.getStorageKey(); 
       localStorage.setItem(key, JSON.stringify(items));
     } catch (error) {
       console.warn('Không thể lưu danh sách so sánh:', error);
@@ -177,7 +168,7 @@ export class CompareService {
           this.itemsSubject.next(items);
         }
       } else {
-        this.itemsSubject.next([]); // Nếu user khác đăng nhập chưa có dữ liệu thì reset về mảng rỗng
+        this.itemsSubject.next([]); 
       }
     } catch (error) {
       console.warn('Không thể tải danh sách so sánh:', error);

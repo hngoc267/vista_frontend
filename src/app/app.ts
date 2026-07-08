@@ -36,20 +36,14 @@ export class App implements OnInit {
   constructor(private cdr: ChangeDetectorRef,private router: Router) {}
 
   ngOnInit() {
-
-    // Chờ splash hiển thị
     setTimeout(() => {
-
-      // bắt đầu fade-out
       this.isClosing = true;
       this.cdr.detectChanges();
 
-      // chờ animation kết thúc rồi mới ẩn
       setTimeout(() => {
         this.showSplash = false;
         this.cdr.detectChanges();
       }, 1000);
-
     }, 5000);
   }
   @HostListener('window:scroll')
