@@ -1,4 +1,4 @@
-<div *ngIf="product">
+<div *ngIf="product; else loadingState">
 
   <div class="breadcrumb-bar">
     <div class="section-container">
@@ -361,3 +361,10 @@
   </div>
 </div>
 </div>
+
+<ng-template #loadingState>
+  <div class="loading-state">
+    <div class="loading-spinner"></div>
+    <span>Đang tải thông tin sản phẩm...</span>
+  </div>
+</ng-template>
