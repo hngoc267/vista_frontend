@@ -326,3 +326,39 @@
     transform: translateX(30px) rotate(360deg);
   }
 }
+
+@media (max-width: 768px) {
+  .navbar {
+    height: auto;
+
+    .navbar-container {
+      padding: 0 16px;
+      flex-wrap: wrap;
+      height: auto;
+      gap: 12px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .nav-left {
+      gap: 16px;
+
+      .category-dropdown .dropdown-trigger > span {
+        display: none;
+      }
+    }
+
+    .nav-center.greeting-wrapper {
+      display: none;
+    }
+
+    .nav-right {
+      gap: 12px;
+      flex-wrap: wrap;
+
+      .action-btn > span {
+        display: none;
+      }
+    }
+  }
+}
