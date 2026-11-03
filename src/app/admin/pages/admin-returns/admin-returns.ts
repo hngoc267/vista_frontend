@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, Subject, debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -36,7 +36,7 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'app-admin-returns',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, NgIcon],
+  imports: [CommonModule, FormsModule, NgIcon],
   providers: [
     provideIcons({
       lucideSearch,

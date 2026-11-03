@@ -1,11 +1,15 @@
-import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+  ActivatedRouteSnapshot,
+  NavigationEnd,
   Router,
   RouterLink,
   RouterLinkActive,
   RouterOutlet
 } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs';
 import { clearAdminSession, getAdminRole } from '../../../guards/admin-guard';
 import { NotificationBellComponent } from '../../../components/notification-bell/notification-bell';
 
@@ -23,6 +27,11 @@ import {
   lucideKeyRound,
   lucideLogOut
 } from '@ng-icons/lucide';
+
+interface AdminBreadcrumb {
+  label: string;
+  url: string | null;
+}
 
 @Component({
   selector: 'app-admin-layout',
@@ -54,6 +63,7 @@ import {
   styleUrl: './admin-layout.scss'
 })
 export class AdminLayoutComponent {
+  breadcrumbs: AdminBreadcrumb[] = [];
   isSidebarCollapsed = false;
   isAccountMenuOpen = false;
   accountMenuPlacement: 'sidebar' | 'header' = 'sidebar';
@@ -73,6 +83,7 @@ export class AdminLayoutComponent {
 
   @ViewChild('accountMenu')
   private accountMenu?: ElementRef<HTMLElement>;
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly allMenuItems = [
     {
@@ -122,6 +133,48 @@ export class AdminLayoutComponent {
 
   constructor(private router: Router) {
     this.loadAccountInfo();
+    this.updateBreadcrumbs();
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => this.updateBreadcrumbs());
+  }
+
+  private updateBreadcrumbs(): void {
+    const routeBreadcrumbs: Array<{ label: string; url: string }> = [];
+    let activeRoute: ActivatedRouteSnapshot | null = this.router.routerState.snapshot.root;
+    let activeUrl = '';
+
+    while (activeRoute) {
+      const segments = activeRoute.url.map((segment) => segment.path);
+      if (segments.length > 0) {
+        activeUrl += `/${segments.join('/')}`;
+      }
+
+      const label = activeRoute.data['breadcrumb'];
+      if (typeof label === 'string' && label.length > 0) {
+        routeBreadcrumbs.push({ label, url: activeUrl });
+      }
+
+      activeRoute = activeRoute.firstChild;
+    }
+
+    const isManager = getAdminRole() === 'Manager';
+    const dashboardUrl = '/admin/dashboard';
+    this.breadcrumbs = [
+      {
+        label: 'Quản trị',
+        url: isManager && this.router.url.split(/[?#]/, 1)[0] !== dashboardUrl
+          ? dashboardUrl
+          : null,
+      },
+      ...routeBreadcrumbs.map((breadcrumb, index) => ({
+        ...breadcrumb,
+        url: index === routeBreadcrumbs.length - 1 ? null : breadcrumb.url,
+      })),
+    ];
   }
 
   private loadAccountInfo(): void {
@@ -149,10 +202,6 @@ export class AdminLayoutComponent {
 
   private getStoredText(value: unknown): string {
     return typeof value === 'string' ? value.trim() : '';
-  }
-
-  get isDashboardRoute(): boolean {
-    return this.router.url.split(/[?#]/, 1)[0] === '/admin/dashboard';
   }
 
   toggleAccountMenu(placement: 'sidebar' | 'header'): void {

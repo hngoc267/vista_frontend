@@ -3,7 +3,8 @@ import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-export type AdminProductStatus = 'on_sale' | 'out_of_stock';
+export type AdminProductStatus = 'on_sale' | 'discontinued' | 'out_of_stock';
+export type AdminProductSellingStatus = 'on_sale' | 'discontinued';
 export type AdminProductVariantStatus = 'active' | 'out_of_stock';
 
 export interface AdminCategory {
@@ -96,7 +97,7 @@ export interface AdminProductVariantCreateRequest {
 }
 
 export interface AdminProductCreateRequest {
-  Status?: AdminProductStatus;
+  Status?: AdminProductSellingStatus;
   Product_name: string;
   Category_id: string;
   Brand_id: string;
@@ -168,15 +169,6 @@ export class AdminProductService {
       this.http.put<AdminProductCreateResponse>(
         `${this.apiUrl}/${encodeURIComponent(id)}`,
         request,
-        { headers },
-      ),
-    );
-  }
-
-  deleteProduct(id: string): Observable<{ success: boolean; message?: string }> {
-    return this.withAuth((headers) =>
-      this.http.delete<{ success: boolean; message?: string }>(
-        `${this.apiUrl}/${encodeURIComponent(id)}`,
         { headers },
       ),
     );
