@@ -106,8 +106,10 @@
               </div>
             </td>
             <td class="rating-cell">
-              {{ review.Rating }}/5
-              <ng-icon name="lucideStar" class="star" size="13px"></ng-icon>
+              <span class="rating-line">
+                {{ review.Rating }}/5
+                <ng-icon name="lucideStar" class="star" size="13px"></ng-icon>
+              </span>
             </td>
             <td class="comment-cell">
               <span class="comment-text" *ngIf="review.Comment">{{ review.Comment }}</span>
@@ -115,8 +117,10 @@
             </td>
             <td class="muted whitespace-nowrap">{{ review.Created_at | date: 'dd/MM/yyyy' }}</td>
             <td>
-              <span class="badge" [ngClass]="review.Display_status">{{ getStatusLabel(review.Display_status) }}</span>
-              <small class="status-note">{{ getRowNote(review) }}</small>
+              <div class="status-stack">
+                <span class="badge" [ngClass]="review.Display_status">{{ getStatusLabel(review.Display_status) }}</span>
+                <small class="status-note">{{ getRowNote(review) }}</small>
+              </div>
             </td>
             <td class="actions">
               <button

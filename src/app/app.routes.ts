@@ -66,23 +66,28 @@ export const routes: Routes = [
       {
         path: 'change-password',
         component: AdminChangePassword,
+        data: { breadcrumb: 'Đổi mật khẩu' },
       },
       {
         path: 'dashboard',
         component: AdminDashboard,
+        data: { breadcrumb: 'Tổng quan' },
       },
       {
         path: 'orders',
         component: AdminOrders,
+        data: { breadcrumb: 'Xử lý đơn hàng' },
       },
       {
         path: 'reviews',
         component: AdminReviews,
+        data: { breadcrumb: 'Kiểm duyệt đánh giá' },
       },
       {
         path: 'staff',
         component: AdminStaff,
         canActivate: [adminManagerGuard],
+        data: { breadcrumb: 'Quản lý nhân sự' },
       },
       {
         path: '',
@@ -92,10 +97,12 @@ export const routes: Routes = [
       {
         path: 'products',
         component: AdminProducts,
+        data: { breadcrumb: 'Danh mục sản phẩm' },
       },
       {
         path: 'returns',
         component: AdminReturnsComponent,
+        data: { breadcrumb: 'Hậu mãi & Đổi trả' },
       },
     ],
   },

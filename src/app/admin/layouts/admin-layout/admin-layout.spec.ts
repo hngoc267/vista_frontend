@@ -1,7 +1,14 @@
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
 import { AdminLayoutComponent } from './admin-layout';
+
+@Component({
+  standalone: true,
+  template: '',
+})
+class AdminRouteStub {}
 
 describe('AdminLayout', () => {
   let component: AdminLayoutComponent;
@@ -11,7 +18,38 @@ describe('AdminLayout', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminLayoutComponent],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([
+          {
+            path: 'admin',
+            component: AdminRouteStub,
+            children: [
+              {
+                path: 'dashboard',
+                component: AdminRouteStub,
+                data: { breadcrumb: 'Tổng quan' },
+              },
+              {
+                path: 'orders',
+                component: AdminRouteStub,
+                data: { breadcrumb: 'Xử lý đơn hàng' },
+              },
+              {
+                path: 'products',
+                component: AdminRouteStub,
+                data: { breadcrumb: 'Danh mục sản phẩm' },
+                children: [
+                  {
+                    path: ':id',
+                    component: AdminRouteStub,
+                    data: { breadcrumb: 'Chi tiết sản phẩm' },
+                  },
+                ],
+              },
+            ],
+          },
+        ]),
+      ],
     }).compileComponents();
     router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -64,6 +102,53 @@ describe('AdminLayout', () => {
     createComponent('Customer');
 
     expect(fixture.nativeElement.querySelectorAll('.menu-item').length).toBe(0);
+  });
+
+  it('updates the breadcrumb after Angular Router navigation', async () => {
+    createComponent('Manager');
+
+    await router.navigateByUrl('/admin/orders');
+    fixture.detectChanges();
+
+    const breadcrumb = fixture.nativeElement.querySelector('.header-breadcrumb');
+    expect(breadcrumb.textContent).toContain('Quản trị');
+    expect(breadcrumb.textContent).toContain('Xử lý đơn hàng');
+    expect(breadcrumb.querySelector('.breadcrumb-current').textContent.trim())
+      .toBe('Xử lý đơn hàng');
+    expect(breadcrumb.querySelector('a.breadcrumb-parent').getAttribute('href'))
+      .toBe('/admin/dashboard');
+  });
+
+  it('shows route parents for a nested Admin page on initial load', async () => {
+    localStorage.setItem('vista_admin_token', 'test-token');
+    localStorage.setItem('vista_admin_user', JSON.stringify({ Role: 'Manager' }));
+    await router.navigateByUrl('/admin/products/123');
+
+    fixture = TestBed.createComponent(AdminLayoutComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const breadcrumb = fixture.nativeElement.querySelector('.header-breadcrumb');
+    expect(breadcrumb.textContent).toContain('Quản trị');
+    expect(breadcrumb.textContent).toContain('Danh mục sản phẩm');
+    expect(breadcrumb.textContent).toContain('Chi tiết sản phẩm');
+    expect(breadcrumb.querySelectorAll('a.breadcrumb-parent').length).toBe(2);
+    expect(breadcrumb.querySelector('.breadcrumb-current').textContent.trim())
+      .toBe('Chi tiết sản phẩm');
+  });
+
+  it('does not link the Admin root to a page hidden from Staff', async () => {
+    createComponent('Staff');
+
+    await router.navigateByUrl('/admin/orders');
+    fixture.detectChanges();
+
+    const rootBreadcrumb = Array.from(
+      fixture.nativeElement.querySelectorAll(
+        '.header-breadcrumb > *'
+      ) as NodeListOf<HTMLElement>
+    ).find((element) => element.textContent?.trim() === 'Quản trị');
+    expect(rootBreadcrumb?.tagName.toLowerCase()).toBe('span');
   });
 
   it('shows the signed-in Admin name, role and avatar initial', () => {

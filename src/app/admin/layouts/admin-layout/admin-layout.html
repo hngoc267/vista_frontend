@@ -115,10 +115,25 @@
         </button>
 
         <div class="header-breadcrumb">
-          <span class="breadcrumb-parent">Quản trị</span>
-          <ng-container *ngIf="isDashboardRoute">
-            <span class="breadcrumb-separator">›</span>
-            <span class="breadcrumb-current">Tổng quan</span>
+          <ng-container
+            *ngFor="let breadcrumb of breadcrumbs; let first = first; let last = last"
+          >
+            <span *ngIf="!first" class="breadcrumb-separator">›</span>
+            <a
+              *ngIf="breadcrumb.url && !last"
+              class="breadcrumb-parent"
+              [routerLink]="breadcrumb.url"
+            >
+              {{ breadcrumb.label }}
+            </a>
+            <span
+              *ngIf="!breadcrumb.url || last"
+              [class.breadcrumb-parent]="!last"
+              [class.breadcrumb-current]="last"
+              [attr.aria-current]="last ? 'page' : null"
+            >
+              {{ breadcrumb.label }}
+            </span>
           </ng-container>
         </div>
       </div>
