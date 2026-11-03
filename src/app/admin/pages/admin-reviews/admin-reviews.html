@@ -1,14 +1,20 @@
 <section class="reviews-page">
-  <!-- Tiêu đề trang -->
+  <!-- Tiêu đề trang (Đồng bộ với Hậu mãi & Đổi trả) -->
   <header class="page-heading">
     <h1>Kiểm duyệt đánh giá</h1>
-    <p>{{ canEdit ? 'Kiểm tra và phản hồi đánh giá của khách hàng' : 'Theo dõi và giám sát đánh giá của khách hàng' }}</p>
+    <p *ngIf="role === 'Staff'">
+      Kiểm tra và phản hồi đánh giá của khách hàng
+    </p>
+    <p *ngIf="role === 'Manager'">
+      Theo dõi và giám sát đánh giá của khách hàng
+    </p>
   </header>
 
+  <!-- PANEL CHÍNH: DANH SÁCH ĐÁNH GIÁ -->
   <section class="panel">
     <div class="panel-heading">
       <h2>Danh sách đánh giá</h2>
-      <p>{{ total }} đánh giá {{ hasFilters ? 'phù hợp' : 'trong hệ thống' }}</p>
+      <p>{{ total }} đánh giá {{ hasActiveFilters ? 'phù hợp' : 'trong hệ thống' }}</p>
     </div>
 
     <!-- Nhãn trạng thái kèm số lượng, bấm để lọc nhanh -->
@@ -29,7 +35,7 @@
     <!-- Bộ lọc -->
     <div class="filters">
       <label class="search-box">
-        <ng-icon name="lucideSearch" size="18px"></ng-icon>
+        <ng-icon name="lucideSearch" size="17px"></ng-icon>
         <input
           type="search"
           [(ngModel)]="keyword"
@@ -39,21 +45,21 @@
         />
       </label>
 
-      <label class="filter-field">
+      <div class="filter-field">
         <span>Số sao</span>
         <select [(ngModel)]="ratingFilter" (ngModelChange)="applyFilters()" aria-label="Lọc theo số sao">
           <option value="">Tất cả số sao</option>
           <option *ngFor="let star of ratingOptions" [ngValue]="star">{{ star }} sao</option>
         </select>
-      </label>
+      </div>
 
-      <label class="filter-field">
+      <div class="filter-field">
         <span>Trạng thái kiểm duyệt</span>
         <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()" aria-label="Lọc theo trạng thái kiểm duyệt">
           <option value="">Tất cả trạng thái</option>
           <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
         </select>
-      </label>
+      </div>
 
       <div class="filter-field">
         <span>Ngày đánh giá</span>
@@ -63,16 +69,11 @@
           <input type="date" [(ngModel)]="toDate" (ngModelChange)="applyFilters()" aria-label="Đến ngày" />
         </div>
       </div>
-    </div>
 
-    <p class="filter-note">
-      <ng-container *ngIf="canEdit">
-        Phản hồi: <strong>{{ getCount('drafts') }}</strong> bản nháp chưa gửi · Trạng thái phản hồi tách biệt với kiểm duyệt đánh giá
-      </ng-container>
-      <ng-container *ngIf="!canEdit">
-        Theo dõi trạng thái kiểm duyệt và bản nháp phản hồi chưa gửi
-      </ng-container>
-    </p>
+      <div class="filter-actions" *ngIf="hasActiveFilters">
+        <button type="button" class="btn" (click)="clearFilters()">Xóa bộ lọc</button>
+      </div>
+    </div>
 
     <!-- Bảng đánh giá -->
     <div class="table-wrapper">
@@ -91,12 +92,16 @@
         <tbody *ngIf="!isLoading && !loadError && reviews.length">
           <tr *ngFor="let review of reviews">
             <td class="customer-cell">{{ review.Customer_name || '—' }}</td>
-            <td>
-              <div class="product-cell">
-                <img [src]="review.Image" [alt]="review.Product_name" (error)="hideBrokenImage($event)" />
-                <div>
-                  <strong>{{ review.Product_name }}</strong>
-                  <small class="muted">{{ review.Product_variant_id }}</small>
+            <td class="product-cell">
+              <div class="product-info-wrap">
+                <div class="product-thumb">
+                  <img [src]="review.Image" [alt]="review.Product_name" (error)="hideBrokenImage($event)" />
+                </div>
+                <div class="product-details">
+                  <span class="product-name" [title]="review.Product_name">{{ review.Product_name }}</span>
+                  <span class="product-sub" *ngIf="review.Product_variant_id">
+                    SKU: {{ review.Product_variant_id }}
+                  </span>
                 </div>
               </div>
             </td>
@@ -108,7 +113,7 @@
               <span class="comment-text" *ngIf="review.Comment">{{ review.Comment }}</span>
               <span class="muted" *ngIf="!review.Comment">Khách không viết nhận xét</span>
             </td>
-            <td class="muted nowrap">{{ review.Created_at | date: 'dd/MM/yyyy' }}</td>
+            <td class="muted whitespace-nowrap">{{ review.Created_at | date: 'dd/MM/yyyy' }}</td>
             <td>
               <span class="badge" [ngClass]="review.Display_status">{{ getStatusLabel(review.Display_status) }}</span>
               <small class="status-note">{{ getRowNote(review) }}</small>
@@ -118,17 +123,17 @@
                 *ngIf="canEdit && review.Display_status === 'pending'"
                 type="button"
                 class="link-button"
-                (click)="openDetail(review.Review_id)"
+                (click)="openDetail(review.Review_id, review)"
               >
                 Xử lý
               </button>
               <ng-container *ngIf="!(canEdit && review.Display_status === 'pending')">
-                <button type="button" class="link-button" (click)="openDetail(review.Review_id)">Xem chi tiết</button>
+                <button type="button" class="link-button" (click)="openDetail(review.Review_id, review)">Xem chi tiết</button>
                 <button
                   *ngIf="canEdit && review.Display_status === 'approved' && review.Has_draft"
                   type="button"
                   class="link-button"
-                  (click)="openDetail(review.Review_id)"
+                  (click)="openDetail(review.Review_id, review)"
                 >
                   Phản hồi
                 </button>
@@ -138,8 +143,10 @@
         </tbody>
       </table>
 
+      <!-- LOADING STATE -->
       <div class="table-state" *ngIf="isLoading">Đang tải danh sách đánh giá...</div>
 
+      <!-- ERROR STATE -->
       <div class="table-state" *ngIf="!isLoading && loadError">
         <ng-icon name="lucideTriangleAlert" size="32px"></ng-icon>
         <strong>Không tải được danh sách đánh giá</strong>
@@ -150,89 +157,114 @@
         </button>
       </div>
 
+      <!-- EMPTY STATE -->
       <div class="table-state" *ngIf="!isLoading && !loadError && !reviews.length">
         <ng-icon name="lucideMessageSquare" size="32px"></ng-icon>
-        <ng-container *ngIf="hasFilters">
-          <strong>Không có đánh giá trong khoảng ngày này</strong>
-          <p>Thử thay đổi khoảng ngày hoặc xóa bộ lọc để xem đánh giá.</p>
+        <ng-container *ngIf="hasActiveFilters">
+          <strong>Không tìm thấy đánh giá phù hợp</strong>
+          <p>Thử thay đổi từ khóa, khoảng ngày hoặc xóa bộ lọc để xem đánh giá.</p>
           <button type="button" class="btn" (click)="clearFilters()">Xóa bộ lọc</button>
         </ng-container>
-        <ng-container *ngIf="!hasFilters">
+        <ng-container *ngIf="!hasActiveFilters">
           <strong>Chưa có đánh giá nào</strong>
-          <p>Đánh giá của khách hàng sẽ xuất hiện tại đây.</p>
+          <p>Hiện tại hệ thống chưa ghi nhận đánh giá nào từ khách hàng.</p>
         </ng-container>
       </div>
     </div>
 
-    <!-- Phân trang -->
-    <footer class="table-footer">
+    <!-- PHÂN TRANG (ĐỒNG BỘ VỚI HẬU MÃI & ĐỔI TRẢ) -->
+    <footer class="table-footer" *ngIf="!isLoading && !loadError">
       <div class="pagination-summary">
-        Hiển thị
-        <strong>{{ rangeStart }}</strong>–<strong>{{ rangeEnd }}</strong>
-        / <strong>{{ total }}</strong> đánh giá
+        <ng-container *ngIf="total > 0; else noReviewSummary">
+          Hiển thị <strong>{{ rangeStart }}</strong>–<strong>{{ rangeEnd }}</strong> / <strong>{{ total }}</strong> đánh giá
+        </ng-container>
+        <ng-template #noReviewSummary>Không có đánh giá phù hợp</ng-template>
       </div>
 
       <div class="pagination-controls">
-        <button type="button" class="page-button" [disabled]="page <= 1 || isLoading" (click)="goToPage(page - 1)" aria-label="Trang trước">‹</button>
+        <label class="page-size">
+          <span>Số dòng:</span>
+          <select [(ngModel)]="limit" (ngModelChange)="onLimitChange()" aria-label="Số dòng mỗi trang">
+            <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+          </select>
+        </label>
 
-        <ng-container *ngFor="let item of pageItems">
-          <button
-            *ngIf="item !== null"
-            type="button"
-            class="page-button"
-            [class.active]="item === page"
-            [attr.aria-current]="item === page ? 'page' : null"
-            [disabled]="isLoading"
-            (click)="goToPage(item)"
-          >
-            {{ item }}
-          </button>
-          <span class="page-gap" *ngIf="item === null">…</span>
-        </ng-container>
+        <button
+          type="button"
+          class="page-button"
+          [disabled]="page <= 1 || isLoading || total === 0"
+          (click)="goToPage(page - 1)"
+          aria-label="Trang trước"
+        >
+          ‹
+        </button>
 
-        <button type="button" class="page-button" [disabled]="page >= totalPages || isLoading" (click)="goToPage(page + 1)" aria-label="Trang sau">›</button>
+        <span class="current-page">{{ total > 0 ? page : 0 }} / {{ totalPages }}</span>
+
+        <button
+          type="button"
+          class="page-button"
+          [disabled]="page >= totalPages || isLoading || total === 0"
+          (click)="goToPage(page + 1)"
+          aria-label="Trang sau"
+        >
+          ›
+        </button>
       </div>
     </footer>
 
-    <label class="page-size">
-      <span>Số dòng mỗi trang</span>
-      <select name="pageSize" [(ngModel)]="limit" (ngModelChange)="applyFilters()" aria-label="Số dòng mỗi trang">
-        <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }} dòng</option>
-      </select>
-    </label>
-
-    <p class="table-footnote">
-      <ng-container *ngIf="canEdit">Staff kiểm duyệt, rà soát và chỉnh sửa gợi ý AI trước khi gửi thủ công. AI không bao giờ tự gửi.</ng-container>
-      <ng-container *ngIf="!canEdit">Manager chỉ xem đánh giá và theo dõi kết quả. Staff rà soát, chỉnh sửa gợi ý AI và gửi thủ công; AI không tự gửi.</ng-container>
-    </p>
+    <!-- GHI CHÚ PHÂN QUYỀN DƯỚI BẢNG -->
+    <div class="footer-note">
+      Manager chỉ xem đánh giá và theo dõi kết quả. Staff rà soát, chỉnh sửa gợi ý AI và gửi thủ công; AI không tự gửi.
+    </div>
   </section>
 </section>
 
 <!-- Drawer chi tiết đánh giá -->
 <div class="drawer-backdrop" *ngIf="isDetailOpen" (click)="closeDetail()"></div>
-<aside class="drawer" *ngIf="isDetailOpen" role="dialog" aria-modal="true" aria-label="Chi tiết đánh giá">
+<aside
+  class="drawer"
+  [class.open]="isDetailOpen"
+  [attr.aria-hidden]="!isDetailOpen"
+  [attr.inert]="isDetailOpen ? null : ''"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Chi tiết đánh giá"
+>
   <header class="drawer-header">
     <div>
-      <h2>{{ canEdit ? 'Chi tiết đánh giá' : 'Chi tiết & theo dõi phản hồi' }}</h2>
-      <p *ngIf="detail">{{ detail.Review_id }} · {{ detail.Created_at | date: 'dd/MM/yyyy, HH:mm' }}</p>
+      <h2 class="drawer-title">{{ canEdit ? 'Chi tiết đánh giá' : 'Chi tiết & theo dõi phản hồi' }}</h2>
+      <p class="drawer-meta" *ngIf="detail">{{ detail.Review_id }} · {{ detail.Created_at | date: 'dd/MM/yyyy, HH:mm' }}</p>
     </div>
-    <button type="button" class="icon-button" (click)="closeDetail()" aria-label="Đóng">
-      <ng-icon name="lucideX" size="18px"></ng-icon>
+    <button type="button" class="drawer-close" (click)="closeDetail()" aria-label="Đóng">
+      <ng-icon name="lucideX" size="20px"></ng-icon>
     </button>
   </header>
 
-  <div class="drawer-body">
-    <div class="table-state" *ngIf="isDetailLoading">Đang tải chi tiết đánh giá...</div>
+  <div class="drawer-loading" *ngIf="isDetailOpen && isDetailLoading && !detail">
+    <div class="spinner"></div>
+    <p>Đang tải chi tiết đánh giá...</p>
+  </div>
 
-    <div class="table-state" *ngIf="!isDetailLoading && detailError">
+  <div class="drawer-body" *ngIf="isDetailOpen && detail">
+    <div class="drawer-inline-loading" *ngIf="isDetailLoading" role="status">
+      <span class="spinner"></span>
+      <span>Đang tải thông tin chi tiết...</span>
+    </div>
+
+    <div class="table-state" *ngIf="detailError">
       <ng-icon name="lucideTriangleAlert" size="32px"></ng-icon>
       <strong>{{ detailError }}</strong>
     </div>
 
-    <ng-container *ngIf="!isDetailLoading && detail">
+    <ng-container *ngIf="!detailError">
       <div class="detail-badges">
         <span class="badge" [ngClass]="detail.Display_status">{{ getStatusLabel(detail.Display_status) }}</span>
-        <span class="muted small" *ngIf="detail.Moderated_by_name">
+        <span class="rating-line">
+          {{ detail.Rating }}/5
+          <ng-icon name="lucideStar" class="star" size="14px"></ng-icon>
+        </span>
+        <span class="muted small" *ngIf="!isDetailLoading && detail.Moderated_by_name">
           {{ detail.Moderated_by_name }} · {{ detail.Moderated_at | date: 'dd/MM/yyyy, HH:mm' }}
         </span>
       </div>
@@ -246,66 +278,72 @@
         </ng-container>
       </div>
 
-      <section class="detail-section">
-        <h3>Thông tin khách hàng</h3>
-        <div class="info-grid">
+      <section class="detail-section drawer-section">
+        <h3 class="section-title">Thông tin khách hàng</h3>
+        <div class="info-grid customer-info-grid">
           <div>
-            <strong>{{ detail.Customer_name || '—' }}</strong>
-            <span class="muted">{{ detail.Customer_phone }}</span>
+            <span class="info-label">Họ và tên:</span>
+            <span class="info-value font-semibold">{{ detail.Customer_name || '—' }}</span>
           </div>
           <div>
-            <span class="muted">Email</span>
-            <span>{{ detail.Customer_email || '—' }}</span>
+            <span class="info-label">Email:</span>
+            <span class="info-value">{{ isDetailLoading ? 'Đang tải...' : (detail.Customer_email || '—') }}</span>
+          </div>
+          <div>
+            <span class="info-label">Số điện thoại:</span>
+            <span class="info-value">{{ isDetailLoading ? 'Đang tải...' : (detail.Customer_phone || '—') }}</span>
+          </div>
+          <div>
+            <span class="info-label">Đơn hàng:</span>
+            <span class="info-value">{{ isDetailLoading ? 'Đang tải...' : (detail.Order_id || '—') }}</span>
           </div>
         </div>
       </section>
 
-      <section class="detail-section">
-        <h3>Sản phẩm</h3>
+      <section class="detail-section drawer-section">
+        <h3 class="section-title">Sản phẩm</h3>
         <div class="product-card">
           <img [src]="detail.Image" [alt]="detail.Product_name" (error)="hideBrokenImage($event)" />
           <div>
             <strong>{{ detail.Product_name }}</strong>
-            <small class="muted">SKU: {{ detail.Product_variant_id }} · Đơn hàng {{ detail.Order_id }}</small>
+            <small class="muted">SKU: {{ detail.Product_variant_id || '—' }}</small>
           </div>
         </div>
       </section>
 
-      <section class="detail-section">
+      <section class="detail-section drawer-section">
         <div class="section-line">
-          <h3>Nội dung đánh giá</h3>
-          <span class="rating-line">
-            {{ detail.Rating }}/5
-            <ng-icon name="lucideStar" class="star" size="14px"></ng-icon>
-          </span>
+          <h3 class="section-title">Nội dung đánh giá</h3>
         </div>
-        <p class="review-text" *ngIf="detail.Comment">{{ detail.Comment }}</p>
-        <p class="muted" *ngIf="!detail.Comment">Khách không viết nhận xét.</p>
+        <div class="review-content-card">
+          <p class="review-text" *ngIf="detail.Comment">{{ detail.Comment }}</p>
+          <p class="muted" *ngIf="!detail.Comment">Khách không viết nhận xét.</p>
 
-        <div class="media-grid" *ngIf="detail.Images.length">
-          <ng-container *ngFor="let media of detail.Images">
-            <video *ngIf="isVideo(media)" [src]="media" controls preload="metadata"></video>
-            <img *ngIf="!isVideo(media)" [src]="media" alt="Ảnh khách hàng đính kèm" />
-          </ng-container>
+          <div class="media-grid" *ngIf="!isDetailLoading && detail.Images.length">
+            <ng-container *ngFor="let media of detail.Images">
+              <video *ngIf="isVideo(media)" [src]="media" controls preload="metadata"></video>
+              <img *ngIf="!isVideo(media)" [src]="media" alt="Ảnh khách hàng đính kèm" />
+            </ng-container>
+          </div>
+
+          <small class="muted">
+            Ngày đánh giá: {{ detail.Created_at | date: 'dd/MM/yyyy, HH:mm' }}
+            <ng-container *ngIf="!isDetailLoading && detail.Is_verified_purchase"> · Đã mua hàng</ng-container>
+          </small>
         </div>
-
-        <small class="muted">
-          Ngày đánh giá: {{ detail.Created_at | date: 'dd/MM/yyyy, HH:mm' }}
-          <ng-container *ngIf="detail.Is_verified_purchase"> · Đã mua hàng</ng-container>
-        </small>
       </section>
 
       <!-- Trạng thái phản hồi -->
-      <section class="reply-status-card">
+      <section class="reply-status-card" *ngIf="!isDetailLoading">
         <h3>Trạng thái phản hồi</h3>
         <span class="badge" [ngClass]="replyStatusClass">{{ replyStatusLabel }}</span>
         <small class="muted">{{ replyStatusNote }}</small>
       </section>
 
       <!-- Staff: soạn phản hồi (đánh giá đã duyệt, chưa gửi) -->
-      <section class="detail-section reply-section" *ngIf="canEdit && isApproved">
+      <section class="detail-section drawer-section reply-section" *ngIf="!isDetailLoading && canEdit && isApproved">
         <div class="section-line">
-          <h3>
+          <h3 class="section-title">
             {{ detail.Reply_reviewed ? 'Phản hồi đã được rà soát' : 'AI gợi ý phản hồi' }}
             <span class="ai-chip" *ngIf="isAiDraftShown">AI</span>
           </h3>
@@ -341,15 +379,15 @@
       </section>
 
       <!-- Đã gửi phản hồi (Staff và Manager) -->
-      <section class="detail-section" *ngIf="detail.Display_status === 'replied'">
-        <h3>Phản hồi đã gửi cho khách hàng</h3>
+      <section class="detail-section drawer-section" *ngIf="!isDetailLoading && detail.Display_status === 'replied'">
+        <h3 class="section-title">Phản hồi đã gửi cho khách hàng</h3>
         <p class="reply-box">{{ detail.Reply_content }}</p>
         <small class="muted">{{ detail.Replied_by_name || 'Staff' }} gửi lúc {{ formatDateTime(detail.Replied_at) }}</small>
       </section>
 
       <!-- Manager: chỉ xem bản nháp đã rà soát -->
-      <section class="detail-section" *ngIf="!canEdit && detail.Display_status === 'approved'">
-        <h3>{{ detail.Reply_reviewed ? 'Phản hồi đã được rà soát' : 'Phản hồi' }}</h3>
+      <section class="detail-section drawer-section" *ngIf="!isDetailLoading && !canEdit && detail.Display_status === 'approved'">
+        <h3 class="section-title">{{ detail.Reply_reviewed ? 'Phản hồi đã được rà soát' : 'Phản hồi' }}</h3>
         <p class="reply-box" *ngIf="detail.Reply_reviewed && detail.Reply_draft">{{ detail.Reply_draft }}</p>
         <p class="muted" *ngIf="!detail.Reply_reviewed">Staff chưa rà soát phản hồi cho đánh giá này.</p>
         <small class="muted" *ngIf="detail.Reply_reviewed">
@@ -357,24 +395,35 @@
         </small>
       </section>
 
-      <section class="detail-section" *ngIf="detail.Display_status === 'rejected' && detail.Moderation_note">
-        <h3>Lý do từ chối</h3>
-        <p>{{ detail.Moderation_note }}</p>
+      <section class="detail-section drawer-section" *ngIf="!isDetailLoading && detail.Display_status === 'rejected' && detail.Moderation_note">
+        <h3 class="section-title">Lý do từ chối</h3>
+        <div class="reason-box">{{ detail.Moderation_note }}</div>
       </section>
 
-      <section class="detail-section">
-        <h3>Lịch sử xử lý</h3>
-        <ol class="timeline">
-          <li class="done" *ngFor="let item of historyItems">
-            <strong>{{ item.Note || item.Event }}</strong>
-            <small class="muted">{{ item.Created_at | date: 'dd/MM HH:mm' }} · {{ item.Actor_name }}</small>
-          </li>
-        </ol>
+      <section class="detail-section drawer-section" *ngIf="!isDetailLoading">
+        <h3 class="section-title">Lịch sử xử lý</h3>
+        <div class="timeline">
+          <div
+            class="timeline-item"
+            *ngFor="let item of historyItems"
+            [class.step-done]="item.Event !== 'rejected'"
+            [class.step-rejected]="item.Event === 'rejected'"
+          >
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <div class="timeline-title">{{ item.Note || item.Event }}</div>
+              <div class="timeline-desc">Người thực hiện: {{ item.Actor_name || '—' }}</div>
+              <div class="timeline-time" *ngIf="item.Created_at">
+                {{ item.Created_at | date: 'dd/MM/yyyy, HH:mm' }}
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </ng-container>
   </div>
 
-  <footer class="drawer-footer">
+  <footer class="drawer-footer" *ngIf="isDetailOpen && !isDetailLoading && detail && !detailError">
     <button type="button" class="btn" (click)="closeDetail()">Đóng</button>
     <ng-container *ngIf="canEdit && detail">
       <button type="button" class="btn btn-danger-outline" *ngIf="hasAction('reject')" [disabled]="isModerating" (click)="openRejectModal()">

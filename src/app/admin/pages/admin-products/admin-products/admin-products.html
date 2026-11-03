@@ -44,8 +44,6 @@
 
     <form class="filters" (ngSubmit)="search()">
       <label class="search-box">
-        <span class="field-label">Tìm kiếm</span>
-
         <span class="input-with-icon">
           <span class="search-icon" aria-hidden="true">⌕</span>
 
@@ -90,6 +88,7 @@
         >
           <option value="">Tất cả trạng thái</option>
           <option value="on_sale">Đang bán</option>
+          <option value="discontinued">Ngừng bán</option>
           <option value="out_of_stock">Hết hàng</option>
         </select>
       </label>
@@ -214,10 +213,11 @@
             <td class="status-cell">
               <span
                 class="status-badge"
-                [class.status-active]="product.Status === 'on_sale'"
-                [class.status-empty]="product.Status === 'out_of_stock'"
+                [class.status-active]="getProductDisplayStatus(product) === 'on_sale'"
+                [class.status-discontinued]="getProductDisplayStatus(product) === 'discontinued'"
+                [class.status-empty]="getProductDisplayStatus(product) === 'out_of_stock'"
               >
-                {{ getProductStatusLabel(product.Status) }}
+                {{ getProductStatusLabel(getProductDisplayStatus(product)) }}
               </span>
             </td>
 
@@ -239,15 +239,6 @@
                   [attr.aria-label]="'Chỉnh sửa sản phẩm ' + product.Product_name"
                 >
                   Chỉnh sửa
-                </button>
-                <button
-                  *ngIf="canManageProduct"
-                  type="button"
-                  class="link-button action-delete"
-                  (click)="openDeleteConfirm(product)"
-                  [attr.aria-label]="'Xóa sản phẩm ' + product.Product_name"
-                >
-                  Xóa
                 </button>
               </div>
             </td>
@@ -287,7 +278,7 @@
       </div>
     </div>
 
-    <footer class="table-footer">
+    <footer class="table-footer" *ngIf="!isLoading && !errorMessage">
       <div class="pagination-summary">
         Hiển thị
         <strong>{{ firstItemIndex }}</strong>–<strong>{{ lastItemIndex }}</strong>
@@ -296,16 +287,14 @@
 
       <div class="pagination-controls">
         <label class="page-size">
-          <span>Số dòng:</span>
+          <span>Số dòng mỗi trang:</span>
 
           <select
             name="pageSize"
             [(ngModel)]="limit"
             (ngModelChange)="changePageSize()"
           >
-            <option *ngFor="let size of pageSizeOptions" [ngValue]="size">
-              {{ size }}
-            </option>
+            <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
           </select>
         </label>
 
@@ -411,11 +400,12 @@
             <h3>{{ productDetail.Product_name }}</h3>
             <span
               class="status-badge"
-              [class.status-active]="productDetail.Status === 'on_sale'"
-              [class.status-empty]="productDetail.Status === 'out_of_stock'"
+              [class.status-active]="getProductDisplayStatus(productDetail) === 'on_sale'"
+              [class.status-discontinued]="getProductDisplayStatus(productDetail) === 'discontinued'"
+              [class.status-empty]="getProductDisplayStatus(productDetail) === 'out_of_stock'"
             >
               <span class="status-dot"></span>
-              {{ getProductStatusLabel(productDetail.Status) }}
+              {{ getProductStatusLabel(getProductDisplayStatus(productDetail)) }}
             </span>
           </div>
         </section>
@@ -602,6 +592,16 @@
           {{ createError }}
         </div>
 
+        <section class="form-section simple-form-section">
+          <div class="form-section-header simple-form-section-heading">
+            <div class="header-with-action">
+              <div>
+                <h3 class="form-section-title">Thông tin cơ bản</h3>
+                <p class="form-section-desc">Thông tin nhận diện và trạng thái kinh doanh của sản phẩm.</p>
+              </div>
+            </div>
+          </div>
+
         <!-- 1. Tên sản phẩm * -->
         <div class="simple-form-group">
           <label class="simple-label">
@@ -740,7 +740,7 @@
               (ngModelChange)="onFieldChange()"
             >
               <option value="on_sale">Đang bán</option>
-              <option value="out_of_stock">Ngừng bán</option>
+              <option value="discontinued">Ngừng bán</option>
             </select>
             <span class="select-chevron">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -751,8 +751,19 @@
         </div>
 
         <!-- 6. Hình ảnh sản phẩm -->
+        </section>
+
+        <section class="form-section simple-form-section simple-image-section">
+          <div class="form-section-header simple-form-section-heading">
+            <div class="header-with-action">
+              <div>
+                <h3 class="form-section-title">Hình ảnh sản phẩm</h3>
+                <p class="form-section-desc">Tải lên hình ảnh minh họa cho sản phẩm.</p>
+              </div>
+            </div>
+          </div>
+
         <div class="simple-form-group">
-          <label class="simple-label">Hình ảnh sản phẩm</label>
           <div class="simple-upload-box" (click)="filePicker.click()">
             <div class="upload-box-left">
               <div class="upload-icon-wrapper">
@@ -803,6 +814,7 @@
             </div>
           </div>
         </div>
+        </section>
 
         <!-- 7. Biến thể sản phẩm (Khu vực riêng biệt A) -->
         <div class="product-section-card variants-card-section">
@@ -829,7 +841,7 @@
               <span class="col-th sku-th">SKU</span>
               <span class="col-th price-th">Giá bán (VND)</span>
               <span class="col-th stock-th">Tồn kho</span>
-              <span class="col-th action-th"></span>
+              <span class="col-th action-th">Thao tác</span>
             </div>
 
             <div class="variants-table-body">
@@ -838,6 +850,7 @@
                 class="variant-row"
               >
                 <div class="col-td name-td">
+                  <span class="variant-mobile-label">Biến thể</span>
                   <input
                     type="text"
                     class="simple-input"
@@ -848,6 +861,7 @@
                   />
                 </div>
                 <div class="col-td sku-td">
+                  <span class="variant-mobile-label">SKU</span>
                   <input
                     type="text"
                     class="simple-input"
@@ -858,6 +872,7 @@
                   />
                 </div>
                 <div class="col-td price-td">
+                  <span class="variant-mobile-label">Giá bán (VND)</span>
                   <input
                     type="number"
                     class="simple-input"
@@ -869,6 +884,7 @@
                   />
                 </div>
                 <div class="col-td stock-td">
+                  <span class="variant-mobile-label">Tồn kho</span>
                   <input
                     type="number"
                     class="simple-input"
@@ -880,6 +896,7 @@
                   />
                 </div>
                 <div class="col-td action-td">
+                  <span class="variant-mobile-label">Thao tác</span>
                   <button
                     type="button"
                     class="btn-row-delete"
@@ -895,6 +912,9 @@
                     </svg>
                   </button>
                 </div>
+              </div>
+              <div class="variants-empty-state" *ngIf="createForm.variants.length === 0">
+                Chưa có biến thể. Chọn <strong>+ Thêm biến thể</strong> để bổ sung.
               </div>
             </div>
           </div>
@@ -1037,70 +1057,6 @@
       </button>
     </div>
   </div>
-</div>
-
-<div
-  class="product-create-backdrop"
-  *ngIf="isDeleteOpen"
-  (click)="closeDeleteConfirm()"
->
-  <aside
-    class="product-confirm-modal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="confirm-delete-title"
-    (click)="$event.stopPropagation()"
-  >
-    <header class="product-confirm-header">
-      <div>
-        <h2 id="confirm-delete-title">Xác nhận xóa sản phẩm</h2>
-        <p>Hành động này không thể hoàn tác.</p>
-      </div>
-      <button
-        type="button"
-        class="drawer-close-button"
-        (click)="closeDeleteConfirm()"
-        [disabled]="isDeleting"
-        aria-label="Đóng hộp thoại xóa"
-      >
-        ×
-      </button>
-    </header>
-
-    <div class="product-confirm-body">
-      <p>
-        Bạn có chắc chắn muốn xóa sản phẩm
-        <strong>{{ deletingProduct?.Product_name }}</strong>
-        <span *ngIf="deletingProduct?.Product_id"> (Mã: <code>{{ deletingProduct?.Product_id }}</code>)</span>?
-      </p>
-      <p class="confirm-warning">
-        Toàn bộ dữ liệu biến thể của sản phẩm này cũng sẽ bị xóa vĩnh viễn khỏi hệ thống.
-      </p>
-      <p *ngIf="deleteError" class="inline-error" role="alert">
-        {{ deleteError }}
-      </p>
-    </div>
-
-    <footer class="product-confirm-footer">
-      <button
-        type="button"
-        class="btn btn-secondary"
-        (click)="closeDeleteConfirm()"
-        [disabled]="isDeleting"
-      >
-        Hủy
-      </button>
-      <button
-        type="button"
-        class="btn btn-danger"
-        (click)="confirmDelete()"
-        [disabled]="isDeleting"
-      >
-        <span *ngIf="isDeleting" class="spinner-inline"></span>
-        {{ isDeleting ? 'Đang xóa...' : 'Xóa sản phẩm' }}
-      </button>
-    </footer>
-  </aside>
 </div>
 
 <!-- ==================== MODAL NHẬP HÀNG LOẠT (BULK IMPORT) ==================== -->

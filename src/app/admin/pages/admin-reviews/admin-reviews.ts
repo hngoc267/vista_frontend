@@ -54,7 +54,8 @@ const REPLY_MIN_LENGTH = 10;
 })
 export class AdminReviews implements OnInit, OnDestroy {
   // Staff duyệt, soạn và gửi phản hồi. Manager chỉ xem.
-  readonly canEdit = getAdminRole() === 'Staff';
+  readonly role = getAdminRole();
+  readonly canEdit = this.role === 'Staff';
   readonly statusOptions = (Object.keys(STATUS_LABELS) as ReviewDisplayStatus[]).map((value) => ({
     value,
     label: STATUS_LABELS[value],
@@ -105,6 +106,7 @@ export class AdminReviews implements OnInit, OnDestroy {
   private searchTimer?: ReturnType<typeof setTimeout>;
   private toastTimer?: ReturnType<typeof setTimeout>;
   private queryParamsSubscription?: Subscription;
+  private detailLoadId = 0;
 
   constructor(
     private readonly reviewService: AdminReviewService,
@@ -199,8 +201,17 @@ export class AdminReviews implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
+  get hasActiveFilters(): boolean {
+    return this.hasFilters;
+  }
+
+  onLimitChange(): void {
+    this.page = 1;
+    this.loadReviews();
+  }
+
   get hasFilters(): boolean {
-    return !!(this.keyword || this.statusFilter || this.ratingFilter || this.fromDate || this.toDate);
+    return !!(this.keyword.trim() || this.statusFilter || this.ratingFilter || this.fromDate || this.toDate);
   }
 
   getCount(key: string): number {
@@ -209,25 +220,6 @@ export class AdminReviews implements OnInit, OnDestroy {
 
   get totalPages(): number {
     return Math.max(1, Math.ceil(this.total / this.limit));
-  }
-
-  // Phân trang rút gọn: 1 … 4 5 6 … 22 (null = dấu …)
-  get pageItems(): (number | null)[] {
-    const total = this.totalPages;
-    if (total <= 7) {
-      return Array.from({ length: total }, (_, index) => index + 1);
-    }
-
-    const start = Math.max(2, Math.min(this.page - 1, total - 4));
-    const end = Math.min(total - 1, Math.max(this.page + 1, 5));
-    const items: (number | null)[] = [1];
-
-    if (start > 2) items.push(null);
-    for (let number = start; number <= end; number++) items.push(number);
-    if (end < total - 1) items.push(null);
-    items.push(total);
-
-    return items;
   }
 
   get rangeStart(): number {
@@ -249,30 +241,74 @@ export class AdminReviews implements OnInit, OnDestroy {
 
   // ===== Chi tiết =====
 
-  openDetail(reviewId: string): void {
+  openDetail(reviewId: string, summary?: AdminReviewSummary): void {
     this.isDetailOpen = true;
     this.isDetailLoading = true;
     this.detailError = '';
-    this.detail = null;
+    this.detail = summary ? this.createDetailPreview(summary) : null;
     this.replyError = '';
+    this.isEditing = false;
+    const loadId = ++this.detailLoadId;
 
     this.reviewService
       .getReviewDetail(reviewId)
       .pipe(
         finalize(() => {
+          if (loadId !== this.detailLoadId) return;
           this.isDetailLoading = false;
           this.changeDetectorRef.detectChanges();
         }),
       )
       .subscribe({
         next: (response) => {
-          this.detail = response.data ?? null;
+          if (loadId !== this.detailLoadId) return;
+          if (!response.data) {
+            this.detailError = 'Không có dữ liệu chi tiết đánh giá.';
+            return;
+          }
+          this.detail = response.data;
           this.resetDraftFromDetail();
         },
         error: () => {
+          if (loadId !== this.detailLoadId) return;
           this.detailError = 'Không tải được chi tiết đánh giá. Vui lòng thử lại.';
         },
       });
+  }
+
+  private createDetailPreview(review: AdminReviewSummary): AdminReviewDetail {
+    return {
+      Review_id: review.Review_id,
+      Created_at: review.Created_at,
+      Rating: review.Rating,
+      Comment: review.Comment,
+      Images: [],
+      Display_status: review.Display_status,
+      Available_actions: [],
+      Customer_name: review.Customer_name,
+      Customer_phone: '',
+      Customer_email: '',
+      Order_id: '',
+      Is_verified_purchase: false,
+      Product_id: '',
+      Product_name: review.Product_name,
+      Variant_name: review.Variant_name,
+      Product_variant_id: review.Product_variant_id,
+      Image: review.Image,
+      Moderated_by_name: '',
+      Moderated_at: null,
+      Moderation_note: '',
+      AI_reply_draft: '',
+      Reply_draft: '',
+      Reply_draft_version: 0,
+      Reply_draft_by_name: '',
+      Reply_draft_at: null,
+      Reply_reviewed: false,
+      Reply_content: '',
+      Replied_by_name: '',
+      Replied_at: review.Replied_at,
+      History: [],
+    };
   }
 
   // Tải lại chi tiết đang mở. keepDraft = giữ nguyên nội dung Staff đang gõ.
@@ -295,6 +331,7 @@ export class AdminReviews implements OnInit, OnDestroy {
       return;
     }
 
+    this.detailLoadId++;
     this.isDetailOpen = false;
     this.detail = null;
     this.isSendConfirmOpen = false;

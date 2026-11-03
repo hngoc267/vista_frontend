@@ -12,8 +12,10 @@ import {
   AdminProduct,
   AdminProductQueryParams,
   AdminProductService,
+  AdminProductSellingStatus,
   AdminProductStatus,
 } from '../../../services/admin-product';
+import { getAdminProductDisplayStatus } from './admin-product-status';
 
 export interface KeyValuePair {
   key: string;
@@ -50,7 +52,7 @@ export interface ProductFormState {
   Description: string;
   Price: number | null;
   Stock_quantity: number | null;
-  Status: 'on_sale' | 'out_of_stock';
+  Status: AdminProductSellingStatus;
   images: string[];
   Discount?: number | null;
   Is_Flash_Sale?: boolean;
@@ -75,10 +77,6 @@ export class AdminProducts implements OnInit, OnDestroy {
   readonly canCreateProduct = this.canManageProduct;
   isEditMode = false;
   editingProductId: string | null = null;
-  isDeleteOpen = false;
-  deletingProduct: AdminProduct | null = null;
-  isDeleting = false;
-  deleteError = '';
   keyword = '';
   selectedCategory = '';
   selectedStatus: '' | AdminProductStatus = '';
@@ -433,12 +431,15 @@ export class AdminProducts implements OnInit, OnDestroy {
 
   getProductStock(product: AdminProduct): number {
     return (product.variants ?? [])
-      .filter((variant) => variant.Status === 'active')
       .reduce(
         (total, variant) =>
           total + Math.max(0, Number(variant.Stock_quantity) || 0),
         0,
       );
+  }
+
+  getProductDisplayStatus(product: AdminProduct): AdminProductStatus {
+    return getAdminProductDisplayStatus(product.Status, this.getProductStock(product));
   }
 
   getProductSku(product: AdminProduct): string {
@@ -467,7 +468,11 @@ export class AdminProducts implements OnInit, OnDestroy {
   }
 
   getProductStatusLabel(status: AdminProductStatus): string {
-    return status === 'on_sale' ? 'Đang bán' : 'Hết hàng';
+    if (status === 'discontinued') {
+      return 'Ngừng bán';
+    }
+
+    return status === 'out_of_stock' ? 'Hết hàng' : 'Đang bán';
   }
 
   formatCurrency(value: number): string {
@@ -1100,7 +1105,9 @@ export class AdminProducts implements OnInit, OnDestroy {
       Description: product.Description || '',
       Price: basePrice,
       Stock_quantity: baseStock,
-      Status: (product.Status as any) || 'on_sale',
+      Status: product.Status === 'discontinued' || product.Status === 'out_of_stock'
+        ? 'discontinued'
+        : 'on_sale',
       images,
       Discount: product.Discount !== undefined ? Number(product.Discount) : 0,
       Is_Flash_Sale: Boolean(product.Is_Flash_Sale),
@@ -1227,67 +1234,6 @@ export class AdminProducts implements OnInit, OnDestroy {
     }
 
     return request;
-  }
-
-  // --- Xóa sản phẩm ---
-  openDeleteConfirm(product: AdminProduct): void {
-    if (!this.canManageProduct || this.isDeleting) {
-      return;
-    }
-    this.deletingProduct = product;
-    this.deleteError = '';
-    this.isDeleteOpen = true;
-  }
-
-  closeDeleteConfirm(force: boolean = false): void {
-    if (this.isDeleting && !force) {
-      return;
-    }
-    this.isDeleteOpen = false;
-    this.deletingProduct = null;
-    this.deleteError = '';
-  }
-
-  confirmDelete(): void {
-    if (!this.deletingProduct || !this.canManageProduct || this.isDeleting) {
-      return;
-    }
-
-    const targetProduct = this.deletingProduct;
-    this.isDeleting = true;
-    this.deleteError = '';
-
-    this.productService
-      .deleteProduct(targetProduct.Product_id)
-      .pipe(
-        finalize(() => {
-          this.isDeleting = false;
-          this.changeDetectorRef.detectChanges();
-        }),
-      )
-      .subscribe({
-        next: (response) => {
-          this.isDeleting = false;
-          this.closeDeleteConfirm(true);
-          this.showToast(response?.message || 'Xóa sản phẩm thành công.', 'success');
-
-          if (this.isDetailOpen && this.detailProductId === targetProduct.Product_id) {
-            this.closeProductDetail();
-          }
-
-          if (this.products.length === 1 && this.page > 1) {
-            this.page -= 1;
-          }
-
-          this.loadProducts();
-        },
-        error: (error: unknown) => {
-          this.deleteError = this.getApiErrorMessage(
-            error,
-            'Không thể xóa sản phẩm. Vui lòng thử lại.',
-          );
-        },
-      });
   }
 
   private getApiErrorMessage(error: unknown, fallback: string): string {

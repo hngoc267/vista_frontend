@@ -118,7 +118,15 @@
           </div>
         </div>
 
-        <div class="action-buttons">
+        <p
+          *ngIf="purchaseUnavailableMessage"
+          class="product-unavailable-notice"
+          role="status"
+        >
+          {{ purchaseUnavailableMessage }}
+        </p>
+
+        <div class="action-buttons" *ngIf="canPurchaseSelectedVariant">
           <button class="btn-cart" (click)="addToCart()">Thêm vào giỏ hàng</button>
           <button class="btn-buy" (click)="buyNow()">Mua ngay</button>
         </div>

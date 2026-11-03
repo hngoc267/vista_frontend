@@ -86,7 +86,9 @@ export class ProductDetail implements OnInit {
         this.category = res.data.category;
         this.brand = res.data.brand;
         if (this.variants.length > 0) {
-          this.selectedVariant = this.variants[0];
+          this.selectedVariant =
+            this.variants.find((variant) => Number(variant.Stock_quantity) > 0) ||
+            this.variants[0];
         }
         this.selectedImageIndex = 0;
         
@@ -132,7 +134,28 @@ export class ProductDetail implements OnInit {
 
   selectVariant(variant: any) {
     this.selectedVariant = variant;
+    this.quantity = 1;
     this.cdr.detectChanges();
+  }
+
+  get purchaseUnavailableMessage(): string {
+    if (this.product?.Status === 'discontinued') {
+      return 'Sản phẩm này ngưng bán.';
+    }
+
+    if (this.product?.Status === 'out_of_stock') {
+      return 'Sản phẩm này hiện đã hết hàng.';
+    }
+
+    if (Number(this.selectedVariant?.Stock_quantity) <= 0) {
+      return 'Phiên bản này hiện đã hết hàng.';
+    }
+
+    return '';
+  }
+
+  get canPurchaseSelectedVariant(): boolean {
+    return !this.purchaseUnavailableMessage;
   }
 
   changeQuantity(delta: number) {
@@ -147,6 +170,10 @@ export class ProductDetail implements OnInit {
   }
 
   addToCart() {
+    if (!this.canPurchaseSelectedVariant) {
+      return;
+    }
+
     const userId = this.cartService.getCurrentUserId();
     if (!userId) {
       Swal.fire({
@@ -193,6 +220,10 @@ export class ProductDetail implements OnInit {
   }
 
   buyNow(): void {
+    if (!this.canPurchaseSelectedVariant) {
+      return;
+    }
+
     const userId = this.cartService.getCurrentUserId();
     if (!userId) {
       Swal.fire({
