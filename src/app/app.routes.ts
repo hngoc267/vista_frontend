@@ -38,6 +38,8 @@ import { AdminProducts } from './admin/pages/admin-products/admin-products/admin
 import { AdminStaff } from './admin/pages/admin-staff/admin-staff';
 import { adminManagerGuard } from './guards/admin-manager-guard';
 import { AdminReturnsComponent } from './admin/pages/admin-returns/admin-returns';
+import { AdminPromotionsComponent } from './admin/pages/admin-promotions/admin-promotions';
+import { AdminCustomersComponent } from './admin/pages/admin-customers/admin-customers';
 
 export const routes: Routes = [
   // =========================
@@ -103,6 +105,16 @@ export const routes: Routes = [
         path: 'returns',
         component: AdminReturnsComponent,
         data: { breadcrumb: 'Hậu mãi & Đổi trả' },
+      },
+      {
+        path: 'promotions',
+        component: AdminPromotionsComponent,
+        data: { breadcrumb: 'Quản lý khuyến mãi' },
+      },
+      {
+        path: 'customers',
+        component: AdminCustomersComponent,
+        data: { breadcrumb: 'Quản lý khách hàng' },
       },
     ],
   },

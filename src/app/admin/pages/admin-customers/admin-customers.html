@@ -1,0 +1,578 @@
+<section class="customers-page">
+  <!-- TIÊU ĐỀ TRANG -->
+  <header class="page-heading">
+    <div class="page-heading-text">
+      <h1>Quản lý khách hàng</h1>
+      <p>Tra cứu hồ sơ và theo dõi hoạt động của khách hàng</p>
+    </div>
+  </header>
+
+  <!-- PANEL CHÍNH -->
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Danh sách khách hàng</h2>
+        <p>{{ total }} khách hàng {{ hasActiveFilters ? 'phù hợp với bộ lọc' : 'trong hệ thống' }}</p>
+      </div>
+      <button
+        type="button"
+        class="btn-refresh"
+        (click)="loadCustomers()"
+        [disabled]="isLoading"
+        title="Tải lại danh sách"
+      >
+        <ng-icon name="lucideRefreshCw" size="16px" [class.spin]="isLoading"></ng-icon>
+        <span>Làm mới</span>
+      </button>
+    </div>
+
+    <!-- TOOLBAR & BỘ LỌC -->
+    <div class="filters">
+      <label class="search-box">
+        <ng-icon name="lucideSearch" size="16px"></ng-icon>
+        <input
+          type="search"
+          [(ngModel)]="searchKeyword"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Tìm mã KH, họ tên, email, số điện thoại..."
+          aria-label="Tìm kiếm khách hàng"
+          autocomplete="off"
+        />
+      </label>
+
+      <div class="filter-field">
+        <label for="customer-status-filter">Trạng thái</label>
+        <div class="select-wrap">
+          <select
+            id="customer-status-filter"
+            [(ngModel)]="selectedStatus"
+            (ngModelChange)="onStatusChange()"
+            aria-label="Lọc theo trạng thái"
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="blocked">Đã khóa</option>
+          </select>
+          <ng-icon name="lucideChevronDown" size="16px"></ng-icon>
+        </div>
+      </div>
+
+      <div class="filter-actions" *ngIf="hasActiveFilters">
+        <button type="button" class="btn-clear" (click)="clearFilters()">
+          Xóa bộ lọc
+        </button>
+      </div>
+    </div>
+
+    <!-- BẢNG DANH SÁCH -->
+    <div class="table-wrapper">
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th>Mã khách hàng</th>
+            <th>Khách hàng</th>
+            <th>Liên hệ</th>
+            <th>Ngày tham gia</th>
+            <th>Số đơn hàng</th>
+            <th>Tổng chi tiêu</th>
+            <th>Trạng thái</th>
+            <th class="text-right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="!isLoading && !errorMessage && customers.length">
+          <tr
+            *ngFor="let item of customers"
+            [class.row-selected]="selectedCustomer?.User_id === item.User_id"
+          >
+            <!-- Mã khách hàng -->
+            <td class="customer-code">
+              <button
+                type="button"
+                class="link-button font-mono"
+                (click)="openDetail(item)"
+                title="Xem chi tiết khách hàng"
+              >
+                {{ item.User_id }}
+              </button>
+            </td>
+
+            <!-- Khách hàng -->
+            <td>
+              <div class="customer-profile">
+                <div class="customer-avatar" [class.avatar-blocked]="item.Status === 'blocked'">
+                  {{ getInitials(item.Full_name, item.Username) }}
+                </div>
+                <div class="customer-meta">
+                  <span class="customer-name font-medium">
+                    {{ item.Full_name || 'Chưa cập nhật tên' }}
+                  </span>
+                  <span class="customer-username font-mono text-muted">
+                    @{{ item.Username }}
+                  </span>
+                </div>
+              </div>
+            </td>
+
+            <!-- Liên hệ -->
+            <td>
+              <div class="contact-info">
+                <span class="contact-email">
+                  <ng-icon name="lucideMail" size="14px"></ng-icon>
+                  {{ item.Email }}
+                </span>
+                <span class="contact-phone" *ngIf="item.Phone_number">
+                  <ng-icon name="lucidePhone" size="14px"></ng-icon>
+                  {{ item.Phone_number }}
+                </span>
+                <span class="contact-phone text-muted" *ngIf="!item.Phone_number">
+                  Chưa có SĐT
+                </span>
+              </div>
+            </td>
+
+            <!-- Ngày tham gia -->
+            <td class="text-muted text-sm">
+              {{ item.Created_at ? (item.Created_at | date: 'dd/MM/yyyy') : '—' }}
+            </td>
+
+            <!-- Số đơn hàng -->
+            <td>
+              <button
+                type="button"
+                class="view-link-badge"
+                (click)="openDetail(item); selectTab('orders')"
+                title="Bấm để xem thống kê đơn hàng"
+              >
+                <ng-icon name="lucideShoppingBag" size="13px"></ng-icon>
+                <span>Xem chi tiết</span>
+              </button>
+            </td>
+
+            <!-- Tổng chi tiêu -->
+            <td>
+              <button
+                type="button"
+                class="view-link-badge"
+                (click)="openDetail(item); selectTab('orders')"
+                title="Bấm để xem tổng chi tiêu"
+              >
+                <ng-icon name="lucideDollarSign" size="13px"></ng-icon>
+                <span>Xem chi tiết</span>
+              </button>
+            </td>
+
+            <!-- Trạng thái -->
+            <td>
+              <span
+                class="badge"
+                [class.badge-active]="item.Status === 'active'"
+                [class.badge-blocked]="item.Status === 'blocked'"
+              >
+                {{ item.Status === 'active' ? 'Hoạt động' : 'Đã khóa' }}
+              </span>
+            </td>
+
+            <!-- Thao tác -->
+            <td class="action-cell">
+              <div class="row-actions">
+                <button
+                  type="button"
+                  class="link-button action-view"
+                  (click)="openDetail(item)"
+                >
+                  Xem
+                </button>
+
+                <ng-container *ngIf="isManager">
+                  <button
+                    *ngIf="item.Status === 'active'"
+                    type="button"
+                    class="link-button action-status"
+                    (click)="toggleLock(item)"
+                    [disabled]="isSubmittingAction"
+                  >
+                    Khóa
+                  </button>
+
+                  <button
+                    *ngIf="item.Status === 'blocked'"
+                    type="button"
+                    class="link-button action-status"
+                    (click)="toggleLock(item)"
+                    [disabled]="isSubmittingAction"
+                  >
+                    Mở khóa
+                  </button>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- LOADING STATE -->
+      <div class="state-container" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Đang tải dữ liệu khách hàng...</p>
+      </div>
+
+      <!-- ERROR STATE -->
+      <div class="state-container error-state" *ngIf="!isLoading && errorMessage">
+        <ng-icon name="lucideAlertCircle" size="36px"></ng-icon>
+        <p class="error-title">Không thể tải dữ liệu</p>
+        <p class="error-desc">{{ errorMessage }}</p>
+        <button type="button" class="btn-retry" (click)="loadCustomers()">
+          Thử lại
+        </button>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div
+        class="state-container empty-state"
+        *ngIf="!isLoading && !errorMessage && customers.length === 0"
+      >
+        <ng-icon name="lucideUsers" size="36px"></ng-icon>
+        <p class="empty-title">Không tìm thấy khách hàng nào</p>
+        <p class="empty-desc" *ngIf="hasActiveFilters">
+          Không có kết quả phù hợp với bộ lọc hiện tại. Vui lòng thử tìm kiếm khác hoặc xóa bộ lọc.
+        </p>
+        <p class="empty-desc" *ngIf="!hasActiveFilters">
+          Hệ thống hiện chưa có tài khoản khách hàng nào.
+        </p>
+        <button
+          type="button"
+          class="btn-clear"
+          *ngIf="hasActiveFilters"
+          (click)="clearFilters()"
+        >
+          Xóa bộ lọc
+        </button>
+      </div>
+    </div>
+
+    <!-- PHÂN TRANG -->
+    <footer class="pagination" *ngIf="!isLoading && !errorMessage && total > 0">
+      <div class="pagination-summary">
+        Hiển thị
+        <strong>{{ (page - 1) * limit + 1 }}</strong> -
+        <strong>{{ (page * limit > total) ? total : page * limit }}</strong>
+        trên tổng số
+        <strong>{{ total }}</strong> khách hàng
+      </div>
+
+      <div class="pagination-controls">
+        <div class="page-size">
+          <label for="customer-page-size">Số dòng:</label>
+          <div class="select-wrap select-wrap--small">
+            <select
+              id="customer-page-size"
+              [(ngModel)]="limit"
+              (ngModelChange)="onPageSizeChange()"
+            >
+              <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+            </select>
+            <ng-icon name="lucideChevronDown" size="14px"></ng-icon>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="page-button"
+          [disabled]="page <= 1"
+          (click)="goToPage(page - 1)"
+          aria-label="Trang trước"
+        >
+          ‹
+        </button>
+
+        <span class="current-page">{{ page }} / {{ totalPages }}</span>
+
+        <button
+          type="button"
+          class="page-button"
+          [disabled]="page >= totalPages"
+          (click)="goToPage(page + 1)"
+          aria-label="Trang kế tiếp"
+        >
+          ›
+        </button>
+      </div>
+    </footer>
+  </section>
+
+  <!-- DRAWER BACKDROP -->
+  <div
+    class="drawer-backdrop"
+    *ngIf="isDrawerOpen"
+    (click)="closeDrawer()"
+    role="presentation"
+  ></div>
+
+  <!-- DRAWER CHI TIẾT KHÁCH HÀNG -->
+  <aside
+    class="drawer"
+    [class.drawer-open]="isDrawerOpen"
+    aria-label="Chi tiết khách hàng"
+  >
+    <!-- DRAWER HEADER -->
+    <header class="drawer-header" *ngIf="selectedCustomer">
+      <div class="drawer-header-left">
+        <div class="drawer-title-group">
+          <h2>{{ selectedCustomer.Full_name || selectedCustomer.Username }}</h2>
+          <span class="customer-code-badge font-mono">{{ selectedCustomer.User_id }}</span>
+        </div>
+        <span
+          class="badge"
+          [class.badge-active]="selectedCustomer.Status === 'active'"
+          [class.badge-blocked]="selectedCustomer.Status === 'blocked'"
+        >
+          {{ selectedCustomer.Status === 'active' ? 'Đang hoạt động' : 'Đang bị khóa' }}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        class="btn-close-drawer"
+        (click)="closeDrawer()"
+        aria-label="Đóng bảng chi tiết"
+      >
+        <ng-icon name="lucideX" size="20px"></ng-icon>
+      </button>
+    </header>
+
+    <!-- DRAWER TABS -->
+    <nav class="drawer-tabs" role="tablist" *ngIf="selectedCustomer">
+      <button
+        type="button"
+        role="tab"
+        class="drawer-tab"
+        [class.active]="activeTab === 'info'"
+        [attr.aria-selected]="activeTab === 'info'"
+        (click)="selectTab('info')"
+      >
+        Hồ sơ &amp; Địa chỉ
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="drawer-tab"
+        [class.active]="activeTab === 'orders'"
+        [attr.aria-selected]="activeTab === 'orders'"
+        (click)="selectTab('orders')"
+      >
+        Lịch sử đơn hàng
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="drawer-tab"
+        [class.active]="activeTab === 'reviews'"
+        [attr.aria-selected]="activeTab === 'reviews'"
+        (click)="selectTab('reviews')"
+      >
+        Lịch sử đánh giá
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="drawer-tab"
+        [class.active]="activeTab === 'returns'"
+        [attr.aria-selected]="activeTab === 'returns'"
+        (click)="selectTab('returns')"
+      >
+        Lịch sử đổi trả
+      </button>
+    </nav>
+
+    <!-- DRAWER BODY -->
+    <div class="drawer-body" *ngIf="selectedCustomer">
+      <!-- LOADING & ERROR IN DRAWER -->
+      <div class="drawer-loading" *ngIf="isDetailLoading">
+        <div class="spinner"></div>
+        <span>Đang tải thông tin chi tiết...</span>
+      </div>
+
+      <div class="drawer-alert-error" *ngIf="!isDetailLoading && detailError">
+        <ng-icon name="lucideAlertCircle" size="18px"></ng-icon>
+        <span>{{ detailError }}</span>
+      </div>
+
+      <ng-container *ngIf="!isDetailLoading">
+        <!-- TAB 1: THÔNG TIN CÁ NHÂN & ĐỊA CHỈ -->
+        <section class="tab-content" *ngIf="activeTab === 'info'">
+          <div class="info-section">
+            <h3 class="section-title">Thông tin tài khoản (Chỉ xem)</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Mã khách hàng</span>
+                <span class="info-value font-mono">{{ selectedCustomer.User_id }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Tên tài khoản (Username)</span>
+                <span class="info-value font-mono">@{{ selectedCustomer.Username }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Họ và tên</span>
+                <span class="info-value font-semibold">
+                  {{ selectedCustomer.Full_name || 'Chưa cập nhật' }}
+                </span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ selectedCustomer.Email }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Số điện thoại</span>
+                <span class="info-value">
+                  {{ selectedCustomer.Phone_number || 'Chưa cập nhật' }}
+                </span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Ngày đăng ký</span>
+                <span class="info-value">
+                  {{ selectedCustomer.Created_at ? (selectedCustomer.Created_at | date: 'dd/MM/yyyy HH:mm') : '—' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-section">
+            <div class="section-header-flex">
+              <h3 class="section-title">Sổ địa chỉ nhận hàng</h3>
+              <span class="badge-counter">{{ selectedAddresses.length }} địa chỉ</span>
+            </div>
+
+            <div class="address-list" *ngIf="selectedAddresses.length > 0">
+              <div
+                class="address-card"
+                *ngFor="let addr of selectedAddresses"
+                [class.address-default]="addr.Is_default"
+              >
+                <div class="address-header">
+                  <div class="receiver-meta">
+                    <strong class="receiver-name">{{ addr.Receiver_name }}</strong>
+                    <span class="receiver-phone font-mono">{{ addr.Receiver_phone }}</span>
+                  </div>
+                  <span class="badge-default" *ngIf="addr.Is_default">Mặc định</span>
+                </div>
+                <p class="address-detail">
+                  {{ addr.Specific_address }}
+                </p>
+                <p class="address-location text-muted text-sm">
+                  {{ addr.Ward }}, {{ addr.District }}, {{ addr.Province }}
+                </p>
+                <p class="address-email text-muted text-sm" *ngIf="addr.Email">
+                  Email nhận đơn: {{ addr.Email }}
+                </p>
+              </div>
+            </div>
+
+            <div class="empty-box" *ngIf="selectedAddresses.length === 0">
+              <ng-icon name="lucideMapPin" size="24px"></ng-icon>
+              <span>Khách hàng chưa lưu địa chỉ nhận hàng nào.</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: LỊCH SỬ ĐƠN HÀNG -->
+        <section class="tab-content" *ngIf="activeTab === 'orders'">
+          <div class="stats-overview-box" *ngIf="selectedOrderStats">
+            <h3 class="section-title">Thống kê hoạt động đơn hàng</h3>
+            
+            <div class="order-stats-grid">
+              <div class="order-stat-item">
+                <span class="order-stat-label">Tổng số đơn hàng</span>
+                <strong class="order-stat-val">{{ selectedOrderStats.total | number }}</strong>
+              </div>
+              <div class="order-stat-item stat-success">
+                <span class="order-stat-label">Đơn hoàn thành</span>
+                <strong class="order-stat-val text-success">{{ selectedOrderStats.completed | number }}</strong>
+              </div>
+              <div class="order-stat-item stat-processing">
+                <span class="order-stat-label">Đang xử lý</span>
+                <strong class="order-stat-val text-warning">{{ selectedOrderStats.processing | number }}</strong>
+              </div>
+              <div class="order-stat-item stat-cancelled">
+                <span class="order-stat-label">Đã hủy</span>
+                <strong class="order-stat-val text-danger">{{ selectedOrderStats.cancelled | number }}</strong>
+              </div>
+            </div>
+
+            <div class="total-spent-banner">
+              <div class="spent-icon">
+                <ng-icon name="lucideDollarSign" size="24px"></ng-icon>
+              </div>
+              <div class="spent-meta">
+                <span class="spent-title">Tổng chi tiêu thực tế đã thanh toán</span>
+                <strong class="spent-amount">{{ formatCurrency(selectedOrderStats.totalSpent) }}</strong>
+                <span class="spent-note">(Đã trừ các khoản hoàn tiền từ các đơn đổi trả hàng thành công)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="unsupported-banner">
+            <ng-icon name="lucideInfo" size="20px"></ng-icon>
+            <div>
+              <strong>Lưu ý về danh sách đơn hàng</strong>
+              <p>Hiện hệ thống hỗ trợ thống kê đơn hàng của khách hàng. Danh sách chi tiết đơn hàng chưa được hỗ trợ.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: LỊCH SỬ ĐÁNH GIÁ -->
+        <section class="tab-content" *ngIf="activeTab === 'reviews'">
+          <div class="unsupported-banner notice">
+            <ng-icon name="lucideInfo" size="20px"></ng-icon>
+            <div>
+              <strong>Thông báo hệ thống</strong>
+              <p>Chức năng xem lịch sử đánh giá theo khách hàng hiện chưa được hỗ trợ.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 4: LỊCH SỬ ĐỔI TRẢ -->
+        <section class="tab-content" *ngIf="activeTab === 'returns'">
+          <div class="unsupported-banner notice">
+            <ng-icon name="lucideInfo" size="20px"></ng-icon>
+            <div>
+              <strong>Thông báo hệ thống</strong>
+              <p>Chức năng xem lịch sử đổi trả theo khách hàng hiện chưa được hỗ trợ.</p>
+            </div>
+          </div>
+        </section>
+      </ng-container>
+    </div>
+
+    <!-- DRAWER FOOTER (PHÂN QUYỀN MANAGER / STAFF) -->
+    <footer class="drawer-footer" *ngIf="selectedCustomer && !isDetailLoading">
+      <button type="button" class="btn-drawer-secondary" (click)="closeDrawer()">
+        Đóng
+      </button>
+
+      <!-- CHỈ MANAGER MỚI CÓ NÚT THAO TÁC TRẠNG THÁI -->
+      <ng-container *ngIf="isManager">
+        <button
+          *ngIf="selectedCustomer.Status === 'active'"
+          type="button"
+          class="btn-drawer-danger"
+          (click)="toggleLock(selectedCustomer)"
+          [disabled]="isSubmittingAction"
+        >
+          <ng-icon name="lucideLock" size="16px"></ng-icon>
+          <span>{{ isSubmittingAction ? 'Đang xử lý...' : 'Khóa tài khoản' }}</span>
+        </button>
+
+        <button
+          *ngIf="selectedCustomer.Status === 'blocked'"
+          type="button"
+          class="btn-drawer-success"
+          (click)="toggleLock(selectedCustomer)"
+          [disabled]="isSubmittingAction"
+        >
+          <ng-icon name="lucideUnlock" size="16px"></ng-icon>
+          <span>{{ isSubmittingAction ? 'Đang xử lý...' : 'Mở khóa tài khoản' }}</span>
+        </button>
+      </ng-container>
+    </footer>
+  </aside>
+</section>
