@@ -25,7 +25,9 @@ import {
   lucideBell,
   lucideChevronDown,
   lucideKeyRound,
-  lucideLogOut
+  lucideLogOut,
+  lucideTicket,
+  lucideContactRound
 } from '@ng-icons/lucide';
 
 interface AdminBreadcrumb {
@@ -56,7 +58,9 @@ interface AdminBreadcrumb {
       lucideBell,
       lucideChevronDown,
       lucideKeyRound,
-      lucideLogOut
+      lucideLogOut,
+      lucideTicket,
+      lucideContactRound
     })
   ],
   templateUrl: './admin-layout.html',
@@ -102,6 +106,11 @@ export class AdminLayoutComponent {
       route: '/admin/products'
     },
     {
+      label: 'Quản lý khách hàng',
+      icon: 'lucideContactRound',
+      route: '/admin/customers'
+    },
+    {
       label: 'Xử lý đơn hàng',
       icon: 'lucideShoppingBag',
       route: '/admin/orders'
@@ -115,6 +124,11 @@ export class AdminLayoutComponent {
       label: 'Kiểm duyệt đánh giá',
       icon: 'lucideMessageSquare',
       route: '/admin/reviews'
+    },
+    {
+      label: 'Quản lý khuyến mãi',
+      icon: 'lucideTicket',
+      route: '/admin/promotions'
     }
   ];
 
