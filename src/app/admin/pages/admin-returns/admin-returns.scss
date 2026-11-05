@@ -574,6 +574,7 @@
       .drawer-status-bar {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 12px;
         padding-bottom: 16px;
         border-bottom: 1px solid #f1f5f9;
@@ -616,23 +617,52 @@
             grid-column: span 2;
           }
         }
+        // 1. Thông tin khách hàng (grid box)
+        .customer-info-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          background-color: #f8fafc;
+          padding: 14px 16px;
+          border-radius: 8px;
+          font-size: 13px;
 
+          .info-label {
+            color: #64748b;
+            margin-right: 6px;
+          }
+
+          .info-value {
+            color: #0f172a;
+          }
+
+          .col-span-2 {
+            grid-column: span 2;
+          }
+        }
+
+        // 2. Đơn hàng gốc (white card with border)
         .order-box {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          background: #f8fafc;
+          background: #ffffff;
           border: 1px solid #e2e8f0;
           border-radius: 8px;
-          padding: 12px 16px;
+          padding: 14px 16px;
 
           .order-id-line {
             font-size: 14px;
             margin-bottom: 4px;
+
+            .order-id, .order-date {
+              color: #2563eb;
+              font-weight: 600;
+            }
           }
 
           .order-status-line {
-            font-size: 12px;
+            font-size: 12.5px;
             color: #64748b;
             margin: 0;
           }
@@ -644,119 +674,163 @@
           }
         }
 
-        .return-product-card {
-          display: flex;
-          align-items: center;
-          gap: 12px;
+        // 3. Sản phẩm yêu cầu trả (Mini-table card)
+        .product-table-card {
           border: 1px solid #e2e8f0;
           border-radius: 8px;
-          padding: 12px;
+          overflow: hidden;
+          background: #ffffff;
 
-          .product-thumb-large {
-            width: 54px;
-            height: 54px;
-            border-radius: 6px;
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+          .product-table-header {
+            display: grid;
+            grid-template-columns: 1fr 100px 120px;
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 9px 16px;
 
-            img {
-              width: 100%;
-              height: 100%;
-              object-fit: cover;
-            }
-          }
-
-          .product-meta {
-            flex: 1;
-
-            .product-heading {
-              font-size: 14px;
-              font-weight: 600;
-              margin: 0 0 2px 0;
-              color: #0f172a;
-            }
-
-            .product-variant {
+            .col-th {
               font-size: 12px;
               color: #64748b;
-              margin: 0;
+              font-weight: 500;
+
+              &.th-qty {
+                text-align: center;
+              }
+
+              &.th-amount {
+                text-align: right;
+              }
             }
           }
 
-          .product-quantities {
-            text-align: right;
-            padding: 0 12px;
+          .product-table-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 120px;
+            padding: 12px 16px;
+            align-items: center;
 
-            .qty-label {
-              display: block;
-              font-size: 11px;
-              color: #64748b;
-            }
+            .col-td {
+              &.td-product {
+                display: flex;
+                align-items: center;
+                gap: 12px;
 
-            .qty-val {
-              font-size: 13px;
-            }
-          }
+                .product-thumb {
+                  width: 44px;
+                  height: 44px;
+                  border-radius: 6px;
+                  background-color: #f1f5f9;
+                  overflow: hidden;
+                  flex-shrink: 0;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
 
-          .product-refund-val {
-            text-align: right;
+                  img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                  }
+                }
 
-            .refund-label {
-              display: block;
-              font-size: 11px;
-              color: #64748b;
-            }
+                .product-info-text {
+                  .product-name {
+                    font-size: 13.5px;
+                    font-weight: 600;
+                    color: #0f172a;
+                    margin: 0 0 2px 0;
+                  }
 
-            .refund-num {
-              font-size: 14px;
+                  .product-sku {
+                    font-size: 12px;
+                    color: #64748b;
+                    margin: 0;
+                  }
+                }
+              }
+
+              &.td-qty {
+                text-align: center;
+                font-size: 13.5px;
+                color: #0f172a;
+              }
+
+              &.td-amount {
+                text-align: right;
+                font-size: 14px;
+                color: #0f172a;
+                font-weight: 500;
+              }
             }
           }
         }
 
-        .reason-box {
-          background-color: #f8fafc;
+        // 4. Lý do đổi trả (Thiết kế đồng bộ với khung Sản phẩm yêu cầu trả - Tinh tế, không thô)
+        .reason-card {
+          border: 1px solid #e2e8f0;
           border-radius: 8px;
-          padding: 12px 16px;
+          overflow: hidden;
+          background: #ffffff;
 
-          .reason-type {
-            font-size: 14px;
-            color: #0f172a;
-            margin: 0 0 4px 0;
-          }
-
-          .reason-desc {
-            font-size: 13px;
-            color: #475569;
-            font-style: italic;
-            margin: 0;
-            line-height: 1.5;
-          }
-        }
-
-        .evidence-list {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-
-          .evidence-card {
+          .reason-card-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 8px 12px;
+            justify-content: space-between;
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 9px 16px;
 
-            .evidence-thumb {
-              width: 48px;
-              height: 48px;
-              border-radius: 4px;
-              background-color: #f1f5f9;
+            .reason-type-label {
+              font-size: 12px;
+              color: #64748b;
+              font-weight: 500;
+            }
+
+            .reason-type-val {
+              font-size: 12px;
+              font-weight: 500;
+              color: #334155;
+            }
+          }
+
+          .reason-card-body {
+            padding: 12px 16px;
+            background: #ffffff;
+
+            .reason-desc {
+              font-size: 13px;
+              color: #334155;
+              font-style: normal;
+              margin: 0;
+              line-height: 1.6;
+
+              &.text-empty {
+                color: #94a3b8;
+                font-style: italic;
+              }
+            }
+          }
+        }
+
+        // 5. Minh chứng khách hàng (clean item layout)
+        .evidence-list-clean {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+
+          .evidence-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+
+            .evidence-thumb-lg {
+              width: 72px;
+              height: 72px;
+              border-radius: 8px;
               overflow: hidden;
-              position: relative;
+              background-color: #f1f5f9;
+              flex-shrink: 0;
+              border: 1px solid #e2e8f0;
               cursor: pointer;
 
               img {
@@ -764,47 +838,39 @@
                 height: 100%;
                 object-fit: cover;
               }
-
-              .thumb-overlay {
-                position: absolute;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.4);
-                color: #fff;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                opacity: 0;
-                transition: opacity 0.2s;
-              }
-
-              &:hover .thumb-overlay {
-                opacity: 1;
-              }
             }
 
-            .evidence-meta {
-              flex: 1;
+            .evidence-details {
               display: flex;
               flex-direction: column;
 
-              .evidence-name {
-                font-size: 13px;
+              .evidence-title {
+                font-size: 13.5px;
+                font-weight: 600;
                 color: #0f172a;
+                margin-bottom: 3px;
               }
 
-              .evidence-sub {
+              .evidence-file-meta {
                 font-size: 12px;
                 color: #64748b;
+                margin-bottom: 2px;
               }
 
-              .btn-link {
-                align-self: flex-start;
-                padding: 2px 0 0 0;
+              .evidence-desc {
                 font-size: 12px;
+                color: #64748b;
+                margin-bottom: 4px;
+              }
+
+              .btn-view-evidence {
+                font-size: 12.5px;
                 color: #2563eb;
                 background: none;
                 border: none;
+                padding: 0;
                 cursor: pointer;
+                text-align: left;
 
                 &:hover {
                   text-decoration: underline;
@@ -813,57 +879,68 @@
             }
           }
         }
-      }
 
-      // HỘP TRẠNG THÁI TIẾN TRÌNH
-      .progress-box {
-        border-radius: 8px;
-        padding: 14px 16px;
-        line-height: 1.5;
+        // 6. Hộp trạng thái tiến trình (nền #f8fafc)
+        .progress-box {
+          background-color: #f8fafc;
+          border: 1px solid #f1f5f9;
+          border-radius: 8px;
+          padding: 14px 16px;
+          line-height: 1.6;
 
-        .box-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 4px;
-        }
+          .box-header-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
 
-        .box-title {
-          font-size: 14px;
-        }
+            .status-icon {
+              flex-shrink: 0;
+            }
+          }
 
-        .box-desc {
-          font-size: 13px;
-          margin: 0 0 4px 0;
-        }
+          .box-title {
+            font-size: 14px;
+            font-weight: 600;
+          }
 
-        .box-highlight {
-          font-size: 13px;
-          margin: 0 0 2px 0;
-        }
+          .box-desc {
+            font-size: 13px;
+            color: #0f172a;
+            margin: 0 0 4px 0;
+          }
 
-        .box-sub {
-          font-size: 12px;
-          color: #64748b;
-          margin: 0;
-        }
+          .box-highlight {
+            font-size: 13px;
+            margin: 0 0 2px 0;
+          }
 
-        &.box-approved {
-          background-color: #fffbeb;
-          border: 1px solid #fef3c7;
-          color: #92400e;
-        }
+          .box-sub {
+            font-size: 12px;
+            color: #64748b;
+            margin: 0;
+          }
 
-        &.box-completed {
-          background-color: #f0fdf4;
-          border: 1px solid #dcfce7;
-          color: #166534;
-        }
+          &.box-approved {
+            .box-header-row {
+              color: #2563eb !important;
+            }
+            .box-title {
+              color: #2563eb !important;
+            }
+          }
 
-        &.box-rejected {
-          background-color: #fef2f2;
-          border: 1px solid #fee2e2;
-          color: #991b1b;
+          &.box-completed {
+            .box-header-row {
+              color: #16a34a;
+            }
+          }
+
+          &.box-rejected {
+            .box-header-row {
+              color: #dc2626;
+            }
+          }
         }
       }
 
@@ -1080,6 +1157,7 @@
   }
 
   .modal-dialog {
+    font-family: 'Be Vietnam Pro', sans-serif !important;
     position: fixed;
     top: 50%;
     left: 50%;
@@ -1193,6 +1271,14 @@
         }
 
         .form-textarea {
+          font-family: 'Be Vietnam Pro', sans-serif !important;
+          line-height: 1.5;
+
+          &::placeholder {
+            font-family: 'Be Vietnam Pro', sans-serif !important;
+            color: #94a3b8 !important;
+            font-size: 14px;
+          }
           width: 100%;
           border: 1px solid #e2e8f0;
           border-radius: 8px;
@@ -1306,3 +1392,10 @@
   to { transform: rotate(360deg); }
 }
 
+
+.text-amber-500 { color: #d97706 !important; }
+.text-blue-600 { color: #2563eb !important; }
+.text-emerald-600 { color: #16a34a !important; }
+.text-rose-600, .text-rose-500 { color: #ef4444 !important; }
+.text-slate-500, .text-slate-600 { color: #64748b !important; }
+.text-slate-800 { color: #0f172a !important; }

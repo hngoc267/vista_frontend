@@ -21,7 +21,8 @@ import {
   lucideChevronDown,
   lucideArrowRight,
   lucideMaximize2,
-  lucideRefreshCw
+  lucideRefreshCw,
+  lucideTriangleAlert
 } from '@ng-icons/lucide';
 import {
   AdminReturnService,
@@ -55,7 +56,8 @@ import Swal from 'sweetalert2';
       lucideChevronDown,
       lucideArrowRight,
       lucideMaximize2,
-      lucideRefreshCw
+      lucideRefreshCw,
+  lucideTriangleAlert
     })
   ],
   templateUrl: './admin-returns.html',
@@ -613,6 +615,36 @@ export class AdminReturnsComponent implements OnInit, OnDestroy {
       return `/${img}`;
     }
     return `/assets/images/${img.replace(/^\.\//, '')}`;
+  }
+
+  getCustomerName(item?: any): string {
+    if (!item) return '';
+    return item.Customer_name || item.Customer?.Name || '';
+  }
+
+  getProductName(item?: any): string {
+    if (!item) return '';
+    return item.Product_name || item.Product_info?.Product_name || '';
+  }
+
+  getSku(item?: any): string {
+    if (!item) return '';
+    return item.SKU || item.Product_info?.SKU || item.Variant_name || item.Product_info?.Variant_name || '';
+  }
+
+  getOrderId(item?: any): string {
+    if (!item) return '';
+    return item.Order_id || item.Order_info?.Order_id || '';
+  }
+
+  getOrderStatusLabel(status?: string): string {
+    if (!status || status === 'delivered' || status === 'returning' || status === 'completed') {
+      return 'Đã giao';
+    }
+    if (status === 'shipping') return 'Đang giao hàng';
+    if (status === 'processing') return 'Đang xử lý';
+    if (status === 'cancelled') return 'Đã hủy';
+    return status;
   }
 
   onImageError(event: Event): void {
