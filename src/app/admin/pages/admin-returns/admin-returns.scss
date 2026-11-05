@@ -1208,23 +1208,41 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
-
       .target-summary-box {
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        line-height: 1.5;
+        background-color: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+
+        .font-semibold {
+          font-size: 15px;
+          color: #0f172a;
+          margin-bottom: 3px;
+        }
+
+        .text-sm {
+          font-size: 13.5px;
+          color: #64748b;
+          line-height: 1.5;
+        }
       }
 
       .transition-badge-row {
+        background-color: #f8fafc;
+        border: 1px solid #f1f5f9;
+        border-radius: 8px;
+        padding: 14px 24px;
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 8px 0;
+        justify-content: center;
+        gap: 24px;
+
+        .step-label {
+          font-size: 14px;
+          font-weight: 600;
+        }
 
         .arrow-icon {
-          color: #94a3b8;
+          color: #64748b;
         }
       }
 
@@ -1300,11 +1318,11 @@
           margin: 0;
         }
       }
-
       .operator-meta {
-        font-size: 12px;
-        color: #94a3b8;
-        padding-top: 8px;
+        font-size: 12.5px;
+        color: #64748b;
+        padding-top: 14px;
+        margin-top: 4px;
         border-top: 1px solid #f1f5f9;
       }
     }
@@ -1391,7 +1409,6 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-
 
 .text-amber-500 { color: #d97706 !important; }
 .text-blue-600 { color: #2563eb !important; }
