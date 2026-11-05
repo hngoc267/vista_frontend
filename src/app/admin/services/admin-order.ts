@@ -88,6 +88,7 @@ export interface AdminOrderDetail extends AdminOrderSummary {
   Email: string;
   Address: string;
   Order_notes: string;
+  Voucher_code?: string;
   Total_items_price: number;
   Discount_amount: number;
   Shipping_fee: number;
@@ -102,6 +103,7 @@ export interface AdminOrderDetail extends AdminOrderSummary {
 export interface AdminOrderFilters {
   keyword?: string;
   status?: string;
+  paymentType?: string;
   fromDate?: string;
   toDate?: string;
   page?: number;
