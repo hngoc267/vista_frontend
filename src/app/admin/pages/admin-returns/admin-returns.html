@@ -20,8 +20,6 @@
 
   </header>
 
-
-
   <!-- PANEL CHÍNH: DANH SÁCH YÊU CẦU ĐỔI TRẢ -->
 
   <section class="panel">
@@ -33,8 +31,6 @@
       <p>{{ total }} yêu cầu {{ hasActiveFilters ? 'phù hợp' : 'trong hệ thống' }}</p>
 
     </div>
-
-
 
     <!-- BỘ LỌC -->
 
@@ -60,8 +56,6 @@
 
       </label>
 
-
-
       <div class="filter-field">
 
         <span>Trạng thái</span>
@@ -81,8 +75,6 @@
         </select>
 
       </div>
-
-
 
       <div class="filter-field">
 
@@ -110,8 +102,6 @@
 
       </div>
 
-
-
       <div class="filter-field">
 
         <span>Lý do đổi trả</span>
@@ -132,8 +122,6 @@
 
       </div>
 
-
-
       <div class="filter-actions" *ngIf="hasActiveFilters">
 
         <button type="button" class="btn" (click)="clearFilters()">Xóa bộ lọc</button>
@@ -141,8 +129,6 @@
       </div>
 
     </div>
-
-
 
     <!-- BẢNG YÊU CẦU ĐỔI TRẢ -->
 
@@ -190,8 +176,6 @@
 
             </td>
 
-
-
             <!-- Mã đơn hàng -->
 
             <td class="order-code muted">
@@ -200,13 +184,9 @@
 
             </td>
 
-
-
             <!-- Khách hàng -->
 
             <td>{{ item.Customer_name }}</td>
-
-
 
             <!-- Sản phẩm -->
 
@@ -244,8 +224,6 @@
 
             </td>
 
-
-
             <!-- Lý do đổi trả -->
 
             <td>
@@ -254,8 +232,6 @@
 
             </td>
 
-
-
             <!-- Ngày yêu cầu -->
 
             <td class="muted whitespace-nowrap">
@@ -263,8 +239,6 @@
               {{ item.Created_at | date: 'dd/MM/yyyy' }}
 
             </td>
-
-
 
             <!-- Trạng thái -->
 
@@ -277,8 +251,6 @@
               </span>
 
             </td>
-
-
 
             <!-- Thao tác -->
 
@@ -306,13 +278,9 @@
 
       </table>
 
-
-
       <!-- LOADING STATE -->
 
       <div class="table-state" *ngIf="isLoading">Đang tải danh sách yêu cầu đổi trả...</div>
-
-
 
       <!-- ERROR STATE -->
 
@@ -334,8 +302,6 @@
 
       </div>
 
-
-
       <!-- EMPTY STATE -->
 
       <div class="table-state" *ngIf="!isLoading && !errorMessage && !returns.length">
@@ -352,8 +318,6 @@
 
     </div>
 
-
-
     <!-- PHÂN TRANG (ĐỒNG BỘ VỚI XỬ LÝ ĐƠN HÀNG & DANH MỤC SẢN PHẨM) -->
 
     <footer class="table-footer" *ngIf="!isLoading && !errorMessage">
@@ -363,8 +327,6 @@
         Hiển thị <strong>{{ rangeStart }}</strong>–<strong>{{ rangeEnd }}</strong> trong tổng số <strong>{{ total }}</strong> bản ghi
 
       </div>
-
-
 
       <div class="pagination-controls">
 
@@ -379,8 +341,6 @@
           </select>
 
         </label>
-
-
 
         <button
 
@@ -400,11 +360,7 @@
 
         </button>
 
-
-
         <span class="current-page">{{ totalPages > 0 ? page : 0 }} / {{ totalPages }}</span>
-
-
 
         <button
 
@@ -428,8 +384,6 @@
 
     </footer>
 
-
-
     <!-- GHI CHÚ DƯỚI BẢNG THEO FIGMA -->
 
     <div class="footer-note" *ngIf="role === 'Staff'">
@@ -446,8 +400,6 @@
 
   </section>
 
-
-
   <!-- ======================================================== -->
 
   <!-- SIDE DRAWER: CHI TIẾT YÊU CẦU ĐỔI TRẢ                    -->
@@ -455,8 +407,6 @@
   <!-- ======================================================== -->
 
   <div class="drawer-backdrop" *ngIf="isDrawerOpen" (click)="closeDrawer()"></div>
-
-
 
   <aside class="detail-drawer" [class.open]="isDrawerOpen" aria-label="Chi tiết đổi trả">
 
@@ -484,8 +434,6 @@
 
     </div>
 
-
-
     <!-- Body Drawer Loading -->
 
     <div class="drawer-loading" *ngIf="isDetailLoading">
@@ -495,8 +443,6 @@
       <p>Đang tải chi tiết yêu cầu...</p>
 
     </div>
-
-
 
     <!-- Body Drawer Content -->
 
@@ -509,8 +455,6 @@
         Manager chỉ xem và theo dõi. Staff duyệt yêu cầu và kiểm tra hàng hoàn trả; hệ thống chỉ cộng tồn kho và hoàn tiền sau khi Staff xác nhận hàng đạt.
 
       </div>
-
-
 
       <!-- Badge trạng thái đầu Drawer -->
 
@@ -529,8 +473,6 @@
         </span>
 
       </div>
-
-
 
       <!-- Mục: Thông tin khách hàng -->
 
@@ -576,8 +518,6 @@
 
       </section>
 
-
-
       <!-- Mục: Đơn hàng gốc -->
 
       <section class="drawer-section">
@@ -617,8 +557,6 @@
         </div>
 
       </section>
-
-
 
       <!-- Mục: Sản phẩm yêu cầu trả -->
 
@@ -688,8 +626,6 @@
 
       </section>
 
-
-
       <!-- Mục: Lý do đổi trả -->
 
       <section class="drawer-section">
@@ -725,8 +661,6 @@
         </div>
 
       </section>
-
-
 
       <!-- Mục: Minh chứng khách hàng -->
 
@@ -769,8 +703,6 @@
         </div>
 
       </section>
-
-
 
       <!-- HỘP TRẠNG THÁI TIẾN TRÌNH (THEO FIGMA) -->
 
@@ -816,8 +748,6 @@
 
       </section>
 
-
-
       <!-- 2. Trạng thái Đã hoàn tất: Kết quả hoàn tiền và hoàn kho -->
 
       <section class="drawer-section" *ngIf="selectedReturn.Status === 'completed'">
@@ -860,8 +790,6 @@
 
       </section>
 
-
-
       <!-- 3. Trạng thái Từ chối: Kết quả xử lý -->
 
       <section class="drawer-section" *ngIf="selectedReturn.Status === 'rejected'">
@@ -903,8 +831,6 @@
         </div>
 
       </section>
-
-
 
       <!-- Mục: Lịch sử yêu cầu (Timeline 5 bước) -->
 
@@ -952,8 +878,6 @@
 
     </div>
 
-
-
     <!-- Footer Drawer: Phân quyền Staff vs Manager -->
 
     <div class="drawer-footer" *ngIf="!isDetailLoading && selectedReturn">
@@ -965,8 +889,6 @@
         Đóng
 
       </button>
-
-
 
       <!-- Hành động dành cho Staff -->
 
@@ -1005,8 +927,6 @@
           </button>
 
         </ng-container>
-
-
 
         <!-- Giai đoạn 2: Khi Đã duyệt (Kiểm tra hàng) -->
 
@@ -1047,8 +967,6 @@
     </div>
 
   </aside>
-
-
 
   <!-- ======================================================== -->
 
@@ -1098,8 +1016,6 @@
 
       </div>
 
-
-
       <!-- Stepper Badge -->
 
       <div class="transition-badge-row">
@@ -1112,15 +1028,11 @@
 
       </div>
 
-
-
       <p class="modal-desc">
 
         Hệ thống xác nhận đủ điều kiện: trong thời hạn đổi trả theo chính sách và đơn hàng đã giao. Bạn đã rà soát yêu cầu và minh chứng?
 
       </p>
-
-
 
       <!-- Alert warning -->
 
@@ -1135,8 +1047,6 @@
         </div>
 
       </div>
-
-
 
       <div class="operator-meta">
 
@@ -1163,8 +1073,6 @@
     </div>
 
   </div>
-
-
 
   <!-- ======================================================== -->
 
@@ -1212,8 +1120,6 @@
 
       </div>
 
-
-
       <div class="transition-badge-row">
 
         <span class="step-label text-amber-500">Chờ xử lý</span>
@@ -1224,15 +1130,11 @@
 
       </div>
 
-
-
       <p class="modal-desc">
 
         Yêu cầu đủ điều kiện theo thời gian và trạng thái đơn hàng. Hãy rà soát lý do trước khi xác nhận từ chối. Hệ thống sẽ gửi thông báo từ chối cho khách hàng.
 
       </p>
-
-
 
       <div class="form-group">
 
@@ -1270,8 +1172,6 @@
 
       </div>
 
-
-
       <div class="operator-meta">
 
         Người xử lý: {{ staffName }} &middot; {{ (modalTargetItem.Created_at || '') | date: 'dd/MM/yyyy, HH:mm' }}
@@ -1297,8 +1197,6 @@
     </div>
 
   </div>
-
-
 
   <!-- ======================================================== -->
 
@@ -1346,8 +1244,6 @@
 
       </div>
 
-
-
       <div class="transition-badge-row">
 
         <span class="step-label text-blue-600">Đã duyệt</span>
@@ -1358,15 +1254,11 @@
 
       </div>
 
-
-
       <p class="modal-desc font-medium text-slate-800">
 
         Bạn đã nhận và kiểm tra sản phẩm hoàn trả: đúng sản phẩm, đủ phụ kiện, không hư hỏng?
 
       </p>
-
-
 
       <div class="alert-box alert-warning">
 
@@ -1379,8 +1271,6 @@
         </div>
 
       </div>
-
-
 
       <div class="operator-meta">
 
@@ -1407,8 +1297,6 @@
     </div>
 
   </div>
-
-
 
   <!-- ======================================================== -->
 
@@ -1456,8 +1344,6 @@
 
       </div>
 
-
-
       <div class="transition-badge-row">
 
         <span class="step-label text-blue-600">Đã duyệt</span>
@@ -1468,15 +1354,11 @@
 
       </div>
 
-
-
       <p class="modal-desc text-slate-700">
 
         Sản phẩm hoàn trả không đạt điều kiện sau khi kiểm tra. Từ chối hoàn tiền sẽ <strong>không cộng lại tồn kho</strong> và không hoàn tiền cho khách hàng.
 
       </p>
-
-
 
       <div class="form-group">
 
@@ -1514,8 +1396,6 @@
 
       </div>
 
-
-
       <div class="operator-meta">
 
         Người xử lý: {{ staffName }} &middot; {{ (modalTargetItem.Created_at || '') | date: 'dd/MM/yyyy, HH:mm' }}
@@ -1542,8 +1422,6 @@
 
   </div>
 
-
-
   <!-- ======================================================== -->
 
   <!-- LIGHTBOX PHÓNG TO ẢNH MINH CHỨNG                         -->
@@ -1567,6 +1445,4 @@
   </div>
 
 </section>
-
-
 
