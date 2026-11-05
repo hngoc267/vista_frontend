@@ -1,752 +1,1572 @@
 <section class="returns-page">
+
   <!-- TIÊU ĐỀ TRANG (ĐỒNG BỘ VỚI ĐƠN HÀNG & SẢN PHẨM) -->
+
   <header class="page-heading">
+
     <h1>Hậu mãi &amp; Đổi trả</h1>
+
     <p *ngIf="role === 'Staff'">
+
       Tiếp nhận và xử lý yêu cầu đổi trả của khách hàng
+
     </p>
+
     <p *ngIf="role === 'Manager'">
+
       Theo dõi và giám sát yêu cầu đổi trả của khách hàng
+
     </p>
+
   </header>
 
+
+
   <!-- PANEL CHÍNH: DANH SÁCH YÊU CẦU ĐỔI TRẢ -->
+
   <section class="panel">
+
     <div class="panel-heading">
+
       <h2>Danh sách yêu cầu đổi trả</h2>
+
       <p>{{ total }} yêu cầu {{ hasActiveFilters ? 'phù hợp' : 'trong hệ thống' }}</p>
+
     </div>
+
+
 
     <!-- BỘ LỌC -->
+
     <div class="filters">
+
       <label class="search-box">
+
         <ng-icon name="lucideSearch" size="17px"></ng-icon>
+
         <input
+
           type="search"
+
           [(ngModel)]="searchKeyword"
+
           (ngModelChange)="onSearchChange()"
+
           placeholder="Tìm mã yêu cầu, mã đơn hàng, tên khách hàng..."
+
           aria-label="Tìm kiếm yêu cầu đổi trả"
+
         />
+
       </label>
 
+
+
       <div class="filter-field">
+
         <span>Trạng thái</span>
+
         <select
+
           [(ngModel)]="selectedStatus"
+
           (ngModelChange)="onFilterChange()"
+
           aria-label="Lọc theo trạng thái"
+
         >
+
           <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+
         </select>
+
       </div>
 
+
+
       <div class="filter-field">
+
         <span>Thời gian</span>
+
         <select
+
           [(ngModel)]="selectedDateFilter"
+
           (ngModelChange)="onFilterChange()"
+
           aria-label="Lọc theo thời gian"
+
         >
+
           <option value="all">Tất cả thời gian</option>
+
           <option value="today">Hôm nay</option>
+
           <option value="7days">7 ngày qua</option>
+
           <option value="30days">30 ngày qua</option>
+
         </select>
+
       </div>
 
+
+
       <div class="filter-field">
+
         <span>Lý do đổi trả</span>
+
         <select
+
           [(ngModel)]="selectedReason"
+
           (ngModelChange)="onFilterChange()"
+
           aria-label="Lọc theo lý do"
+
         >
+
           <option *ngFor="let opt of reasonOptions" [value]="opt.value">{{ opt.label }}</option>
+
         </select>
+
       </div>
+
+
 
       <div class="filter-actions" *ngIf="hasActiveFilters">
+
         <button type="button" class="btn" (click)="clearFilters()">Xóa bộ lọc</button>
+
       </div>
+
     </div>
+
+
 
     <!-- BẢNG YÊU CẦU ĐỔI TRẢ -->
+
     <div class="table-wrapper">
+
       <table class="returns-table">
+
         <thead>
+
           <tr>
+
             <th>Mã yêu cầu</th>
+
             <th>Mã đơn hàng</th>
+
             <th>Khách hàng</th>
+
             <th>Sản phẩm</th>
+
             <th>Lý do đổi trả</th>
+
             <th>Ngày yêu cầu</th>
+
             <th>Trạng thái</th>
+
             <th>Thao tác</th>
+
           </tr>
+
         </thead>
+
         <tbody *ngIf="!isLoading && !errorMessage && returns.length">
+
           <tr *ngFor="let item of returns" [class.row-selected]="selectedReturn?.Return_order_id === item.Return_order_id">
+
             <!-- Mã yêu cầu -->
+
             <td class="order-code">
+
               <button type="button" class="link-button font-semibold" (click)="openDetail(item)">
+
                 {{ item.Return_order_id }}
+
               </button>
+
             </td>
+
+
 
             <!-- Mã đơn hàng -->
+
             <td class="order-code muted">
+
               {{ item.Order_id }}
+
             </td>
+
+
 
             <!-- Khách hàng -->
+
             <td>{{ item.Customer_name }}</td>
 
+
+
             <!-- Sản phẩm -->
+
             <td class="product-cell">
+
               <div class="product-info-wrap">
+
                 <div class="product-thumb">
+
                   <img
+
                     [src]="getProductImageUrl(item.Product_image)"
+
                     [alt]="item.Product_name"
+
                     (error)="onImageError($event)"
+
                   />
+
                 </div>
+
                 <div class="product-details">
+
                   <span class="product-name" [title]="item.Product_name">{{ item.Product_name }}</span>
+
                   <span class="product-sub" *ngIf="item.SKU">
+
                     SKU: {{ item.SKU }} &middot; SL: {{ item.Return_quantity }}
+
                   </span>
+
                 </div>
+
               </div>
+
             </td>
+
+
 
             <!-- Lý do đổi trả -->
+
             <td>
+
               <span class="reason-text">{{ item.Reason_type }}</span>
+
             </td>
+
+
 
             <!-- Ngày yêu cầu -->
+
             <td class="muted whitespace-nowrap">
+
               {{ item.Created_at | date: 'dd/MM/yyyy' }}
+
             </td>
+
+
 
             <!-- Trạng thái -->
+
             <td>
+
               <span class="badge" [ngClass]="getStatusClass(item.Status)">
+
                 {{ getStatusLabel(item.Status) }}
+
               </span>
+
             </td>
+
+
 
             <!-- Thao tác -->
+
             <td class="actions">
+
               <button
+
                 type="button"
+
                 class="link-button"
+
                 (click)="openDetail(item)"
+
               >
+
                 Xem chi tiết
+
               </button>
+
             </td>
+
           </tr>
+
         </tbody>
+
       </table>
 
+
+
       <!-- LOADING STATE -->
+
       <div class="table-state" *ngIf="isLoading">Đang tải danh sách yêu cầu đổi trả...</div>
 
+
+
       <!-- ERROR STATE -->
+
       <div class="table-state" *ngIf="!isLoading && errorMessage">
+
         <ng-icon name="lucideAlertCircle" size="32px"></ng-icon>
+
         <strong>Không tải được danh sách yêu cầu đổi trả</strong>
+
         <p>{{ errorMessage }}</p>
+
         <button type="button" class="btn" (click)="loadReturns()">
+
           <ng-icon name="lucideRefreshCw" size="16px"></ng-icon>
+
           <span>Tải lại</span>
+
         </button>
+
       </div>
+
+
 
       <!-- EMPTY STATE -->
+
       <div class="table-state" *ngIf="!isLoading && !errorMessage && !returns.length">
+
         <ng-icon name="lucideInbox" size="32px"></ng-icon>
+
         <strong>{{ hasActiveFilters ? 'Không tìm thấy yêu cầu phù hợp' : 'Chưa có yêu cầu đổi trả nào' }}</strong>
+
         <p>{{ hasActiveFilters ? 'Không có yêu cầu đổi trả phù hợp với bộ lọc hiện tại. Thử thay đổi từ khóa, thời gian hoặc lý do.' : 'Hiện tại hệ thống chưa ghi nhận yêu cầu hoàn trả hàng nào từ khách hàng.' }}</p>
+
         <button *ngIf="hasActiveFilters" type="button" class="btn" (click)="clearFilters()">Xóa bộ lọc</button>
+
       </div>
+
     </div>
 
+
+
     <!-- PHÂN TRANG (ĐỒNG BỘ VỚI XỬ LÝ ĐƠN HÀNG & DANH MỤC SẢN PHẨM) -->
+
     <footer class="table-footer" *ngIf="!isLoading && !errorMessage">
+
       <div class="pagination-summary">
+
         Hiển thị <strong>{{ rangeStart }}</strong>–<strong>{{ rangeEnd }}</strong> trong tổng số <strong>{{ total }}</strong> bản ghi
+
       </div>
 
+
+
       <div class="pagination-controls">
+
         <label class="page-size">
+
           <span>Số dòng:</span>
+
           <select [(ngModel)]="limit" (ngModelChange)="onLimitChange()" aria-label="Số dòng mỗi trang">
+
             <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+
           </select>
+
         </label>
 
+
+
         <button
+
           type="button"
+
           class="page-button"
+
           [disabled]="page <= 1 || isLoading || total === 0"
+
           (click)="goToPage(page - 1)"
+
           aria-label="Trang trước"
+
         >
+
           ‹
+
         </button>
+
+
 
         <span class="current-page">{{ totalPages > 0 ? page : 0 }} / {{ totalPages }}</span>
 
+
+
         <button
+
           type="button"
+
           class="page-button"
+
           [disabled]="page >= totalPages || isLoading || total === 0"
+
           (click)="goToPage(page + 1)"
+
           aria-label="Trang sau"
+
         >
+
           ›
+
         </button>
+
       </div>
+
     </footer>
 
+
+
     <!-- GHI CHÚ DƯỚI BẢNG THEO FIGMA -->
+
     <div class="footer-note" *ngIf="role === 'Staff'">
+
       Staff tiếp nhận và duyệt/từ chối yêu cầu có đủ điều kiện, sau đó kiểm tra hàng hoàn trả. Hệ thống chỉ cộng lại tồn kho khi Staff xác nhận hàng đạt.
+
     </div>
+
     <div class="footer-note" *ngIf="role === 'Manager'">
+
       Manager chỉ xem và theo dõi. Staff duyệt yêu cầu và xác nhận hàng đạt. Hệ thống chỉ cộng lại tồn kho sau khi Staff xác nhận hàng đạt.
+
     </div>
+
   </section>
 
+
+
   <!-- ======================================================== -->
+
   <!-- SIDE DRAWER: CHI TIẾT YÊU CẦU ĐỔI TRẢ                    -->
+
   <!-- ======================================================== -->
+
   <div class="drawer-backdrop" *ngIf="isDrawerOpen" (click)="closeDrawer()"></div>
 
+
+
   <aside class="detail-drawer" [class.open]="isDrawerOpen" aria-label="Chi tiết đổi trả">
+
     <!-- Header Drawer -->
+
     <div class="drawer-header">
+
       <div>
+
         <h2 class="drawer-title">Chi tiết yêu cầu đổi trả</h2>
+
         <p class="drawer-meta" *ngIf="selectedReturn">
+
           {{ selectedReturn.Return_order_id }} &middot; {{ selectedReturn.Created_at | date: 'dd/MM/yyyy, HH:mm' }}
+
         </p>
+
       </div>
+
       <button type="button" class="btn-close" (click)="closeDrawer()" aria-label="Đóng">
+
         <ng-icon name="lucideX" size="20px"></ng-icon>
+
       </button>
+
     </div>
+
+
 
     <!-- Body Drawer Loading -->
+
     <div class="drawer-loading" *ngIf="isDetailLoading">
+
       <div class="spinner"></div>
+
       <p>Đang tải chi tiết yêu cầu...</p>
+
     </div>
+
+
 
     <!-- Body Drawer Content -->
+
     <div class="drawer-body" *ngIf="!isDetailLoading && selectedReturn">
+
       <!-- Banner dành cho Store Manager -->
+
       <div class="manager-notice-banner" *ngIf="role === 'Manager'">
+
         Manager chỉ xem và theo dõi. Staff duyệt yêu cầu và kiểm tra hàng hoàn trả; hệ thống chỉ cộng tồn kho và hoàn tiền sau khi Staff xác nhận hàng đạt.
+
       </div>
+
+
 
       <!-- Badge trạng thái đầu Drawer -->
+
       <div class="drawer-status-bar">
+
         <span class="badge" [ngClass]="getStatusClass(selectedReturn.Status)">
+
           {{ getStatusLabel(selectedReturn.Status) }}
+
         </span>
+
         <span class="drawer-status-desc">
-          Yêu cầu trả hàng &middot; {{ selectedReturn.Product_info.Return_quantity }} sản phẩm
+
+          Yêu cầu trả hàng &middot; {{ selectedReturn.Product_info?.Return_quantity || selectedReturn.Return_quantity || 1 }} sản phẩm
+
         </span>
+
       </div>
+
+
 
       <!-- Mục: Thông tin khách hàng -->
+
       <section class="drawer-section">
+
         <h3 class="section-title">Thông tin khách hàng</h3>
+
         <div class="customer-info-grid">
+
           <div>
+
             <span class="info-label">Họ và tên:</span>
-            <span class="info-value font-semibold">{{ selectedReturn.Customer.Name }}</span>
+
+            <span class="info-value font-semibold">{{ getCustomerName(selectedReturn) }}</span>
+
           </div>
+
           <div>
+
             <span class="info-label">Email:</span>
-            <span class="info-value">{{ selectedReturn.Customer.Email || 'Chưa cung cấp' }}</span>
+
+            <span class="info-value">{{ selectedReturn.Customer?.Email || 'Chưa cung cấp' }}</span>
+
           </div>
+
           <div>
+
             <span class="info-label">Số điện thoại:</span>
-            <span class="info-value">{{ selectedReturn.Customer.Phone || 'Chưa cung cấp' }}</span>
+
+            <span class="info-value">{{ selectedReturn.Customer?.Phone || 'Chưa cung cấp' }}</span>
+
           </div>
+
           <div class="col-span-2">
+
             <span class="info-label">Địa chỉ trả hàng:</span>
-            <span class="info-value">{{ selectedReturn.Customer.Address || 'Chưa cung cấp' }}</span>
+
+            <span class="info-value">{{ selectedReturn.Customer?.Address || 'Chưa cung cấp' }}</span>
+
           </div>
+
         </div>
+
       </section>
+
+
 
       <!-- Mục: Đơn hàng gốc -->
+
       <section class="drawer-section">
+
         <h3 class="section-title">Đơn hàng gốc</h3>
+
         <div class="order-box">
+
           <div class="order-main">
+
             <div class="order-id-line">
-              <span class="order-id text-primary font-semibold">{{ selectedReturn.Order_info.Order_id }}</span>
-              <span class="order-date">&middot; {{ selectedReturn.Order_info.Created_at | date: 'dd/MM/yyyy, HH:mm' }}</span>
+
+              <span class="order-id font-semibold">{{ getOrderId(selectedReturn) }}</span>
+
+              <span class="order-date"> &middot; {{ (selectedReturn.Order_info?.Created_at || selectedReturn.Created_at) | date: 'dd/MM/yyyy, HH:mm' }}</span>
+
             </div>
+
             <p class="order-status-line">
-              {{ selectedReturn.Order_info.Status === 'delivered' ? 'Đã giao' : selectedReturn.Order_info.Status }}
-              &middot; {{ selectedReturn.Order_info.Total_items }} sản phẩm &middot; Đã thanh toán
+
+              {{ getOrderStatusLabel(selectedReturn.Order_info?.Status) }}
+
+              <span *ngIf="selectedReturn.Order_info?.Created_at || selectedReturn.Created_at"> {{ (selectedReturn.Order_info?.Created_at || selectedReturn.Created_at) | date: 'dd/MM/yyyy' }}</span>
+
+              &middot; {{ selectedReturn.Order_info?.Total_items || 1 }} sản phẩm &middot; Đã thanh toán
+
             </p>
+
           </div>
-          <div class="order-amount">
-            {{ formatCurrency(selectedReturn.Order_info.Total_amount) }}
+
+          <div class="order-amount font-semibold">
+
+            {{ formatCurrency(selectedReturn.Order_info?.Total_amount || selectedReturn.Refund_amount) }}
+
           </div>
+
         </div>
+
       </section>
+
+
 
       <!-- Mục: Sản phẩm yêu cầu trả -->
+
       <section class="drawer-section">
+
         <h3 class="section-title">Sản phẩm yêu cầu trả</h3>
-        <div class="return-product-card">
-          <div class="product-thumb-large">
-            <img
-              [src]="getProductImageUrl(selectedReturn.Product_info?.Product_image)"
-              [alt]="selectedReturn.Product_info?.Product_name"
-              (error)="onImageError($event)"
-            />
+
+        <div class="product-table-card">
+
+          <div class="product-table-header">
+
+            <span class="col-th th-product">Sản phẩm</span>
+
+            <span class="col-th th-qty">SL trả / mua</span>
+
+            <span class="col-th th-amount">Giá trị trả</span>
+
           </div>
-          <div class="product-meta">
-            <h4 class="product-heading">{{ selectedReturn.Product_info.Product_name }}</h4>
-            <p class="product-variant" *ngIf="selectedReturn.Product_info.SKU">
-              SKU: {{ selectedReturn.Product_info.SKU }} &middot; {{ selectedReturn.Product_info.Variant_name }}
-            </p>
-          </div>
-          <div class="product-quantities">
-            <span class="qty-label">SL trả / mua</span>
-            <span class="qty-val font-semibold">
-              {{ selectedReturn.Product_info.Return_quantity }} / {{ selectedReturn.Product_info.Bought_quantity }}
-            </span>
-          </div>
-          <div class="product-refund-val">
-            <span class="refund-label">Giá trị trả</span>
-            <span class="refund-num font-semibold text-primary">
+
+          <div class="product-table-row">
+
+            <div class="col-td td-product">
+
+              <div class="product-thumb">
+
+                <img
+
+                  [src]="getProductImageUrl(selectedReturn.Product_info?.Product_image || selectedReturn.Product_image)"
+
+                  [alt]="getProductName(selectedReturn)"
+
+                  (error)="onImageError($event)"
+
+                />
+
+              </div>
+
+              <div class="product-info-text">
+
+                <h4 class="product-name font-semibold">{{ getProductName(selectedReturn) }}</h4>
+
+                <p class="product-sku" *ngIf="getSku(selectedReturn)">
+
+                  SKU: {{ getSku(selectedReturn) }}<span *ngIf="selectedReturn.Product_info?.Variant_name && selectedReturn.Product_info?.Variant_name !== selectedReturn.Product_info?.SKU"> &middot; {{ selectedReturn.Product_info?.Variant_name }}</span>
+
+                </p>
+
+              </div>
+
+            </div>
+
+            <div class="col-td td-qty">
+
+              {{ selectedReturn.Product_info?.Return_quantity || selectedReturn.Return_quantity || 1 }} / {{ selectedReturn.Product_info?.Bought_quantity || 1 }}
+
+            </div>
+
+            <div class="col-td td-amount font-medium">
+
               {{ formatCurrency(selectedReturn.Refund_amount) }}
-            </span>
+
+            </div>
+
           </div>
+
         </div>
+
       </section>
+
+
 
       <!-- Mục: Lý do đổi trả -->
+
       <section class="drawer-section">
+
         <h3 class="section-title">Lý do đổi trả</h3>
-        <div class="reason-box">
-          <p class="reason-type font-semibold">{{ selectedReturn.Reason_type }}</p>
-          <p class="reason-desc" *ngIf="selectedReturn.Description">
-            &ldquo;{{ selectedReturn.Description }}&rdquo;
-          </p>
+
+        <div class="reason-card">
+
+          <div class="reason-card-header">
+
+            <span class="reason-type-label">Phân loại lý do</span>
+
+            <span class="reason-type-val">{{ selectedReturn.Reason_type }}</span>
+
+          </div>
+
+          <div class="reason-card-body">
+
+            <p class="reason-desc" *ngIf="selectedReturn.Description">
+
+              &ldquo;{{ selectedReturn.Description }}&rdquo;
+
+            </p>
+
+            <p class="reason-desc text-empty" *ngIf="!selectedReturn.Description">
+
+              Khách hàng không để lại mô tả chi tiết.
+
+            </p>
+
+          </div>
+
         </div>
+
       </section>
+
+
 
       <!-- Mục: Minh chứng khách hàng -->
+
       <section class="drawer-section" *ngIf="selectedReturn.Evidence_images && selectedReturn.Evidence_images.length > 0">
+
         <h3 class="section-title">Minh chứng khách hàng</h3>
-        <div class="evidence-list">
-          <div class="evidence-card" *ngFor="let img of selectedReturn.Evidence_images; let idx = index">
-            <div class="evidence-thumb" (click)="openImagePreview(img)">
+
+        <div class="evidence-list-clean">
+
+          <div class="evidence-item" *ngFor="let img of selectedReturn.Evidence_images; let idx = index">
+
+            <div class="evidence-thumb-lg" (click)="openImagePreview(img)">
+
               <img [src]="getEvidenceImageUrl(img)" alt="Minh chứng" (error)="onImageError($event)" />
-              <div class="thumb-overlay">
-                <ng-icon name="lucideMaximize2" size="18px"></ng-icon>
+
+            </div>
+
+            <div class="evidence-details">
+
+              <div class="evidence-title font-semibold">Ảnh sản phẩm do khách hàng gửi</div>
+
+              <div class="evidence-file-meta">
+
+                san-pham-tra.jpg &middot; {{ (selectedReturn.Created_at || '') | date: 'dd/MM/yyyy, HH:mm' }}
+
               </div>
-            </div>
-            <div class="evidence-meta">
-              <span class="evidence-name font-medium">Ảnh sản phẩm do khách hàng gửi #{{ idx + 1 }}</span>
-              <span class="evidence-sub">Minh chứng khách hàng cung cấp</span>
-              <button type="button" class="btn-link" (click)="openImagePreview(img)">
+
+              <div class="evidence-desc">Minh chứng do khách hàng cung cấp</div>
+
+              <button type="button" class="btn-view-evidence font-medium" (click)="openImagePreview(img)">
+
                 Xem ảnh
+
               </button>
+
             </div>
+
           </div>
+
         </div>
+
       </section>
 
-      <!-- HỘP TRẠNG THÁI TIẾN TRÌNH ĐẶC BIỆT (THEO FIGMA) -->
+
+
+      <!-- HỘP TRẠNG THÁI TIẾN TRÌNH (THEO FIGMA) -->
+
       <!-- 1. Trạng thái Đã duyệt: Chờ nhận hàng hoàn trả -->
-      <div class="progress-box box-approved" *ngIf="selectedReturn.Status === 'approved'">
-        <div class="box-header">
-          <span class="box-title font-semibold">
-            Đã duyệt &middot; Số lượng trả: {{ selectedReturn.Product_info.Return_quantity }} {{ selectedReturn.Product_info.Product_name }}
-          </span>
+
+      <section class="drawer-section" *ngIf="selectedReturn.Status === 'approved'">
+
+        <h3 class="section-title">Chờ nhận hàng hoàn trả</h3>
+
+        <div class="progress-box box-approved">
+
+          <div class="box-header-row text-blue-600">
+
+            <ng-icon name="lucideClock" size="18px" class="status-icon"></ng-icon>
+
+            <span class="box-title font-semibold">
+
+              Đã duyệt &middot; Số lượng trả: {{ selectedReturn.Product_info?.Return_quantity || selectedReturn.Return_quantity || 1 }} &middot; {{ getProductName(selectedReturn) }}
+
+            </span>
+
+          </div>
+
+          <p class="box-desc">
+
+            Đủ điều kiện: trong thời hạn đổi trả theo chính sách &middot; Đơn hàng đã giao
+
+          </p>
+
+          <p class="box-highlight text-amber-500 font-medium">
+
+            Đã gửi hướng dẫn hoàn trả cho khách hàng. Đang chờ khách gửi hàng về.
+
+          </p>
+
+          <p class="box-sub">
+
+            Tồn kho chỉ được cộng lại sau khi Staff xác nhận hàng đạt.
+
+          </p>
+
         </div>
-        <p class="box-desc">Đã đủ điều kiện trong thời hạn đổi trả theo chính sách &middot; Đơn hàng đã giao</p>
-        <p class="box-highlight text-amber-600 font-medium">
-          Đã gửi hướng dẫn hoàn trả cho khách hàng. Đang chờ khách gửi hàng về.
-        </p>
-        <p class="box-sub">Tồn kho chỉ được cộng lại sau khi Staff xác nhận hàng đạt.</p>
-      </div>
+
+      </section>
+
+
 
       <!-- 2. Trạng thái Đã hoàn tất: Kết quả hoàn tiền và hoàn kho -->
-      <div class="progress-box box-completed" *ngIf="selectedReturn.Status === 'completed'">
-        <div class="box-header text-emerald-700">
-          <ng-icon name="lucideCheck" size="18px"></ng-icon>
-          <span class="box-title font-semibold">
-            Đã cộng lại tồn kho: +{{ selectedReturn.Product_info.Return_quantity }} sản phẩm
-          </span>
+
+      <section class="drawer-section" *ngIf="selectedReturn.Status === 'completed'">
+
+        <h3 class="section-title">Kết quả hoàn tiền và hoàn kho</h3>
+
+        <div class="progress-box box-completed">
+
+          <div class="box-header-row text-emerald-600">
+
+            <ng-icon name="lucideCheck" size="18px" class="status-icon"></ng-icon>
+
+            <span class="box-title font-semibold">
+
+              Đã cộng lại tồn kho: +{{ selectedReturn.Product_info?.Return_quantity || selectedReturn.Return_quantity || 1 }} sản phẩm
+
+            </span>
+
+          </div>
+
+          <p class="box-desc">
+
+            {{ getProductName(selectedReturn) }} &middot; SKU {{ getSku(selectedReturn) }} &middot; Số lượng: {{ selectedReturn.Product_info?.Return_quantity || selectedReturn.Return_quantity || 1 }}
+
+          </p>
+
+          <p class="box-sub">
+
+            Số tiền hoàn: {{ formatCurrency(selectedReturn.Refund_amount) }} &middot; Đã ghi nhận hoàn tiền
+
+          </p>
+
+          <p class="box-sub">
+
+            {{ (selectedReturn.Inspected_at || selectedReturn.Handled_at || selectedReturn.Created_at) | date: 'dd/MM/yyyy, HH:mm' }} &middot; Hệ thống &middot; Tự động cập nhật
+
+          </p>
+
         </div>
-        <p class="box-desc font-medium">
-          {{ selectedReturn.Product_info.Product_name }} &middot; SKU {{ selectedReturn.Product_info.SKU }} &middot; Số lượng: {{ selectedReturn.Product_info.Return_quantity }}
-        </p>
-        <p class="box-highlight text-emerald-700 font-medium">
-          Số tiền hoàn: {{ formatCurrency(selectedReturn.Refund_amount) }} &middot; Đã ghi nhận hoàn tiền
-        </p>
-        <p class="box-sub">
-          {{ (selectedReturn.Inspected_at || selectedReturn.Handled_at) | date: 'dd/MM/yyyy, HH:mm' }} &middot; Hệ thống &middot; Tự động cập nhật
-        </p>
-      </div>
+
+      </section>
+
+
 
       <!-- 3. Trạng thái Từ chối: Kết quả xử lý -->
-      <div class="progress-box box-rejected" *ngIf="selectedReturn.Status === 'rejected'">
-        <div class="box-header text-rose-700">
-          <ng-icon name="lucideX" size="18px"></ng-icon>
-          <span class="box-title font-semibold">
-            Từ chối hoàn tiền: {{ selectedReturn.Reject_reason || 'Hàng không đạt điều kiện hoàn trả' }}
-          </span>
+
+      <section class="drawer-section" *ngIf="selectedReturn.Status === 'rejected'">
+
+        <h3 class="section-title">Kết quả xử lý</h3>
+
+        <div class="progress-box box-rejected">
+
+          <div class="box-header-row text-rose-600">
+
+            <ng-icon name="lucideX" size="18px" class="status-icon"></ng-icon>
+
+            <span class="box-title font-semibold">
+
+              Từ chối hoàn tiền: {{ selectedReturn.Reject_reason || 'Hàng không đạt điều kiện hoàn trả' }}
+
+            </span>
+
+          </div>
+
+          <p class="box-desc">
+
+            {{ getProductName(selectedReturn) }} &middot; SKU {{ getSku(selectedReturn) }} &middot; Số lượng: {{ selectedReturn.Product_info?.Return_quantity || selectedReturn.Return_quantity || 1 }}
+
+          </p>
+
+          <p class="box-sub">
+
+            Số tiền hoàn: {{ formatCurrency(selectedReturn.Refund_amount) }} &middot; Đã ghi nhận hoàn tiền
+
+          </p>
+
+          <p class="box-sub">
+
+            {{ (selectedReturn.Inspected_at || selectedReturn.Handled_at || selectedReturn.Created_at) | date: 'dd/MM/yyyy, HH:mm' }} &middot; Hệ thống &middot; Tự động ghi sổ
+
+          </p>
+
         </div>
-        <p class="box-desc">
-          {{ selectedReturn.Product_info.Product_name }} &middot; SKU {{ selectedReturn.Product_info.SKU }} &middot; Số lượng: {{ selectedReturn.Product_info.Return_quantity }}
-        </p>
-        <p class="box-highlight text-rose-700 font-medium">
-          Số tiền hoàn: {{ formatCurrency(selectedReturn.Refund_amount) }} &middot; Đã ghi nhận hoàn tiền: 0 đ
-        </p>
-        <p class="box-sub">
-          {{ (selectedReturn.Inspected_at || selectedReturn.Handled_at) | date: 'dd/MM/yyyy, HH:mm' }} &middot; Hệ thống &middot; Tự động ghi sổ
-        </p>
-      </div>
+
+      </section>
+
+
 
       <!-- Mục: Lịch sử yêu cầu (Timeline 5 bước) -->
+
       <section class="drawer-section">
+
         <h3 class="section-title">Lịch sử yêu cầu</h3>
+
         <div class="timeline">
+
           <div
+
             class="timeline-item"
+
             *ngFor="let step of selectedReturn.Timeline"
+
             [class.step-done]="step.Status === 'approved' || step.Status === 'completed'"
+
             [class.step-rejected]="step.Status === 'rejected'"
+
             [class.step-waiting]="step.Status === 'waiting' || step.Status === 'pending'"
+
           >
+
             <div class="timeline-dot"></div>
+
             <div class="timeline-content">
+
               <div class="timeline-title font-semibold">{{ step.Title }}</div>
+
               <div class="timeline-desc">{{ step.Description }}</div>
+
               <div class="timeline-time" *ngIf="step.Created_at">
+
                 {{ step.Created_at | date: 'dd/MM/yyyy, HH:mm' }}
+
               </div>
+
             </div>
+
           </div>
+
         </div>
+
       </section>
+
     </div>
+
+
 
     <!-- Footer Drawer: Phân quyền Staff vs Manager -->
+
     <div class="drawer-footer" *ngIf="!isDetailLoading && selectedReturn">
+
       <!-- Đóng -->
+
       <button type="button" class="btn-secondary" (click)="closeDrawer()">
+
         Đóng
+
       </button>
+
+
 
       <!-- Hành động dành cho Staff -->
+
       <ng-container *ngIf="role === 'Staff'">
+
         <!-- Giai đoạn 1: Khi Chờ xử lý -->
+
         <ng-container *ngIf="selectedReturn.Status === 'pending'">
+
           <button
+
             type="button"
+
             class="btn-danger-outline"
+
             (click)="openModal('reject')"
+
           >
+
             Từ chối
+
           </button>
+
           <button
+
             type="button"
+
             class="btn-primary"
+
             (click)="openModal('approve')"
+
           >
+
             Duyệt yêu cầu
+
           </button>
+
         </ng-container>
+
+
 
         <!-- Giai đoạn 2: Khi Đã duyệt (Kiểm tra hàng) -->
+
         <ng-container *ngIf="selectedReturn.Status === 'approved'">
+
           <button
+
             type="button"
+
             class="btn-danger-outline"
+
             (click)="openModal('reject_goods')"
+
           >
+
             Từ chối hoàn tiền
+
           </button>
+
           <button
+
             type="button"
+
             class="btn-primary"
+
             (click)="openModal('accept_goods')"
+
           >
+
             Xác nhận hàng đạt
+
           </button>
+
         </ng-container>
+
       </ng-container>
+
     </div>
+
   </aside>
 
+
+
   <!-- ======================================================== -->
+
   <!-- MODAL 1: XÁC NHẬN DUYỆT YÊU CẦU ĐỔI TRẢ (Giai đoạn 1)    -->
+
   <!-- ======================================================== -->
+
   <div class="modal-backdrop" *ngIf="activeModal === 'approve'" (click)="closeModal()"></div>
+
   <div class="modal-dialog" *ngIf="activeModal === 'approve'">
+
     <div class="modal-header">
+
       <h3 class="modal-title font-semibold">Xác nhận duyệt yêu cầu đổi trả?</h3>
+
       <button type="button" class="btn-close" (click)="closeModal()">
+
         <ng-icon name="lucideX" size="18px"></ng-icon>
+
       </button>
+
     </div>
+
     <div class="modal-body" *ngIf="modalTargetItem">
+
       <!-- Tóm tắt -->
+
       <div class="target-summary-box">
+
         <div class="font-semibold text-slate-800">
-          {{ modalTargetItem.Return_order_id }} &middot; {{ modalTargetItem.Customer_name }}
+
+          {{ modalTargetItem.Return_order_id }} &middot; {{ getCustomerName(modalTargetItem) }}
+
         </div>
+
         <div class="text-sm text-slate-600">
-          Đơn hàng {{ modalTargetItem.Order_id }} &middot; {{ modalTargetItem.Product_name }} &middot; SL: {{ modalTargetItem.Return_quantity }}
+
+          Đơn hàng {{ getOrderId(modalTargetItem) }} &middot; {{ getProductName(modalTargetItem) }} &middot; SL: {{ modalTargetItem.Return_quantity || 1 }}
+
         </div>
+
         <div class="text-sm text-slate-600">
+
           Lý do: {{ modalTargetItem.Reason_type }} &middot; Giá trị trả: {{ formatCurrency(modalTargetItem.Refund_amount) }}
+
         </div>
+
       </div>
+
+
 
       <!-- Stepper Badge -->
+
       <div class="transition-badge-row">
-        <span class="badge status-pending">Chờ xử lý</span>
-        <ng-icon name="lucideArrowRight" size="16px" class="arrow-icon"></ng-icon>
-        <span class="badge status-approved">Đã duyệt</span>
+
+        <span class="step-label text-amber-500">Chờ xử lý</span>
+
+        <ng-icon name="lucideArrowRight" size="20px" class="arrow-icon"></ng-icon>
+
+        <span class="step-label text-blue-600">Đã duyệt</span>
+
       </div>
 
+
+
       <p class="modal-desc">
-        Hệ thống xác nhận đã đủ điều kiện: trong thời hạn đổi trả theo chính sách và đơn hàng đã giao. Bạn đã rà soát yêu cầu và minh chứng?
+
+        Hệ thống xác nhận đủ điều kiện: trong thời hạn đổi trả theo chính sách và đơn hàng đã giao. Bạn đã rà soát yêu cầu và minh chứng?
+
       </p>
+
+
 
       <!-- Alert warning -->
+
       <div class="alert-box alert-warning">
-        <ng-icon name="lucideAlertCircle" size="20px" class="alert-icon"></ng-icon>
+
+        <ng-icon name="lucideTriangleAlert" size="22px" class="alert-icon"></ng-icon>
+
         <div class="alert-content">
+
           Sau khi xác nhận duyệt, hệ thống gửi thông báo kèm hướng dẫn hoàn trả hàng cho khách hàng. Tồn kho chỉ được cộng lại sau khi Staff nhận hàng và xác nhận hàng đạt.
+
         </div>
+
       </div>
+
+
 
       <div class="operator-meta">
+
         Người xử lý: {{ staffName }} &middot; {{ (modalTargetItem.Created_at || '') | date: 'dd/MM/yyyy, HH:mm' }}
+
       </div>
+
     </div>
+
     <div class="modal-footer">
+
       <button type="button" class="btn-secondary" (click)="closeModal()" [disabled]="isActionLoading">
+
         Quay lại
+
       </button>
+
       <button type="button" class="btn-primary" (click)="confirmApprove()" [disabled]="isActionLoading">
+
         {{ isActionLoading ? 'Đang xử lý...' : 'Xác nhận duyệt' }}
+
       </button>
+
     </div>
+
   </div>
 
+
+
   <!-- ======================================================== -->
+
   <!-- MODAL 2: XÁC NHẬN TỪ CHỐI YÊU CẦU ĐỔI TRẢ (Giai đoạn 1)  -->
+
   <!-- ======================================================== -->
+
   <div class="modal-backdrop" *ngIf="activeModal === 'reject'" (click)="closeModal()"></div>
+
   <div class="modal-dialog" *ngIf="activeModal === 'reject'">
+
     <div class="modal-header">
+
       <h3 class="modal-title font-semibold">Xác nhận từ chối yêu cầu?</h3>
+
       <button type="button" class="btn-close" (click)="closeModal()">
+
         <ng-icon name="lucideX" size="18px"></ng-icon>
+
       </button>
+
     </div>
+
     <div class="modal-body" *ngIf="modalTargetItem">
+
       <div class="target-summary-box">
+
         <div class="font-semibold text-slate-800">
-          {{ modalTargetItem.Return_order_id }} &middot; {{ modalTargetItem.Customer_name }}
+
+          {{ modalTargetItem.Return_order_id }} &middot; {{ getCustomerName(modalTargetItem) }}
+
         </div>
+
         <div class="text-sm text-slate-600">
-          Đơn hàng {{ modalTargetItem.Order_id }} &middot; {{ modalTargetItem.Product_name }} &middot; SL: {{ modalTargetItem.Return_quantity }}
+
+          Đơn hàng {{ getOrderId(modalTargetItem) }} &middot; {{ getProductName(modalTargetItem) }} &middot; SL: {{ modalTargetItem.Return_quantity || 1 }}
+
         </div>
+
         <div class="text-sm text-slate-600">
+
           Lý do: {{ modalTargetItem.Reason_type }} &middot; Giá trị trả: {{ formatCurrency(modalTargetItem.Refund_amount) }}
+
         </div>
+
       </div>
 
+
+
       <div class="transition-badge-row">
-        <span class="badge status-pending">Chờ xử lý</span>
-        <ng-icon name="lucideArrowRight" size="16px" class="arrow-icon"></ng-icon>
-        <span class="badge status-rejected">Từ chối</span>
+
+        <span class="step-label text-amber-500">Chờ xử lý</span>
+
+        <ng-icon name="lucideArrowRight" size="20px" class="arrow-icon"></ng-icon>
+
+        <span class="step-label text-rose-600">Từ chối</span>
+
       </div>
+
+
 
       <p class="modal-desc">
+
         Yêu cầu đủ điều kiện theo thời gian và trạng thái đơn hàng. Hãy rà soát lý do trước khi xác nhận từ chối. Hệ thống sẽ gửi thông báo từ chối cho khách hàng.
+
       </p>
 
+
+
       <div class="form-group">
+
         <label class="form-label">
-          Lý do từ chối * <span class="text-rose-500">(bắt buộc)</span>
+
+          Lý do từ chối * (bắt buộc)
+
         </label>
+
         <textarea
+
           class="form-textarea"
+
           rows="3"
+
+          [class.is-invalid]="!rejectReasonInput.trim()"
+
           [(ngModel)]="rejectReasonInput"
+
           placeholder="Nhập lý do gửi đến khách hàng..."
+
         ></textarea>
+
         <p class="form-help text-rose-500" *ngIf="!rejectReasonInput.trim()">
-          * Vui lòng nhập lý do từ chối trước khi xác nhận. Lý do mà người xử lý sẽ được lưu vào lịch sử yêu cầu.
+
+          Vui lòng nhập lý do từ chối trước khi xác nhận.
+
         </p>
+
+        <p class="form-subtext text-slate-500">
+
+          Lý do và người xử lý sẽ được lưu vào lịch sử yêu cầu.
+
+        </p>
+
       </div>
+
+
 
       <div class="operator-meta">
+
         Người xử lý: {{ staffName }} &middot; {{ (modalTargetItem.Created_at || '') | date: 'dd/MM/yyyy, HH:mm' }}
+
       </div>
+
     </div>
+
     <div class="modal-footer">
+
       <button type="button" class="btn-secondary" (click)="closeModal()" [disabled]="isActionLoading">
+
         Quay lại
+
       </button>
-      <button type="button" class="btn-danger" (click)="confirmReject()" [disabled]="isActionLoading">
+
+      <button type="button" class="btn-danger" [class.btn-disabled]="!rejectReasonInput.trim()" (click)="confirmReject()" [disabled]="isActionLoading || !rejectReasonInput.trim()">
+
         {{ isActionLoading ? 'Đang xử lý...' : 'Xác nhận từ chối' }}
+
       </button>
+
     </div>
+
   </div>
 
+
+
   <!-- ======================================================== -->
+
   <!-- MODAL 3: XÁC NHẬN HÀNG ĐẠT ĐIỀU KIỆN (Giai đoạn 2)       -->
+
   <!-- ======================================================== -->
+
   <div class="modal-backdrop" *ngIf="activeModal === 'accept_goods'" (click)="closeModal()"></div>
+
   <div class="modal-dialog" *ngIf="activeModal === 'accept_goods'">
+
     <div class="modal-header">
+
       <h3 class="modal-title font-semibold">Xác nhận hàng hoàn trả đạt điều kiện?</h3>
+
       <button type="button" class="btn-close" (click)="closeModal()">
+
         <ng-icon name="lucideX" size="18px"></ng-icon>
+
       </button>
+
     </div>
+
     <div class="modal-body" *ngIf="modalTargetItem">
+
       <div class="target-summary-box">
+
         <div class="font-semibold text-slate-800">
-          {{ modalTargetItem.Return_order_id }} &middot; {{ modalTargetItem.Customer_name }}
+
+          {{ modalTargetItem.Return_order_id }} &middot; {{ getCustomerName(modalTargetItem) }}
+
         </div>
+
         <div class="text-sm text-slate-600">
-          Đơn hàng {{ modalTargetItem.Order_id }} &middot; {{ modalTargetItem.Product_name }} &middot; SL: {{ modalTargetItem.Return_quantity }}
+
+          Đơn hàng {{ getOrderId(modalTargetItem) }} &middot; {{ getProductName(modalTargetItem) }} &middot; SL: {{ modalTargetItem.Return_quantity || 1 }}
+
         </div>
+
         <div class="text-sm text-slate-600">
+
           Lý do: {{ modalTargetItem.Reason_type }} &middot; Giá trị trả: {{ formatCurrency(modalTargetItem.Refund_amount) }}
+
         </div>
+
       </div>
 
+
+
       <div class="transition-badge-row">
-        <span class="badge status-approved">Đã duyệt</span>
-        <ng-icon name="lucideArrowRight" size="16px" class="arrow-icon"></ng-icon>
-        <span class="badge status-completed">Đã hoàn tất</span>
+
+        <span class="step-label text-blue-600">Đã duyệt</span>
+
+        <ng-icon name="lucideArrowRight" size="20px" class="arrow-icon"></ng-icon>
+
+        <span class="step-label text-emerald-600">Đã hoàn tất</span>
+
       </div>
+
+
 
       <p class="modal-desc font-medium text-slate-800">
+
         Bạn đã nhận và kiểm tra sản phẩm hoàn trả: đúng sản phẩm, đủ phụ kiện, không hư hỏng?
+
       </p>
+
+
 
       <div class="alert-box alert-warning">
-        <ng-icon name="lucideAlertCircle" size="20px" class="alert-icon"></ng-icon>
+
+        <ng-icon name="lucideTriangleAlert" size="22px" class="alert-icon"></ng-icon>
+
         <div class="alert-content">
-          Sau khi xác nhận, hệ thống cộng lại <strong>+{{ modalTargetItem.Return_quantity }} {{ modalTargetItem.Product_name }}</strong> vào tồn kho và ghi nhận hoàn tiền <strong>{{ formatCurrency(modalTargetItem.Refund_amount) }}</strong> cho khách hàng.
+
+          Sau khi xác nhận, hệ thống cộng lại +{{ modalTargetItem.Return_quantity || 1 }} {{ getProductName(modalTargetItem) }}<span *ngIf="getSku(modalTargetItem)"> ({{ getSku(modalTargetItem) }})</span> vào tồn kho và ghi nhận hoàn tiền {{ formatCurrency(modalTargetItem.Refund_amount) }} cho khách hàng.
+
         </div>
+
       </div>
+
+
 
       <div class="operator-meta">
+
         Người xử lý: {{ staffName }} &middot; {{ (modalTargetItem.Created_at || '') | date: 'dd/MM/yyyy, HH:mm' }}
+
       </div>
+
     </div>
+
     <div class="modal-footer">
+
       <button type="button" class="btn-secondary" (click)="closeModal()" [disabled]="isActionLoading">
+
         Quay lại
+
       </button>
+
       <button type="button" class="btn-primary" (click)="confirmAcceptGoods()" [disabled]="isActionLoading">
+
         {{ isActionLoading ? 'Đang xử lý...' : 'Xác nhận hàng đạt' }}
+
       </button>
+
     </div>
+
   </div>
 
+
+
   <!-- ======================================================== -->
+
   <!-- MODAL 4: XÁC NHẬN TỪ CHỐI HOÀN TIỀN (Giai đoạn 2)       -->
+
   <!-- ======================================================== -->
+
   <div class="modal-backdrop" *ngIf="activeModal === 'reject_goods'" (click)="closeModal()"></div>
+
   <div class="modal-dialog" *ngIf="activeModal === 'reject_goods'">
+
     <div class="modal-header">
+
       <h3 class="modal-title font-semibold">Xác nhận từ chối hoàn tiền?</h3>
+
       <button type="button" class="btn-close" (click)="closeModal()">
+
         <ng-icon name="lucideX" size="18px"></ng-icon>
+
       </button>
+
     </div>
+
     <div class="modal-body" *ngIf="modalTargetItem">
+
       <div class="target-summary-box">
+
         <div class="font-semibold text-slate-800">
-          {{ modalTargetItem.Return_order_id }} &middot; {{ modalTargetItem.Customer_name }}
+
+          {{ modalTargetItem.Return_order_id }} &middot; {{ getCustomerName(modalTargetItem) }}
+
         </div>
+
         <div class="text-sm text-slate-600">
-          Đơn hàng {{ modalTargetItem.Order_id }} &middot; {{ modalTargetItem.Product_name }} &middot; SL: {{ modalTargetItem.Return_quantity }}
+
+          Đơn hàng {{ getOrderId(modalTargetItem) }} &middot; {{ getProductName(modalTargetItem) }} &middot; SL: {{ modalTargetItem.Return_quantity || 1 }}
+
         </div>
+
         <div class="text-sm text-slate-600">
+
           Lý do: {{ modalTargetItem.Reason_type }} &middot; Giá trị trả: {{ formatCurrency(modalTargetItem.Refund_amount) }}
+
         </div>
+
       </div>
+
+
 
       <div class="transition-badge-row">
-        <span class="badge status-approved">Đã duyệt</span>
-        <ng-icon name="lucideArrowRight" size="16px" class="arrow-icon"></ng-icon>
-        <span class="badge status-rejected">Từ chối</span>
+
+        <span class="step-label text-blue-600">Đã duyệt</span>
+
+        <ng-icon name="lucideArrowRight" size="20px" class="arrow-icon"></ng-icon>
+
+        <span class="step-label text-rose-600">Từ chối</span>
+
       </div>
+
+
 
       <p class="modal-desc text-slate-700">
+
         Sản phẩm hoàn trả không đạt điều kiện sau khi kiểm tra. Từ chối hoàn tiền sẽ <strong>không cộng lại tồn kho</strong> và không hoàn tiền cho khách hàng.
+
       </p>
 
+
+
       <div class="form-group">
+
         <label class="form-label">
-          Lý do hàng không đạt * <span class="text-rose-500">(bắt buộc)</span>
+
+          Lý do hàng không đạt * (bắt buộc)
+
         </label>
+
         <textarea
+
           class="form-textarea"
+
           rows="3"
+
+          [class.is-invalid]="!rejectReasonInput.trim()"
+
           [(ngModel)]="rejectReasonInput"
+
           placeholder="Nhập lý do hàng không đạt gửi đến khách hàng..."
+
         ></textarea>
+
         <p class="form-help text-rose-500" *ngIf="!rejectReasonInput.trim()">
-          * Vui lòng nhập lý do từ chối trước khi xác nhận. Lý do và người xử lý sẽ được lưu vào lịch sử yêu cầu.
+
+          Vui lòng nhập lý do từ chối trước khi xác nhận.
+
         </p>
+
+        <p class="form-subtext text-slate-500">
+
+          Lý do và người xử lý sẽ được lưu vào lịch sử yêu cầu.
+
+        </p>
+
       </div>
+
+
 
       <div class="operator-meta">
+
         Người xử lý: {{ staffName }} &middot; {{ (modalTargetItem.Created_at || '') | date: 'dd/MM/yyyy, HH:mm' }}
+
       </div>
+
     </div>
+
     <div class="modal-footer">
+
       <button type="button" class="btn-secondary" (click)="closeModal()" [disabled]="isActionLoading">
+
         Quay lại
+
       </button>
-      <button type="button" class="btn-danger" (click)="confirmRejectGoods()" [disabled]="isActionLoading">
+
+      <button type="button" class="btn-danger" [class.btn-disabled]="!rejectReasonInput.trim()" (click)="confirmRejectGoods()" [disabled]="isActionLoading || !rejectReasonInput.trim()">
+
         {{ isActionLoading ? 'Đang xử lý...' : 'Xác nhận từ chối hoàn tiền' }}
+
       </button>
+
     </div>
+
   </div>
 
+
+
   <!-- ======================================================== -->
+
   <!-- LIGHTBOX PHÓNG TO ẢNH MINH CHỨNG                         -->
+
   <!-- ======================================================== -->
+
   <div class="lightbox-backdrop" *ngIf="previewImageSrc" (click)="closeImagePreview()">
+
     <div class="lightbox-content" (click)="$event.stopPropagation()">
+
       <button type="button" class="lightbox-close" (click)="closeImagePreview()" aria-label="Đóng">
+
         <ng-icon name="lucideX" size="24px"></ng-icon>
+
       </button>
+
       <img [src]="getEvidenceImageUrl(previewImageSrc)" alt="Minh chứng phóng to" class="lightbox-img" />
+
     </div>
+
   </div>
+
 </section>
+
+
 
