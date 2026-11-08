@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CartApiItem, CartService } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
+import { GuestCartService } from '../../services/guest-cart.service';
 import {
   AddressItem,
   CreateOrderPayload,
@@ -234,10 +235,21 @@ export class Order implements OnInit, OnDestroy {
     private router: Router,
     private cartService: CartService,
     private cartState: CartStateService,
+    private guestCart: GuestCartService,
     private orderService: OrderService
   ) {}
 
   ngOnInit(): void {
+    // Guest không được đặt hàng / thanh toán: yêu cầu đăng nhập rồi quay lại giỏ hàng
+    if (this.guestCart.isGuest()) {
+      this.guestCart.requireLogin(
+        'Bạn cần đăng nhập để đặt hàng và thanh toán.',
+        '/cart',
+        () => this.router.navigate(['/cart'])
+      );
+      return;
+    }
+
     this.receiver = this.loadReceiverInfo();
     this.tempReceiver = { ...this.receiver };
     this.loadLocalSavedAddresses();

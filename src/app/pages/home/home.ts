@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../services/product';
 import { CartService } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
+import { GuestCartService } from '../../services/guest-cart.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -51,6 +52,7 @@ export class Home implements OnInit, OnDestroy {
     private productService: ProductService,
     private cartService: CartService,
     private cartState: CartStateService,
+    private guestCart: GuestCartService,
     private cdr: ChangeDetectorRef,
     public router: Router
   ) {}
@@ -179,16 +181,6 @@ export class Home implements OnInit, OnDestroy {
 
     const userId = this.cartService.getCurrentUserId();
 
-    if (!userId) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Vui lòng đăng nhập',
-        text: 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.',
-        confirmButtonColor: '#2563B0'
-      });
-      return;
-    }
-
     this.productService.getProductById(product.Product_id).subscribe({
       next: (res) => {
         const detail = res.data;
@@ -201,6 +193,17 @@ export class Home implements OnInit, OnDestroy {
             text: 'Sản phẩm này chưa có phiên bản để thêm vào giỏ hàng.',
             confirmButtonColor: '#2563B0'
           });
+          return;
+        }
+
+        if (!userId) {
+          // Guest: lưu tạm giỏ hàng trong localStorage
+          const result = this.guestCart.addProduct(detail, variant, detail.variants || [], 1);
+          if (result.success) {
+            this.cartState.setCount(this.guestCart.getTotalQuantity());
+          }
+          this.guestCart.showAddResult(result);
+          this.cdr.detectChanges();
           return;
         }
 

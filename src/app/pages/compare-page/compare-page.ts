@@ -7,6 +7,7 @@ import { ProductService } from '../../services/product';
 import { NotificationService } from '../../components/notification/notification.service';
 import { CartService } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
+import { GuestCartService } from '../../services/guest-cart.service';
 import { AiCompareService } from '../../services/ai-compare';
 import Swal from 'sweetalert2';
 
@@ -78,6 +79,7 @@ export class ComparePageComponent implements OnInit {
     private notificationService: NotificationService,
     private cartService: CartService,
     private cartState: CartStateService,
+    private guestCart: GuestCartService,
     public router: Router,
     private aiCompareService: AiCompareService,
     private cdr: ChangeDetectorRef
@@ -600,15 +602,6 @@ export class ComparePageComponent implements OnInit {
     if (!product) return;
 
     const userId = this.cartService.getCurrentUserId();
-    if (!userId) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Vui lòng đăng nhập',
-        text: 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.',
-        confirmButtonColor: '#2563B0'
-      });
-      return;
-    }
 
     const variantId = product.selectedVariantId || product.variants?.[0]?.Product_variant_id;
 
@@ -619,6 +612,17 @@ export class ComparePageComponent implements OnInit {
         text: 'Sản phẩm chưa có phiên bản cụ thể.',
         confirmButtonColor: '#2563B0'
       });
+      return;
+    }
+
+    if (!userId) {
+      // Guest: lưu tạm giỏ hàng trong localStorage
+      const variant = product.variants?.find((v: any) => v.Product_variant_id === variantId) || product.variants?.[0];
+      const result = this.guestCart.addProduct(product, variant, product.variants || [], 1);
+      if (result.success) {
+        this.cartState.setCount(this.guestCart.getTotalQuantity());
+      }
+      this.guestCart.showAddResult(result);
       return;
     }
 
@@ -650,12 +654,7 @@ export class ComparePageComponent implements OnInit {
 
     const userId = this.cartService.getCurrentUserId();
     if (!userId) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Vui lòng đăng nhập',
-        text: 'Bạn cần đăng nhập để đặt mua sản phẩm.',
-        confirmButtonColor: '#2563B0'
-      });
+      this.guestCart.requireLogin('Bạn cần đăng nhập để đặt mua sản phẩm.', this.router.url);
       return;
     }
 
