@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth';
 import { CartStateService } from '../../services/cart-state.service';
 import { CartService } from '../../services/cart';
+import { WishlistService } from '../../services/wishlist';
 import { ProductService } from '../../services/product';
 import { NotificationBellComponent } from '../notification-bell/notification-bell';
 
@@ -21,6 +22,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   searchQuery: string = ''; 
   userName: string = ''; 
   cartCount = 0;
+  wishlistCount = 0;
   customerToken: string | null = null;
   categories: any[] = [];
   private subscriptions = new Subscription();
@@ -29,6 +31,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private cartState: CartStateService,
     private cartService: CartService,
+    private wishlistService: WishlistService,
     private productService: ProductService,
     private router: Router,
     private cdr: ChangeDetectorRef 
@@ -54,6 +57,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     this.subscriptions.add(this.cartState.cartCount$.subscribe(count => {
       this.cartCount = count;
+      this.cdr.detectChanges();
+    }));
+    
+    this.subscriptions.add(this.wishlistService.count$.subscribe(count => {
+      this.wishlistCount = count;
       this.cdr.detectChanges();
     }));
   }
