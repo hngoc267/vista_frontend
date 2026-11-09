@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type OrderDisplayStatus =
+  | 'pending_payment'
   | 'pending_confirmation'
   | 'processing'
   | 'shipping'

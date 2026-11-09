@@ -80,6 +80,22 @@ describe('AdminPromotionService (Unit tests with mock HttpClient)', () => {
     });
   });
 
+  it('should include the selected date filter in the request', () => {
+    localStorage.setItem('vista_admin_token', 'mock_jwt_token');
+    let calledParams: any;
+    const mockHttp = {
+      get: (_url: string, options: any) => {
+        calledParams = options.params;
+        return of({ success: true, data: { items: [] } });
+      }
+    } as any;
+
+    const service = new AdminPromotionService(mockHttp);
+    service.getPromotions({ dateFilter: 'today' }).subscribe();
+
+    expect(calledParams.get('dateFilter')).toBe('today');
+  });
+
   it('should throw error when calling API without admin token', async () => {
     localStorage.removeItem('vista_admin_token');
     const mockHttp = { get: () => of({}) } as any;
@@ -216,7 +232,47 @@ describe('AdminPromotionService (Unit tests with mock HttpClient)', () => {
       expect(component.getStatusLabel('out_of_quota')).toBe('Đã hết lượt');
       expect(component.getStatusLabel('available')).toBe('Khả dụng');
       expect(component.getStatusLabel('expiring')).toBe('Sắp hết hạn');
-      expect(component.getStatusLabel('used')).toBe('Đã sử dụng');
+      expect(component.getStatusLabel('used')).toBe('Đã hết lượt');
+    });
+
+    it('opens list details immediately without requesting the detail endpoint', async () => {
+      const { AdminPromotionsComponent } = await import('./admin-promotions');
+      const page = Object.create(AdminPromotionsComponent.prototype);
+      let detailRequestCalled = false;
+      page.detailRequestId = 3;
+      page.promotionService = {
+        getPromotionById: () => {
+          detailRequestCalled = true;
+          return of({});
+        }
+      };
+      page.selectedPromotion = null;
+      page.isDetailOpen = false;
+      page.isDetailLoading = true;
+
+      const promotion = {
+        id: 'promo-1',
+        code: 'SAVE',
+        usedCount: 5,
+        usageLimit: 10000
+      };
+      page.openDetail(promotion);
+
+      expect(detailRequestCalled).toBe(false);
+      expect(page.selectedPromotion).toEqual(promotion);
+      expect(page.isDetailOpen).toBe(true);
+      expect(page.isDetailLoading).toBe(false);
+      expect(page.detailRequestId).toBe(4);
+    });
+
+    it('does not let a stale detail response lower usage below the list count', () => {
+      const merged = component.mergePromotionUsage(
+        { id: 'promo-1', code: 'SAVE', usedCount: 0 } as any,
+        { id: 'promo-1', code: 'SAVE', usedCount: 5 } as any
+      );
+
+      expect(merged.usedCount).toBe(5);
+      expect(component.getUsagePercent(merged.usedCount, 10000)).toBe(0);
     });
   });
 });

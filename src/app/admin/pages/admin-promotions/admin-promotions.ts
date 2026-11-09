@@ -104,7 +104,10 @@ export class AdminPromotionsComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private searchSubject = new Subject<string>();
+  private searchSub?: Subscription;
   private querySub?: Subscription;
+  private promotionsRequestId = 0;
+  private detailRequestId = 0;
 
   // Phân quyền
   role: 'Staff' | 'Manager' | 'Admin' = 'Staff';
@@ -204,7 +207,7 @@ export class AdminPromotionsComponent implements OnInit, OnDestroy {
     this.isManager = this.role === 'Manager';
 
     // Debounce tìm kiếm 350ms
-    this.searchSubject
+    this.searchSub = this.searchSubject
       .pipe(debounceTime(350), distinctUntilChanged())
       .subscribe(() => {
         this.page = 1;
@@ -223,11 +226,13 @@ export class AdminPromotionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
     this.querySub?.unsubscribe();
   }
 
   // Tải danh sách khuyến mãi từ Backend API thực tế
   loadPromotions(): void {
+    const requestId = ++this.promotionsRequestId;
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -236,13 +241,17 @@ export class AdminPromotionsComponent implements OnInit, OnDestroy {
         keyword: this.searchKeyword.trim() || undefined,
         status: this.selectedStatus !== 'all' ? this.selectedStatus : undefined,
         type: this.selectedType !== 'all' ? this.selectedType : undefined,
+        dateFilter: this.selectedDateFilter !== 'all' ? this.selectedDateFilter : undefined,
         page: this.page,
         limit: this.limit
       })
       .subscribe({
         next: (res) => {
+          if (requestId !== this.promotionsRequestId) return;
           if (res?.success && res?.data) {
-            this.promotions = res.data.items || [];
+            this.promotions = (res.data.items || []).map((promo) =>
+              this.mergePromotionUsage(promo)
+            );
             this.total = res.data.total ?? this.promotions.length;
             this.totalPages = res.data.totalPages ?? Math.max(1, Math.ceil(this.total / this.limit));
             if (res.data.stats) {
@@ -258,6 +267,7 @@ export class AdminPromotionsComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         },
         error: (err) => {
+          if (requestId !== this.promotionsRequestId) return;
           this.promotions = [];
           this.total = 0;
           this.totalPages = 1;
@@ -301,38 +311,35 @@ export class AdminPromotionsComponent implements OnInit, OnDestroy {
 
   // --- DRAWER CHI TIẾT ---
   openDetail(promo: AdminPromotion): void {
+    this.detailRequestId++;
     this.selectedPromotion = { ...promo };
     this.isDetailOpen = true;
-
-    // Tải thông tin chi tiết đầy đủ kèm thống kê đơn hàng từ API
-    this.isDetailLoading = true;
-    this.promotionService.getPromotionById(promo.id).subscribe({
-      next: (res) => {
-        if (res?.data && this.selectedPromotion?.id === promo.id) {
-          this.selectedPromotion = res.data;
-        }
-        this.isDetailLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.isDetailLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
+    this.isDetailLoading = false;
   }
 
   openDetailById(idOrCode: string): void {
+    const requestId = ++this.detailRequestId;
+    const fallback = this.selectedPromotion &&
+      (this.selectedPromotion.id === idOrCode ||
+        this.selectedPromotion.code.toLowerCase() === idOrCode.toLowerCase())
+      ? this.selectedPromotion
+      : undefined;
+    if (!fallback) {
+      this.selectedPromotion = null;
+    }
     this.isDetailLoading = true;
     this.isDetailOpen = true;
     this.promotionService.getPromotionById(idOrCode).subscribe({
       next: (res) => {
+        if (requestId !== this.detailRequestId) return;
         if (res?.data) {
-          this.selectedPromotion = res.data;
+          this.selectedPromotion = this.mergePromotionUsage(res.data, fallback);
         }
         this.isDetailLoading = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
+        if (requestId !== this.detailRequestId) return;
         this.isDetailLoading = false;
         this.isDetailOpen = false;
         this.showToast(this.parseErrorMessage(err, 'Không tìm thấy chi tiết khuyến mãi.'), 'error');
@@ -342,8 +349,10 @@ export class AdminPromotionsComponent implements OnInit, OnDestroy {
   }
 
   closeDetail(): void {
+    this.detailRequestId++;
     this.isDetailOpen = false;
     this.selectedPromotion = null;
+    this.isDetailLoading = false;
   }
 
   // --- FORM TẠO / SỬA (CHỈ MANAGER) ---
@@ -417,6 +426,29 @@ export class AdminPromotionsComponent implements OnInit, OnDestroy {
 
     if (this.formData.minOrderValue === null || this.formData.minOrderValue < 0) {
       this.formErrors['minOrderValue'] = 'Đơn tối thiểu không được âm.';
+    }
+
+    if (
+      this.formData.maxDiscountAmount !== null &&
+      this.formData.maxDiscountAmount < 0
+    ) {
+      this.formErrors['maxDiscountAmount'] = 'Mức giảm tối đa không được âm.';
+    }
+
+    if (
+      this.formData.usageLimit === null ||
+      this.formData.usageLimit < 0 ||
+      !Number.isInteger(this.formData.usageLimit)
+    ) {
+      this.formErrors['usageLimit'] = 'Tổng lượt sử dụng phải là số nguyên từ 0 trở lên.';
+    }
+
+    if (
+      this.formData.usageLimitPerCustomer === null ||
+      this.formData.usageLimitPerCustomer < 1 ||
+      !Number.isInteger(this.formData.usageLimitPerCustomer)
+    ) {
+      this.formErrors['usageLimitPerCustomer'] = 'Giới hạn mỗi khách phải là số nguyên từ 1 trở lên.';
     }
 
     if (!this.formData.startDate) {
@@ -626,7 +658,7 @@ export class AdminPromotionsComponent implements OnInit, OnDestroy {
       case 'expiring':
         return 'Sắp hết hạn';
       case 'used':
-        return 'Đã sử dụng';
+        return 'Đã hết lượt';
       default:
         return status;
     }
@@ -671,8 +703,25 @@ export class AdminPromotionsComponent implements OnInit, OnDestroy {
   }
 
   getUsagePercent(used: number, limit: number): number {
-    if (!limit || limit <= 0) return 0;
-    return Math.min(100, Math.round((used / limit) * 100));
+    const usedCount = Number(used);
+    const usageLimit = Number(limit);
+    if (!Number.isFinite(usedCount) || !Number.isFinite(usageLimit) || usageLimit <= 0) return 0;
+    return Math.min(100, Math.max(0, Math.round((usedCount / usageLimit) * 100)));
+  }
+
+  private mergePromotionUsage(
+    promotion: AdminPromotion,
+    fallback?: AdminPromotion
+  ): AdminPromotion {
+    const detailCount = Number(promotion.usedCount);
+    const fallbackCount = Number(fallback?.usedCount);
+    const usedCount = Math.max(
+      0,
+      Number.isFinite(detailCount) ? detailCount : 0,
+      Number.isFinite(fallbackCount) ? fallbackCount : 0
+    );
+
+    return { ...fallback, ...promotion, usedCount };
   }
 
   private formatDateForInput(dateStr: string): string {

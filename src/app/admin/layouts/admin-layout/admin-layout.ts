@@ -35,6 +35,17 @@ interface AdminBreadcrumb {
   url: string | null;
 }
 
+interface AdminMenuItem {
+  label: string;
+  icon: string;
+  route: string;
+}
+
+interface AdminMenuGroup {
+  label: string;
+  items: AdminMenuItem[];
+}
+
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
@@ -89,7 +100,9 @@ export class AdminLayoutComponent {
   private accountMenu?: ElementRef<HTMLElement>;
   private readonly destroyRef = inject(DestroyRef);
 
-  private readonly allMenuItems = [
+  readonly isManager = getAdminRole() === 'Manager';
+
+  private readonly allMenuItems: AdminMenuItem[] = [
     {
       label: 'Tổng quan',
       icon: 'lucideLayoutDashboard',
@@ -126,24 +139,64 @@ export class AdminLayoutComponent {
       route: '/admin/reviews'
     },
     {
-      label: 'Quản lý khuyến mãi',
+      label: 'Quản lý voucher',
       icon: 'lucideTicket',
       route: '/admin/promotions'
     }
   ];
 
-  menuItems = (() => {
-    const role = getAdminRole();
-    if (role === 'Manager') {
-      return this.allMenuItems;
-    }
-    if (role === 'Staff') {
-      return this.allMenuItems.filter((item) =>
-        item.route !== '/admin/dashboard' && item.route !== '/admin/staff'
-      );
-    }
-    return [];
-  })();
+  readonly menuGroups: AdminMenuGroup[] = this.isManager
+    ? [
+        {
+          label: 'TỔNG QUAN',
+          items: [this.getMenuItem('/admin/dashboard')],
+        },
+        {
+          label: 'QUẢN LÝ & CẤU HÌNH',
+          items: [
+            this.getMenuItem('/admin/staff'),
+            this.getMenuItem('/admin/customers'),
+            this.getMenuItem('/admin/products'),
+            this.getMenuItem('/admin/promotions'),
+          ],
+        },
+        {
+          label: 'GIÁM SÁT HOẠT ĐỘNG',
+          items: [
+            { ...this.getMenuItem('/admin/orders'), label: 'Theo dõi đơn hàng' },
+            {
+              ...this.getMenuItem('/admin/returns'),
+              label: 'Theo dõi hậu mãi & đổi trả',
+            },
+            {
+              ...this.getMenuItem('/admin/reviews'),
+              label: 'Theo dõi kiểm duyệt đánh giá',
+            },
+          ],
+        },
+      ]
+    : [];
+
+  readonly staffMenuGroups: AdminMenuGroup[] = getAdminRole() === 'Staff'
+    ? [
+        {
+          label: 'TRA CỨU & HỖ TRỢ',
+          items: [
+            this.getMenuItem('/admin/products'),
+            this.getMenuItem('/admin/customers'),
+            { ...this.getMenuItem('/admin/promotions'), label: 'Tra cứu voucher' },
+          ],
+        },
+        {
+          label: 'CÔNG VIỆC NGHIỆP VỤ',
+          items: [
+            this.getMenuItem('/admin/orders'),
+            this.getMenuItem('/admin/returns'),
+            this.getMenuItem('/admin/reviews'),
+          ],
+        },
+      ]
+    : [];
 
   constructor(private router: Router) {
     this.loadAccountInfo();
@@ -154,6 +207,15 @@ export class AdminLayoutComponent {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(() => this.updateBreadcrumbs());
+  }
+
+  private getMenuItem(route: string): AdminMenuItem {
+    const item = this.allMenuItems.find((menuItem) => menuItem.route === route);
+    if (!item) {
+      throw new Error(`Không tìm thấy mục menu quản trị cho route ${route}.`);
+    }
+
+    return item;
   }
 
   private updateBreadcrumbs(): void {

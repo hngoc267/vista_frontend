@@ -35,6 +35,7 @@ import {
 type ModalAction = Exclude<OrderAction, 'print_label'>;
 
 const STATUS_LABELS: Record<OrderDisplayStatus, string> = {
+  pending_payment: 'Chờ thanh toán',
   pending_confirmation: 'Chờ xác nhận',
   processing: 'Đang xử lý',
   shipping: 'Đang giao',
@@ -184,6 +185,7 @@ export class AdminOrders implements OnInit, OnDestroy {
     }, 60 * 1000);
 
     // Mở từ thông báo: /admin/orders?orderId=... → mở chi tiết đơn đó
+    // Mở từ thông báo hoặc dashboard: /admin/orders?orderId=... hoặc ?status=... / ?paymentType=...
     this.queryParamsSubscription = this.route.queryParamMap.subscribe((params) => {
       const orderId = params.get('orderId')?.trim();
       if (orderId) {
@@ -193,6 +195,15 @@ export class AdminOrders implements OnInit, OnDestroy {
         // Điều hướng này phát lại queryParamMap (không còn orderId) → danh sách tự tải ở nhánh dưới
         this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
         return;
+      }
+
+      const statusParam = params.get('status')?.trim();
+      if (statusParam !== undefined && statusParam !== null) {
+        this.statusFilter = statusParam;
+      }
+      const paymentTypeParam = params.get('paymentType')?.trim();
+      if (paymentTypeParam !== undefined && paymentTypeParam !== null) {
+        this.paymentTypeFilter = paymentTypeParam;
       }
 
       this.loadOrders();

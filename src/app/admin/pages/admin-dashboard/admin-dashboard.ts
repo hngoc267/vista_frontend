@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { ApplicationRef, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideCalendarDays,
@@ -19,15 +20,56 @@ import {
   lucideCircleCheck,
   lucideTruck,
   lucideCreditCard,
-  lucideRefreshCw
+  lucideRefreshCw,
+  lucideAlertTriangle,
+  lucideAlertCircle,
+  lucideInfo,
+  lucideArrowRight,
+  lucideHelpCircle
 } from '@ng-icons/lucide';
+import {
+  AdminDashboardService,
+  SummaryCardsData,
+  RevenueTrendData,
+  RevenueTrendPoint,
+  OrderPipelineData,
+  PaymentBreakdownData,
+  CarrierPerformanceData,
+  OperationalAlert,
+  ProfitSummaryData,
+  CategoryCostItem,
+  ProfitTrendData,
+  ProfitTrendPoint
+} from '../../services/admin-dashboard';
+import { Subscription, finalize, forkJoin } from 'rxjs';
 
-type RevenuePeriod = '7days' | '30days' | '12months';
+export type RevenuePeriod = '7days' | '30days' | '90days' | '12months';
+
+export interface SvgChartPoint {
+  x: number;
+  y: number;
+  label: string;
+  key: string;
+  value: number;
+  prevValue: number;
+}
+
+export interface SvgProfitChartPoint {
+  x: number;
+  yRev: number;
+  yProfit: number | null;
+  label: string;
+  key: string;
+  netRevenue: number;
+  cogs: number;
+  grossProfit: number | null;
+  grossMargin: number | null;
+}
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, NgIcon],
+  imports: [CommonModule, RouterLink, NgIcon],
   providers: [
     provideIcons({
       lucideCalendarDays,
@@ -47,38 +89,82 @@ type RevenuePeriod = '7days' | '30days' | '12months';
       lucideCircleCheck,
       lucideTruck,
       lucideCreditCard,
-      lucideRefreshCw
+      lucideRefreshCw,
+      lucideAlertTriangle,
+      lucideAlertCircle,
+      lucideInfo,
+      lucideArrowRight,
+      lucideHelpCircle
     })
   ],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.scss'
 })
-export class AdminDashboard {
-  selectedPeriod: RevenuePeriod = '30days';
+export class AdminDashboard implements OnInit, OnDestroy {
+  private readonly dashboardService = inject(AdminDashboardService);
+  private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly ngZone = inject(NgZone);
+  private readonly appRef = inject(ApplicationRef);
 
-  // Dữ liệu minh họa giao diện, không phải doanh thu thực tế.
-  private readonly demoRevenue = {
-    '7days': {
-      labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
-      values: [12, 18, 15, 25, 21, 32, 28]
-    },
-    '30days': {
-      labels: ['01', '05', '10', '15', '20', '25', '30'],
-      values: [18, 25, 20, 38, 30, 45, 40]
-    },
-    '12months': {
-      labels: [
-        'T1', 'T2', 'T3', 'T4', 'T5', 'T6',
-        'T7', 'T8', 'T9', 'T10', 'T11', 'T12'
-      ],
-      values: [22, 28, 25, 35, 30, 42, 38, 48, 40, 55, 49, 62]
-    }
-  };
+  selectedPeriod: RevenuePeriod = '30days';
+  isLoading = true;
+  isUpdating = false;
+  errorMessage: string | null = null;
+
+  summaryCards: SummaryCardsData | null = null;
+  revenueTrend: RevenueTrendData | null = null;
+  orderPipeline: OrderPipelineData | null = null;
+  paymentBreakdown: PaymentBreakdownData | null = null;
+  carrierPerformance: CarrierPerformanceData | null = null;
+  alerts: OperationalAlert[] = [];
+
+  // Tab điều hướng: Tổng quan kinh doanh (Phase 1) vs Quản trị Giá vốn & Lợi nhuận (Phase 2)
+  activeTab: 'overview' | 'profit' = 'overview';
+
+  profitSummary: ProfitSummaryData | null = null;
+  profitTrend: ProfitTrendData | null = null;
+  readonly profitPageSizeOptions = [10, 20, 50];
+  profitPage = 1;
+  profitPageSize = 10;
+
+  hoveredPoint: SvgChartPoint | null = null;
+  hoveredProfitPoint: SvgProfitChartPoint | null = null;
+
+  // Thuộc tính biểu đồ doanh thu (Phase 1)
+  maxRevenueValue = 1;
+  chartPoints: SvgChartPoint[] = [];
+  prevChartPoints: { x: number; y: number }[] = [];
+  revenueLinePath = '';
+  prevRevenueLinePath = '';
+  revenueAreaPath = '';
+  displayLabels: string[] = [];
+
+  // Thuộc tính biểu đồ lợi nhuận (Phase 2)
+  maxProfitChartValue = 1;
+  profitChartPoints: SvgProfitChartPoint[] = [];
+  profitRevLinePath = '';
+  profitRevAreaPath = '';
+  grossProfitLinePath = '';
+  grossProfitAreaPath = '';
+  profitDisplayLabels: string[] = [];
+
+  private loadSubscription?: Subscription;
+
+  ngOnInit(): void {
+    this.loadDashboardData();
+  }
+
+  ngOnDestroy(): void {
+    this.loadSubscription?.unsubscribe();
+  }
 
   get periodLabel(): string {
     switch (this.selectedPeriod) {
       case '7days':
         return '7 ngày gần nhất';
+      case '90days':
+        return '90 ngày gần nhất';
       case '12months':
         return '12 tháng gần nhất';
       default:
@@ -86,62 +172,457 @@ export class AdminDashboard {
     }
   }
 
-  get revenueLabels(): string[] {
-    return this.demoRevenue[this.selectedPeriod].labels;
+  get activeCategories(): CategoryCostItem[] {
+    const list = this.profitSummary?.categoryBreakdown;
+    if (!Array.isArray(list)) return [];
+    return list.filter((cat) => (cat.cogs || 0) > 0);
   }
 
-  get revenuePoints(): { x: number; y: number; value: number }[] {
-    const values = this.demoRevenue[this.selectedPeriod].values;
-    const width = 600;
-    const height = 200;
-    const max = Math.max(...values) * 1.15;
-    const min = 0;
-
-    return values.map((value, index) => ({
-      x: values.length === 1
-        ? width / 2
-        : (index / (values.length - 1)) * width,
-      y: height - ((value - min) / (max - min)) * height,
-      value
-    }));
+  get profitTotalPages(): number {
+    return Math.max(1, Math.ceil((this.profitTrend?.points.length ?? 0) / this.profitPageSize));
   }
 
-  get revenueLine(): string {
-    return this.revenuePoints
-      .map((point, index) =>
-        `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
-      )
-      .join(' ');
+  get profitRangeStart(): number {
+    return this.profitTrend?.points.length
+      ? (this.profitPage - 1) * this.profitPageSize + 1
+      : 0;
   }
 
-  get revenueArea(): string {
-    const points = this.revenuePoints;
+  get profitRangeEnd(): number {
+    return Math.min(this.profitPage * this.profitPageSize, this.profitTrend?.points.length ?? 0);
+  }
 
-    if (!points.length) {
-      return '';
+  get paginatedProfitPoints(): ProfitTrendPoint[] {
+    const points = this.profitTrend?.points ?? [];
+    const start = (this.profitPage - 1) * this.profitPageSize;
+    return points.slice(start, start + this.profitPageSize);
+  }
+
+  onProfitPageSizeChange(event: Event): void {
+    const value = Number((event.target as HTMLSelectElement).value);
+    if (this.profitPageSizeOptions.includes(value)) {
+      this.profitPageSize = value;
+      this.profitPage = 1;
+    }
+  }
+
+  goToProfitPage(page: number): void {
+    if (page >= 1 && page <= this.profitTotalPages) {
+      this.profitPage = page;
+    }
+  }
+
+  get previousPeriodRangeText(): string {
+    const info = this.summaryCards?.periodInfo || this.profitSummary?.periodInfo;
+    if (info?.previousStart && info?.previousEnd) {
+      const start = this.formatDate(info.previousStart);
+      const end = this.formatDate(info.previousEnd);
+      if (start && end) {
+        return `${start} – ${end}`;
+      }
     }
 
-    return `${this.revenueLine} L 600 200 L 0 200 Z`;
+    const now = new Date();
+    let durationDays = 30;
+    if (this.selectedPeriod === '7days') durationDays = 7;
+    else if (this.selectedPeriod === '90days') durationDays = 90;
+    else if (this.selectedPeriod === '12months') durationDays = 365;
+
+    const curStart = new Date(now.getTime() - durationDays * 24 * 60 * 60 * 1000);
+    const prevEnd = new Date(curStart.getTime() - 1);
+    const prevStart = new Date(prevEnd.getTime() - durationDays * 24 * 60 * 60 * 1000);
+
+    return `${this.formatDate(prevStart)} – ${this.formatDate(prevEnd)}`;
   }
 
-  get maxRevenue(): number {
-    return Math.max(...this.demoRevenue[this.selectedPeriod].values);
+  get currentPeriodRangeText(): string {
+    const info = this.summaryCards?.periodInfo || this.profitSummary?.periodInfo;
+    if (info?.currentStart && info?.currentEnd) {
+      const start = this.formatDate(info.currentStart);
+      const end = this.formatDate(info.currentEnd);
+      if (start && end) {
+        return `${start} – ${end}`;
+      }
+    }
+    const now = new Date();
+    let durationDays = 30;
+    if (this.selectedPeriod === '7days') durationDays = 7;
+    else if (this.selectedPeriod === '90days') durationDays = 90;
+    else if (this.selectedPeriod === '12months') durationDays = 365;
+    const curStart = new Date(now.getTime() - durationDays * 24 * 60 * 60 * 1000);
+    return `${this.formatDate(curStart)} – ${this.formatDate(now)}`;
+  }
+
+  formatDate(dateInput?: string | Date | null): string {
+    if (!dateInput) return '';
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return '';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
   }
 
   onPeriodChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-
-    if (value === '7days' || value === '30days' || value === '12months') {
+    const target = event?.target as HTMLSelectElement | null;
+    const value = target?.value as RevenuePeriod;
+    if (target?.blur) {
+      try {
+        target.blur();
+      } catch {}
+    }
+    if (['7days', '30days', '90days', '12months'].includes(value)) {
       this.selectedPeriod = value;
+      this.profitPage = 1;
+      this.loadDashboardData(true);
     }
   }
 
-  // Sẽ thay bằng dữ liệu API khi backend có endpoint thống kê.
-  orderStatuses = [
-    { label: 'Chờ xử lý', className: 'pending' },
-    { label: 'Đang xử lý', className: 'processing' },
-    { label: 'Đang giao', className: 'shipping' },
-    { label: 'Hoàn thành', className: 'completed' },
-    { label: 'Đã hủy', className: 'cancelled' }
-  ];
+  setTab(tab: 'overview' | 'profit'): void {
+    this.activeTab = tab;
+    this.cdr?.markForCheck();
+    this.cdr?.detectChanges();
+  }
+
+  loadDashboardData(isPeriodChange = false): void {
+    this.loadSubscription?.unsubscribe();
+
+    // Giữ nguyên layout nếu đã có dữ liệu để tránh chớp giật toàn trang
+    if (isPeriodChange && this.summaryCards) {
+      this.isLoading = false;
+      this.isUpdating = true;
+    } else {
+      this.isLoading = true;
+      this.isUpdating = false;
+    }
+
+    this.errorMessage = null;
+    this.hoveredPoint = null;
+    this.hoveredProfitPoint = null;
+    this.cdr?.markForCheck();
+    this.cdr?.detectChanges();
+
+    // alerts là cảnh báo vận hành hệ thống thực tế (quá hạn SLA, đơn chuyển khoản, đổi trả),
+    // không thay đổi theo kỳ báo cáo. Tối ưu bỏ qua alerts khi chỉ đổi kỳ để tăng tốc độ phản hồi.
+    const requests: Record<string, any> = {
+      summary: this.dashboardService.getSummaryCards(this.selectedPeriod),
+      trend: this.dashboardService.getRevenueTrend(this.selectedPeriod),
+      pipeline: this.dashboardService.getOrderPipeline(this.selectedPeriod),
+      payment: this.dashboardService.getPaymentBreakdown(this.selectedPeriod),
+      carrier: this.dashboardService.getCarrierPerformance(this.selectedPeriod),
+      profitSummary: this.dashboardService.getProfitSummary(this.selectedPeriod),
+      profitTrend: this.dashboardService.getProfitTrend(this.selectedPeriod)
+    };
+
+    if (!isPeriodChange || !this.alerts || this.alerts.length === 0) {
+      requests['alerts'] = this.dashboardService.getOperationalAlerts();
+    }
+
+    this.loadSubscription = forkJoin(requests)
+      .subscribe({
+        next: (results: any) => {
+          this.isLoading = false;
+          this.isUpdating = false;
+          this.summaryCards = results.summary?.data ?? this.summaryCards;
+          this.revenueTrend = results.trend?.data ?? this.revenueTrend;
+          this.orderPipeline = results.pipeline?.data ?? this.orderPipeline;
+          this.paymentBreakdown = results.payment?.data ?? this.paymentBreakdown;
+          this.carrierPerformance = results.carrier?.data ?? this.carrierPerformance;
+          if (results.alerts?.data) {
+            this.alerts = Array.isArray(results.alerts.data) ? results.alerts.data : [];
+          }
+          this.profitSummary = results.profitSummary?.data ?? this.profitSummary;
+          this.profitTrend = results.profitTrend?.data ?? this.profitTrend;
+
+          this.updateChartCalculations();
+          this.updateProfitChartCalculations();
+          this.cdr?.markForCheck();
+          this.cdr?.detectChanges();
+        },
+        error: (err) => {
+          console.error('Lỗi tải dữ liệu Dashboard:', err);
+          this.isLoading = false;
+          this.isUpdating = false;
+          this.errorMessage = err?.message || 'Không thể tải dữ liệu Dashboard. Vui lòng thử lại sau.';
+          this.cdr?.markForCheck();
+          this.cdr?.detectChanges();
+        }
+      });
+  }
+
+  onRetry(): void {
+    this.loadDashboardData();
+  }
+
+  // --- ĐIỀU HƯỚNG CẢNH BÁO VẬN HÀNH (OPERATIONAL ALERTS NAVIGATION) ---
+
+  getAlertRoute(link?: string): string {
+    if (!link) return '';
+    return link.split('?')[0] || '';
+  }
+
+  getAlertQueryParams(link?: string): Record<string, string> {
+    if (!link || !link.includes('?')) return {};
+    const queryPart = link.split('?')[1];
+    if (!queryPart) return {};
+    const params = new URLSearchParams(queryPart);
+    const result: Record<string, string> = {};
+    params.forEach((value, key) => {
+      result[key] = value;
+    });
+    return result;
+  }
+
+  getAlertCountText(alert: OperationalAlert): string {
+    const route = this.getAlertRoute(alert.link);
+    const unit = route === '/admin/returns'
+      ? 'yêu cầu'
+      : route === '/admin/orders'
+        ? 'đơn hàng'
+        : 'cảnh báo';
+    return `${alert.count} ${unit}`;
+  }
+
+  getAlertActionText(alert: OperationalAlert): string {
+    switch (alert.id) {
+      case 'sla_overdue_orders':
+        return 'Xem đơn quá hạn';
+      case 'pending_returns':
+        return 'Xem yêu cầu đổi trả';
+      case 'pending_bank_orders':
+        return 'Xem đơn chuyển khoản';
+      default:
+        return 'Xem chi tiết';
+    }
+  }
+
+  // --- TÍNH TOÁN TỌA ĐỘ BIỂU ĐỒ SVG TỪ DỮ LIỆU THẬT ---
+
+  updateChartCalculations(): void {
+    const points = this.revenueTrend?.points;
+    if (!points || points.length === 0) {
+      this.maxRevenueValue = 1;
+      this.chartPoints = [];
+      this.prevChartPoints = [];
+      this.revenueLinePath = '';
+      this.prevRevenueLinePath = '';
+      this.revenueAreaPath = '';
+      this.displayLabels = [];
+      return;
+    }
+
+    const maxCur = Math.max(...points.map((p) => p.netRevenue));
+    const maxPrev = Math.max(...points.map((p) => p.prevNetRevenue));
+    const maxVal = Math.max(maxCur, maxPrev);
+    this.maxRevenueValue = maxVal > 0 ? maxVal * 1.15 : 1000000;
+
+    const width = 600;
+    const leftInset = 12;
+    const rightInset = width - leftInset;
+    const topInset = 12;
+    const bottomInset = 204;
+    const max = this.maxRevenueValue;
+    const count = points.length;
+
+    this.chartPoints = points.map((pt, index) => {
+      const x = count === 1
+        ? width / 2
+        : leftInset + (index / (count - 1)) * (rightInset - leftInset);
+      const y = bottomInset - (pt.netRevenue / max) * (bottomInset - topInset);
+      return {
+        x: Number(x.toFixed(1)),
+        y: Number(y.toFixed(1)),
+        label: pt.label,
+        key: pt.key,
+        value: pt.netRevenue,
+        prevValue: pt.prevNetRevenue
+      };
+    });
+
+    this.prevChartPoints = points.map((pt, index) => {
+      const x = count === 1
+        ? width / 2
+        : leftInset + (index / (count - 1)) * (rightInset - leftInset);
+      const y = bottomInset - (pt.prevNetRevenue / max) * (bottomInset - topInset);
+      return {
+        x: Number(x.toFixed(1)),
+        y: Number(y.toFixed(1))
+      };
+    });
+
+    this.revenueLinePath = this.createSmoothLinePath(
+      this.chartPoints.map(({ x, y }) => ({ x, y }))
+    );
+    this.prevRevenueLinePath = this.createSmoothLinePath(this.prevChartPoints);
+
+    this.revenueAreaPath = this.revenueLinePath
+      ? `${this.revenueLinePath} L ${rightInset} ${bottomInset} L ${leftInset} ${bottomInset} Z`
+      : '';
+
+    const total = points.length;
+    if (total <= 12) {
+      this.displayLabels = points.map((p) => p.label);
+    } else {
+      const step = Math.ceil(total / 6);
+      this.displayLabels = points
+        .filter((_, i) => i % step === 0 || i === total - 1)
+        .map((p) => p.label);
+    }
+  }
+
+  onHoverPoint(point: SvgChartPoint): void {
+    this.hoveredPoint = point;
+  }
+
+  onLeaveChart(): void {
+    this.hoveredPoint = null;
+  }
+
+  // --- TÍNH TOÁN BIỂU ĐỒ LỢI NHUẬN (PHASE 2) ---
+
+  updateProfitChartCalculations(): void {
+    const points = this.profitTrend?.points;
+    if (!points || points.length === 0) {
+      this.maxProfitChartValue = 1;
+      this.profitChartPoints = [];
+      this.profitRevLinePath = '';
+      this.profitRevAreaPath = '';
+      this.grossProfitLinePath = '';
+      this.grossProfitAreaPath = '';
+      this.profitDisplayLabels = [];
+      return;
+    }
+
+    const maxRev = Math.max(...points.map((p) => p.netRevenue));
+    const validProfits = points
+      .map((p) => p.grossProfit)
+      .filter((v): v is number => v !== null && v !== undefined);
+    const maxProfit = validProfits.length > 0 ? Math.max(...validProfits) : 0;
+    const maxVal = Math.max(maxRev, maxProfit);
+    this.maxProfitChartValue = maxVal > 0 ? maxVal * 1.15 : 1000000;
+
+    const width = 600;
+    const leftInset = 12;
+    const rightInset = width - leftInset;
+    const topInset = 12;
+    const bottomInset = 204;
+    const max = this.maxProfitChartValue;
+    const count = points.length;
+
+    this.profitChartPoints = points.map((pt, index) => {
+      const x = count === 1
+        ? width / 2
+        : leftInset + (index / (count - 1)) * (rightInset - leftInset);
+      const yRev = bottomInset - (Math.max(0, pt.netRevenue) / max) * (bottomInset - topInset);
+      const yProfit = pt.grossProfit !== null && pt.grossProfit !== undefined
+        ? bottomInset - (Math.max(0, pt.grossProfit) / max) * (bottomInset - topInset)
+        : null;
+      return {
+        x: Number(x.toFixed(1)),
+        yRev: Number(yRev.toFixed(1)),
+        yProfit: yProfit !== null ? Number(yProfit.toFixed(1)) : null,
+        label: pt.label,
+        key: pt.key,
+        netRevenue: pt.netRevenue,
+        cogs: pt.cogs,
+        grossProfit: pt.grossProfit,
+        grossMargin: pt.grossMargin
+      };
+    });
+
+    this.profitRevLinePath = this.createSmoothLinePath(
+      this.profitChartPoints.map(({ x, yRev }) => ({ x, y: yRev }))
+    );
+
+    this.profitRevAreaPath = this.profitRevLinePath
+      ? `${this.profitRevLinePath} L ${rightInset} ${bottomInset} L ${leftInset} ${bottomInset} Z`
+      : '';
+
+    const validProfitPoints = this.profitChartPoints.filter(
+      (point): point is SvgProfitChartPoint & { yProfit: number } => point.yProfit !== null
+    );
+    if (validProfitPoints.length > 0) {
+      this.grossProfitLinePath = this.createSmoothLinePath(
+        validProfitPoints.map(({ x, yProfit }) => ({ x, y: yProfit }))
+      );
+      this.grossProfitAreaPath = `${this.grossProfitLinePath} L ${validProfitPoints[validProfitPoints.length - 1].x} ${bottomInset} L ${validProfitPoints[0].x} ${bottomInset} Z`;
+    } else {
+      this.grossProfitLinePath = '';
+      this.grossProfitAreaPath = '';
+    }
+
+    const total = points.length;
+    if (total <= 12) {
+      this.profitDisplayLabels = points.map((p) => p.label);
+    } else {
+      const step = Math.ceil(total / 6);
+      this.profitDisplayLabels = points
+        .filter((_, i) => i % step === 0 || i === total - 1)
+        .map((p) => p.label);
+    }
+  }
+
+  private createSmoothLinePath(points: Array<{ x: number; y: number }>): string {
+    if (points.length === 0) return '';
+    if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let index = 0; index < points.length - 1; index++) {
+      const previous = points[Math.max(0, index - 1)];
+      const start = points[index];
+      const end = points[index + 1];
+      const next = points[Math.min(points.length - 1, index + 2)];
+      const control1X = start.x + (end.x - previous.x) / 6;
+      const control1Y = Math.max(12, Math.min(204, start.y + (end.y - previous.y) / 6));
+      const control2X = end.x - (next.x - start.x) / 6;
+      const control2Y = Math.max(12, Math.min(204, end.y - (next.y - start.y) / 6));
+
+      path += ` C ${control1X.toFixed(1)} ${control1Y.toFixed(1)}, ${control2X.toFixed(1)} ${control2Y.toFixed(1)}, ${end.x} ${end.y}`;
+    }
+
+    return path;
+  }
+
+  onHoverProfitPoint(point: SvgProfitChartPoint): void {
+    this.hoveredProfitPoint = point;
+  }
+
+  onLeaveProfitChart(): void {
+    this.hoveredProfitPoint = null;
+  }
+
+  // --- HIT-BOX HOVER SLICE HELPERS ---
+
+  getHoverSliceX(index: number, total: number): number {
+    if (total <= 1) return 0;
+    return Number(((index * 600) / total).toFixed(1));
+  }
+
+  getHoverSliceWidth(total: number): number {
+    if (total <= 1) return 600;
+    return Number((600 / total).toFixed(1));
+  }
+
+  getProfitTooltipLeft(x: number): number {
+    const rawPct = (x / 600) * 100;
+    return Math.max(16, Math.min(84, Number(rawPct.toFixed(1))));
+  }
+
+  getProfitTooltipTop(pt: SvgProfitChartPoint): number {
+    const yRev = pt.yRev;
+    const yProfit = pt.yProfit !== null ? pt.yProfit : yRev;
+    return Math.min(yRev, yProfit);
+  }
+
+  // --- FORMATTING HELPERS ---
+
+  formatCurrency(value?: number | null): string {
+    if (value === undefined || value === null) return '0 ₫';
+    return `${new Intl.NumberFormat('vi-VN').format(Math.round(value))} ₫`;
+  }
+
+  formatNumber(value?: number | null): string {
+    if (value === undefined || value === null) return '0';
+    return new Intl.NumberFormat('vi-VN').format(value);
+  }
 }

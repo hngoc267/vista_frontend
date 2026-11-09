@@ -2,8 +2,14 @@
   <!-- Tiêu đề trang -->
   <header class="page-heading">
     <h1>Xử lý đơn hàng</h1>
-    <p>Theo dõi và cập nhật trạng thái đơn hàng</p>
+    <p *ngIf="canEdit">Tiếp nhận và xử lý đơn hàng</p>
+    <p *ngIf="!canEdit">Theo dõi và giám sát đơn hàng</p>
   </header>
+
+  <div class="manager-notice-banner" *ngIf="!canEdit">
+    <ng-icon name="lucideEye" size="16px" aria-hidden="true"></ng-icon>
+    <span>Manager chỉ xem và theo dõi. Staff thực hiện xác nhận, hủy và bàn giao đơn hàng.</span>
+  </div>
 
   <section class="panel">
     <div class="panel-heading">
