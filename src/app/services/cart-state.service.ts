@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { GuestCartService } from './guest-cart.service';
 
 export interface CartStateItem {
   qty?: number;
@@ -11,6 +12,7 @@ export interface CartStateItem {
 })
 export class CartStateService {
   private readonly storageKey = 'vista_cart_count';
+  private readonly guestCart = inject(GuestCartService);
   private readonly cartCountSubject = new BehaviorSubject<number>(this.readStoredCount());
 
   cartCount$ = this.cartCountSubject.asObservable();
@@ -20,7 +22,10 @@ export class CartStateService {
   }
 
   setCount(count: number): void {
-    const nextCount = Math.max(0, Number(count) || 0);
+    // Chưa đăng nhập: số trên giỏ hàng luôn là số lượng trong giỏ hàng tạm của Guest
+    const nextCount = this.guestCart.isGuest()
+      ? this.guestCart.getTotalQuantity()
+      : Math.max(0, Number(count) || 0);
     this.cartCountSubject.next(nextCount);
     this.storeCount(nextCount);
   }
@@ -39,6 +44,10 @@ export class CartStateService {
   private readStoredCount(): number {
     if (typeof localStorage === 'undefined') {
       return 0;
+    }
+
+    if (this.guestCart.isGuest()) {
+      return this.guestCart.getTotalQuantity();
     }
 
     const stored = localStorage.getItem(this.storageKey);

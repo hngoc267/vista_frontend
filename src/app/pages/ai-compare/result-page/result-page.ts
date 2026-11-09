@@ -8,6 +8,7 @@ import { AiCompareService, AiResult } from '../../../services/ai-compare';
 import { AiHistoryService } from '../../../services/ai-history';
 import { CartService } from '../../../services/cart';
 import { CartStateService } from '../../../services/cart-state.service';
+import { GuestCartService } from '../../../services/guest-cart.service';
 import { ChangeDetectorRef } from '@angular/core';
 import Swal from 'sweetalert2';
 
@@ -35,6 +36,7 @@ export class ResultPage implements OnInit, OnDestroy {
     private location: Location,
     private cartService: CartService,
     private cartState: CartStateService,
+    private guestCart: GuestCartService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -189,15 +191,6 @@ getProductImage(index: number): string {
     if (!product) return;
 
     const userId = this.cartService.getCurrentUserId();
-    if (!userId) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Vui lòng đăng nhập',
-        text: 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.',
-        confirmButtonColor: '#2563B0'
-      });
-      return;
-    }
 
     const variantId = this.resolveVariantId(product);
     if (!variantId) {
@@ -207,6 +200,17 @@ getProductImage(index: number): string {
         text: 'Sản phẩm chưa có phiên bản cụ thể.',
         confirmButtonColor: '#2563B0'
       });
+      return;
+    }
+
+    if (!userId) {
+      // Guest: lưu tạm giỏ hàng trong localStorage
+      const variant = this.resolveVariant(product, variantId);
+      const result = this.guestCart.addProduct(product, variant, product.variants || [], 1);
+      if (result.success) {
+        this.cartState.setCount(this.guestCart.getTotalQuantity());
+      }
+      this.guestCart.showAddResult(result);
       return;
     }
 
@@ -238,12 +242,7 @@ getProductImage(index: number): string {
 
     const userId = this.cartService.getCurrentUserId();
     if (!userId) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Vui lòng đăng nhập',
-        text: 'Bạn cần đăng nhập để đặt mua sản phẩm.',
-        confirmButtonColor: '#2563B0'
-      });
+      this.guestCart.requireLogin('Bạn cần đăng nhập để đặt mua sản phẩm.', this.router.url);
       return;
     }
 

@@ -4,6 +4,7 @@ import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../services/product';
 import { CartService } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
+import { GuestCartService } from '../../services/guest-cart.service';
 import { ReviewService } from '../../services/review';
 import { CompareService, CompareItem } from '../../services/compare';
 import { NotificationService } from '../../components/notification/notification.service';
@@ -53,6 +54,7 @@ export class ProductDetail implements OnInit {
     private productService: ProductService,
     private cartService: CartService,
     private cartState: CartStateService,
+    private guestCart: GuestCartService,
     private reviewService: ReviewService,
     private route: ActivatedRoute,
     private router: Router,
@@ -175,15 +177,6 @@ export class ProductDetail implements OnInit {
     }
 
     const userId = this.cartService.getCurrentUserId();
-    if (!userId) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Vui lòng đăng nhập',
-        text: 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.',
-        confirmButtonColor: '#2563B0'
-      });
-      return;
-    }
 
     const variantId = this.selectedVariant?.Product_variant_id || this.variants[0]?.Product_variant_id;
     if (!variantId) {
@@ -193,6 +186,17 @@ export class ProductDetail implements OnInit {
         text: 'Vui lòng chọn một phiên bản sản phẩm trước khi thêm vào giỏ hàng.',
         confirmButtonColor: '#2563B0'
       });
+      return;
+    }
+
+    if (!userId) {
+      // Guest: lưu tạm giỏ hàng trong localStorage
+      const variant = this.selectedVariant || this.variants[0];
+      const result = this.guestCart.addProduct(this.product, variant, this.variants, this.quantity);
+      if (result.success) {
+        this.cartState.setCount(this.guestCart.getTotalQuantity());
+      }
+      this.guestCart.showAddResult(result);
       return;
     }
 
@@ -226,12 +230,7 @@ export class ProductDetail implements OnInit {
 
     const userId = this.cartService.getCurrentUserId();
     if (!userId) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Vui lòng đăng nhập',
-        text: 'Bạn cần đăng nhập để đặt mua sản phẩm.',
-        confirmButtonColor: '#2563B0'
-      });
+      this.guestCart.requireLogin('Bạn cần đăng nhập để đặt mua sản phẩm.', this.router.url);
       return;
     }
 
