@@ -59,6 +59,14 @@
         <span>Giỏ hàng</span>
       </a>
 
+      <a routerLink="/wishlist" class="action-btn cart-action">
+        <span class="cart-icon-wrap">
+          <i class="ph ph-heart"></i>
+          <span class="cart-badge" *ngIf="wishlistCount > 0">{{ wishlistCount }}</span>
+        </span>
+        <span>Yêu thích</span>
+      </a>
+      
       <a *ngIf="!isLoggedIn" routerLink="/login" class="action-btn">
         <i class="ph ph-user"></i>
         <span>Đăng nhập</span>

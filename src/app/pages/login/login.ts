@@ -1,8 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth';
+import { CartService } from '../../services/cart';
+import { CartStateService } from '../../services/cart-state.service';
+import { GuestCartMergeResult, GuestCartService } from '../../services/guest-cart.service';
 import Swal from 'sweetalert2';
 import { finalize } from 'rxjs';
 
@@ -26,7 +29,14 @@ export class Login implements OnInit {
   countdown = 0;
   timerInterval: any;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private guestCart: GuestCartService,
+    private cartService: CartService,
+    private cartState: CartStateService
+  ) {}
 
   ngOnInit() {
     if (this.authService.isLoggedIn()) {
@@ -92,16 +102,10 @@ export class Login implements OnInit {
       next: (res) => {
         if (res.success) {
           localStorage.setItem('failedAttempts', '0');
-          
-          Swal.fire({
-            icon: 'success',
-            title: 'Đăng nhập thành công!',
-            text: `Chào mừng ${res.user.Full_name}`,
-            showConfirmButton: false,
-            timer: 2000
-          }).then(() => {
-            this.router.navigate(['/']);
-          });
+
+          // Giữ lại các sản phẩm khách đã thêm khi chưa đăng nhập: gộp vào giỏ hàng của tài khoản
+          const userId = (res.user || res.data)?.User_id || '';
+          this.guestCart.mergeIntoAccount(userId).subscribe((mergeResult) => this.finishLogin(res, userId, mergeResult));
           return;
         }
 
@@ -115,6 +119,47 @@ export class Login implements OnInit {
         );
       }
     });
+  }
+
+  private finishLogin(res: any, userId: string, mergeResult: GuestCartMergeResult): void {
+    const notice = this.guestCart.describeMerge(mergeResult).replace(/\n/g, ' ');
+    const welcome = `Chào mừng ${res.user.Full_name}`;
+
+    if (mergeResult.mergedCount > 0) {
+      this.cartService.getCart(userId).subscribe({
+        next: (cartRes) => {
+          this.cartState.setCount(
+            cartRes.data?.cart?.Total_product ?? this.cartState.getTotalQuantity(cartRes.data?.items || [])
+          );
+        },
+        error: () => {}
+      });
+    }
+
+    const popup = notice
+      ? Swal.fire({
+          icon: 'success',
+          title: 'Đăng nhập thành công!',
+          text: `${welcome}. ${notice}`,
+          confirmButtonColor: '#2563B0'
+        })
+      : Swal.fire({
+          icon: 'success',
+          title: 'Đăng nhập thành công!',
+          text: welcome,
+          showConfirmButton: false,
+          timer: 2000
+        });
+
+    popup.then(() => {
+      this.router.navigateByUrl(this.getReturnUrl());
+    });
+  }
+
+  /** Trang cần quay lại sau khi đăng nhập (ví dụ /cart); chỉ nhận đường dẫn nội bộ của ứng dụng. */
+  private getReturnUrl(): string {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '';
+    return /^\/(?![\/\\])/.test(returnUrl) && !returnUrl.startsWith('/login') ? returnUrl : '/';
   }
 
   private handleFailedAttempt(message: string): void {

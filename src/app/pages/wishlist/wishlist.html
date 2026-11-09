@@ -1,0 +1,106 @@
+<div class="breadcrumb-bar">
+  <div class="section-container">
+    <a [routerLink]="['/']">Trang chủ</a>
+    <span class="sep">›</span>
+    <span class="current">Sản phẩm yêu thích</span>
+  </div>
+</div>
+
+<div class="page-layout">
+  <div class="section-container">
+
+    <div class="page-header">
+      <div>
+        <h1>Sản phẩm yêu thích</h1>
+        <p class="sub" *ngIf="!loading && cards.length > 0">{{ cards.length }} sản phẩm đã lưu</p>
+      </div>
+      <button type="button" class="btn-clear" *ngIf="cards.length > 0" (click)="clearAll()">
+        <i class="ph ph-trash"></i>
+        Xóa tất cả
+      </button>
+    </div>
+
+    <div class="guest-note" *ngIf="!isLoggedIn">
+      <i class="ph ph-info"></i>
+      <span>
+        Danh sách đang được lưu tạm trên trình duyệt này.
+        <a routerLink="/login">Đăng nhập</a> để lưu vào tài khoản của bạn.
+      </span>
+    </div>
+
+    <div class="state-box" *ngIf="loading">
+      <div class="loading-spinner"></div>
+      <span>Đang tải danh sách yêu thích...</span>
+    </div>
+
+    <div class="state-box" *ngIf="!loading && loadError">
+      <i class="ph ph-warning-circle"></i>
+      <p>Không thể tải danh sách yêu thích.</p>
+      <button type="button" class="btn-primary" (click)="retry()">Thử lại</button>
+    </div>
+
+    <div class="state-box" *ngIf="!loading && !loadError && cards.length === 0">
+      <i class="ph ph-heart"></i>
+      <p>Bạn chưa lưu sản phẩm yêu thích nào.</p>
+      <a class="btn-primary" routerLink="/products">Khám phá sản phẩm</a>
+    </div>
+
+    <div class="wishlist-grid" *ngIf="!loading && !loadError && cards.length > 0">
+      <div class="wishlist-card" *ngFor="let card of cards" [class.unavailable]="!canAddToCart(card)">
+
+        <div class="card-image">
+          <a [routerLink]="['/products', card.Product_id]">
+            <img
+              [src]="'/assets/images/' + card.Image"
+              [alt]="card.Product_name"
+              (error)="$any($event.target).style.visibility = 'hidden'"
+            >
+          </a>
+
+          <span class="badge badge-promo" *ngIf="!card.Is_Flash_Sale && card.Discount > 0">
+            Ưu đãi {{ card.Discount }}%
+          </span>
+          <span class="badge badge-ai" *ngIf="card.Is_AI && !(card.Discount > 0)">AI Gợi ý</span>
+
+          <button
+            type="button"
+            class="heart-btn active"
+            title="Bỏ khỏi yêu thích"
+            aria-label="Bỏ khỏi yêu thích"
+            (click)="removeCard(card)"
+          >
+            <i class="ph-fill ph-heart"></i>
+          </button>
+        </div>
+
+        <div class="card-info">
+          <a class="card-name" [routerLink]="['/products', card.Product_id]">{{ card.Product_name }}</a>
+          <p class="card-spec">{{ card.addVariant?.Variant_name || specLine(card) }}</p>
+
+          <div class="price-wrap">
+            <p class="product-price">{{ formatPrice(getFinalPrice(card.Min_price, card.Discount)) }}</p>
+            <p class="product-original-price" *ngIf="card.Discount > 0">
+              <del>{{ formatPrice(card.Min_price) }}</del>
+            </p>
+          </div>
+
+          <p class="status-note" *ngIf="statusLabel(card)">{{ statusLabel(card) }}</p>
+
+          <div class="card-actions">
+            <a class="btn-outline" [routerLink]="['/products', card.Product_id]">Xem chi tiết</a>
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="!canAddToCart(card) || card.adding"
+              (click)="addToCart(card)"
+            >
+              {{ card.adding ? 'Đang thêm...' : 'Thêm vào giỏ' }}
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

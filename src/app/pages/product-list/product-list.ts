@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../services/product';
+import { WishlistService } from '../../services/wishlist';
 
 @Component({
   selector: 'app-product-list',
@@ -58,7 +59,8 @@ export class ProductList implements OnInit {
     private productService: ProductService,
     private route: ActivatedRoute,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private wishlistService: WishlistService
   ) {}
 
   ngOnInit() {
@@ -234,6 +236,16 @@ export class ProductList implements OnInit {
     this.currentPage = page;
     this.applyFilter();
     window.scrollTo({ top: 0, behavior: 'smooth' }); 
+  }
+
+  isWishlisted(product: any): boolean {
+    return this.wishlistService.isInWishlist(product.Product_id);
+  }
+
+  toggleWishlist(event: Event, product: any): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.wishlistService.toggle(product.Product_id);
   }
 
   formatPrice(price: number): string {
