@@ -815,6 +815,15 @@
       flex-direction: column;
       gap: 22px;
 
+      .detail-loading {
+        padding: 10px 12px;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 13px;
+      }
+
       .manager-notice-banner {
         background-color: #f8fafc;
         border: 1px dashed #cbd5e1;
@@ -1232,4 +1241,3 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-

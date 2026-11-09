@@ -35,6 +35,16 @@ describe('AdminLayout', () => {
                 data: { breadcrumb: 'Xử lý đơn hàng' },
               },
               {
+                path: 'staff',
+                component: AdminRouteStub,
+                data: { breadcrumb: 'Quản lý nhân sự' },
+              },
+              {
+                path: 'customers',
+                component: AdminRouteStub,
+                data: { breadcrumb: 'Quản lý khách hàng' },
+              },
+              {
                 path: 'products',
                 component: AdminRouteStub,
                 data: { breadcrumb: 'Danh mục sản phẩm' },
@@ -45,6 +55,21 @@ describe('AdminLayout', () => {
                     data: { breadcrumb: 'Chi tiết sản phẩm' },
                   },
                 ],
+              },
+              {
+                path: 'promotions',
+                component: AdminRouteStub,
+                data: { breadcrumb: 'Quản lý khuyến mãi' },
+              },
+              {
+                path: 'returns',
+                component: AdminRouteStub,
+                data: { breadcrumb: 'Hậu mãi & Đổi trả' },
+              },
+              {
+                path: 'reviews',
+                component: AdminRouteStub,
+                data: { breadcrumb: 'Kiểm duyệt đánh giá' },
               },
             ],
           },
@@ -76,26 +101,119 @@ describe('AdminLayout', () => {
     expect(component).toBeTruthy();
   });
 
-  it('shows all six menu items to a Manager', () => {
+  it('shows the grouped management and monitoring menu to a Manager', () => {
     createComponent('Manager');
 
-    expect(fixture.nativeElement.querySelectorAll('.menu-item').length).toBe(6);
-  });
-
-  it('shows only the four operational menu items to Staff', () => {
-    createComponent('Staff');
+    const groups = Array.from(
+      fixture.nativeElement.querySelectorAll('.sidebar-nav-group') as NodeListOf<HTMLElement>
+    );
+    expect(groups.map((group) => group.querySelector('.sidebar-group-title')?.textContent?.trim()))
+      .toEqual(['TỔNG QUAN', 'QUẢN LÝ & CẤU HÌNH', 'GIÁM SÁT HOẠT ĐỘNG']);
 
     const menuItems = Array.from(
       fixture.nativeElement.querySelectorAll('.menu-item') as NodeListOf<HTMLElement>
-    ).map((item) => item.textContent?.trim());
-
-    expect(menuItems.length).toBe(4);
-    expect(menuItems).toEqual([
+    );
+    expect(menuItems.map((item) => item.textContent?.trim())).toEqual([
+      'Tổng quan',
+      'Quản lý nhân sự',
+      'Quản lý khách hàng',
       'Danh mục sản phẩm',
-      'Xử lý đơn hàng',
-      'Hậu mãi & Đổi trả',
-      'Kiểm duyệt đánh giá',
+      'Quản lý voucher',
+      'Theo dõi đơn hàng',
+      'Theo dõi hậu mãi & đổi trả',
+      'Theo dõi kiểm duyệt đánh giá',
     ]);
+    expect(menuItems.map((item) => item.getAttribute('href'))).toEqual([
+      '/admin/dashboard',
+      '/admin/staff',
+      '/admin/customers',
+      '/admin/products',
+      '/admin/promotions',
+      '/admin/orders',
+      '/admin/returns',
+      '/admin/reviews',
+    ]);
+    expect(fixture.nativeElement.querySelector('.account-section-title').textContent.trim())
+      .toBe('TÀI KHOẢN');
+  });
+
+  it('shows Staff menu items in their requested groups and keeps the existing routes', () => {
+    createComponent('Staff');
+
+    const groups = Array.from(
+      fixture.nativeElement.querySelectorAll('.sidebar-nav-group') as NodeListOf<HTMLElement>
+    );
+    expect(groups.map((group) => group.querySelector('.sidebar-group-title')?.textContent?.trim()))
+      .toEqual(['TRA CỨU & HỖ TRỢ', 'CÔNG VIỆC NGHIỆP VỤ']);
+
+    expect(groups.map((group) =>
+      Array.from(group.querySelectorAll('.menu-item') as NodeListOf<HTMLElement>)
+        .map((item) => item.textContent?.trim())
+    )).toEqual([
+      ['Danh mục sản phẩm', 'Quản lý khách hàng', 'Tra cứu voucher'],
+      ['Xử lý đơn hàng', 'Hậu mãi & Đổi trả', 'Kiểm duyệt đánh giá'],
+    ]);
+
+    expect(Array.from(
+      fixture.nativeElement.querySelectorAll('.menu-item') as NodeListOf<HTMLElement>
+    ).map((item) => item.getAttribute('href'))).toEqual([
+      '/admin/products',
+      '/admin/customers',
+      '/admin/promotions',
+      '/admin/orders',
+      '/admin/returns',
+      '/admin/reviews',
+    ]);
+    expect(fixture.nativeElement.querySelector('.account-section-title').textContent.trim())
+      .toBe('TÀI KHOẢN');
+  });
+
+  it('uses the Staff lookup label without changing the Manager voucher label', () => {
+    createComponent('Staff');
+    let voucherItem = Array.from(
+      fixture.nativeElement.querySelectorAll('.menu-item') as NodeListOf<HTMLElement>
+    ).find((item) => item.getAttribute('href') === '/admin/promotions');
+    expect(voucherItem?.textContent?.trim()).toBe('Tra cứu voucher');
+
+    fixture.destroy();
+    createComponent('Manager');
+    voucherItem = Array.from(
+      fixture.nativeElement.querySelectorAll('.menu-item') as NodeListOf<HTMLElement>
+    ).find((item) => item.getAttribute('href') === '/admin/promotions');
+    expect(voucherItem?.textContent?.trim()).toBe('Quản lý voucher');
+  });
+
+  it('keeps the Manager menu item active on a nested route after initial navigation', async () => {
+    createComponent('Manager');
+    await router.navigateByUrl('/admin/products/123');
+    fixture.detectChanges();
+
+    const activeMenuItem = fixture.nativeElement.querySelector('.menu-item.active');
+    expect(activeMenuItem?.textContent?.trim()).toBe('Danh mục sản phẩm');
+    expect(activeMenuItem?.getAttribute('href')).toBe('/admin/products');
+  });
+
+  it('navigates to and activates every Manager menu route', async () => {
+    createComponent('Manager');
+    const menuRoutes = [
+      '/admin/dashboard',
+      '/admin/staff',
+      '/admin/customers',
+      '/admin/products',
+      '/admin/promotions',
+      '/admin/orders',
+      '/admin/returns',
+      '/admin/reviews',
+    ];
+
+    for (const route of menuRoutes) {
+      await router.navigateByUrl(route);
+      fixture.detectChanges();
+
+      expect(router.url).toBe(route);
+      expect(fixture.nativeElement.querySelector('.menu-item.active')?.getAttribute('href'))
+        .toBe(route);
+    }
   });
 
   it('shows no menu items for an invalid role', () => {
@@ -152,12 +270,15 @@ describe('AdminLayout', () => {
   });
 
   it('shows the signed-in Admin name, role and avatar initial', () => {
+    localStorage.setItem('vista_admin_token', 'test-token');
     localStorage.setItem('vista_admin_user', JSON.stringify({
       Full_name: 'Nguyen Thi An',
       Username: 'an.nguyen',
       Role: 'Staff',
     }));
-    createComponent('Staff');
+    fixture = TestBed.createComponent(AdminLayoutComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.admin-info strong').textContent.trim())
       .toBe('Nguyen Thi An');
@@ -177,7 +298,7 @@ describe('AdminLayout', () => {
     createComponent('Manager');
     const logoutSpy = vi.spyOn(component, 'logout');
 
-    component.toggleAccountMenu('header');
+    fixture.nativeElement.querySelector('.account-button').click();
     fixture.detectChanges();
 
     expect(component.isAccountMenuOpen).toBe(true);
@@ -189,11 +310,11 @@ describe('AdminLayout', () => {
   it('opens the account menu and closes it with Escape', () => {
     createComponent('Manager');
 
-    component.toggleAccountMenu('sidebar');
+    fixture.nativeElement.querySelector('.sidebar-account-trigger').click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[role="menu"]')).toBeTruthy();
 
-    component.closeAccountMenuOnEscape();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[role="menu"]')).toBeNull();
   });

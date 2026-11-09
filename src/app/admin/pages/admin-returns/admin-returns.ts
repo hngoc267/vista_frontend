@@ -147,13 +147,17 @@ export class AdminReturnsComponent implements OnInit, OnDestroy {
         this.loadReturns();
       });
 
-    // Hỗ trợ mở trực tiếp từ thông báo: /admin/returns?returnId=... hoặc ?id=...
+    // Hỗ trợ mở trực tiếp từ thông báo hoặc dashboard: /admin/returns?returnId=... hoặc ?status=...
     this.queryParamsSubscription = this.route.queryParamMap.subscribe((params) => {
       const returnId = params.get('returnId')?.trim() || params.get('id')?.trim();
       if (returnId) {
         this.openDetailById(returnId);
         this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
         return;
+      }
+      const statusParam = params.get('status')?.trim();
+      if (statusParam) {
+        this.selectedStatus = statusParam;
       }
       this.loadReturns();
     });

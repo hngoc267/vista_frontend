@@ -13,6 +13,49 @@ export interface AdminCustomerItem {
   Phone_number: string;
   Status: CustomerStatus;
   Created_at: string;
+  order_count?: number;
+  total_spent?: number;
+}
+
+export interface AdminCustomerOrderDetail {
+  Order_id: string;
+  Total_amount: number;
+  Status: string;
+  Created_at: string;
+  Payment_type: string;
+  Payment_status: string;
+  item_count: number;
+}
+
+export interface AdminCustomerReviewItem {
+  Review_id: string;
+  Order_id: string;
+  Product_name: string;
+  Variant_name: string;
+  Product_image?: string;
+  Rating: number;
+  Comment: string;
+  Images?: string[];
+  Moderation_status: 'pending' | 'approved' | 'rejected';
+  Reply_content?: string;
+  Replied_at?: string;
+  Created_at: string;
+}
+
+export interface AdminCustomerReturnItem {
+  Return_order_id: string;
+  Order_id: string;
+  Product_name: string;
+  Variant_name: string;
+  Product_image?: string;
+  Return_quantity: number;
+  Reason_type: string;
+  Reason_codes?: string[];
+  Description?: string;
+  Evidence_images?: string[];
+  Refund_amount: number;
+  Status: string;
+  Created_at: string;
 }
 
 export interface AdminCustomerStats {
@@ -64,6 +107,9 @@ export interface AdminCustomerDetailResponse {
   customer: AdminCustomerItem;
   addresses: AdminCustomerAddress[];
   orderStats: AdminCustomerOrderStats;
+  orders?: AdminCustomerOrderDetail[];
+  reviews?: AdminCustomerReviewItem[];
+  returns?: AdminCustomerReturnItem[];
   message?: string;
 }
 

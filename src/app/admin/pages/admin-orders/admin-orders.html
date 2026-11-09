@@ -2,8 +2,14 @@
   <!-- Tiêu đề trang -->
   <header class="page-heading">
     <h1>Xử lý đơn hàng</h1>
-    <p>Theo dõi và cập nhật trạng thái đơn hàng</p>
+    <p *ngIf="canEdit">Tiếp nhận và xử lý đơn hàng</p>
+    <p *ngIf="!canEdit">Theo dõi và giám sát đơn hàng</p>
   </header>
+
+  <div class="manager-notice-banner" *ngIf="!canEdit">
+    <ng-icon name="lucideEye" size="16px" aria-hidden="true"></ng-icon>
+    <span>Manager chỉ xem và theo dõi. Staff thực hiện xác nhận, hủy và bàn giao đơn hàng.</span>
+  </div>
 
   <section class="panel">
     <div class="panel-heading">
@@ -42,12 +48,39 @@
       </label>
 
       <div class="filter-field">
+        <span>Phương thức</span>
+        <select
+          [(ngModel)]="paymentTypeFilter"
+          (ngModelChange)="applyFilters()"
+          aria-label="Lọc theo phương thức thanh toán"
+        >
+          <option *ngFor="let opt of paymentTypeOptions" [value]="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-field">
         <span>Ngày đặt</span>
         <div class="date-range">
           <input type="date" [(ngModel)]="fromDate" (ngModelChange)="applyFilters()" aria-label="Từ ngày" />
           <span>–</span>
           <input type="date" [(ngModel)]="toDate" (ngModelChange)="applyFilters()" aria-label="Đến ngày" />
         </div>
+      </div>
+
+      <div class="filter-actions">
+        <button
+          type="button"
+          class="btn btn-refresh"
+          [disabled]="isLoading || isRefreshing"
+          (click)="refreshData()"
+          title="Làm mới danh sách đơn hàng"
+          aria-label="Làm mới dữ liệu"
+        >
+          <ng-icon name="lucideRefreshCw" size="14px" [class.spin]="isRefreshing"></ng-icon>
+          <span>{{ isRefreshing ? 'Đang tải...' : 'Làm mới' }}</span>
+        </button>
       </div>
     </div>
 
@@ -92,6 +125,8 @@
             <th>Khách hàng</th>
             <th>Ngày đặt</th>
             <th>Tổng tiền</th>
+            <th>Thanh toán</th>
+            <th>Vận chuyển</th>
             <th>Trạng thái đơn hàng</th>
             <th>Thao tác</th>
           </tr>
@@ -116,7 +151,18 @@
             </td>
             <td>{{ order.Customer_name || '—' }}</td>
             <td class="muted">{{ order.Created_at | date: 'dd/MM/yyyy' }}</td>
-            <td>{{ formatCurrency(order.Total_amount) }}</td>
+            <td class="font-medium">{{ formatCurrency(order.Total_amount) }}</td>
+            <td class="pay-cell">
+              <span class="pay-type">{{ getPaymentTypeLabel(order.Payment_type) }}</span>
+              <span class="badge badge-sm" [ngClass]="'pay-' + order.Payment_status">
+                {{ getPaymentStatusLabel(order.Payment_status) }}
+              </span>
+            </td>
+            <td class="deli-cell">
+              <span class="badge badge-sm" [ngClass]="'deli-' + order.Delivery_status">
+                {{ getDeliveryStatusLabel(order.Delivery_status, order.Display_status) }}
+              </span>
+            </td>
             <td>
               <span class="badge" [ngClass]="order.Display_status">{{ getStatusLabel(order.Display_status) }}</span>
               <small class="status-note" *ngIf="getStatusNote(order)">{{ getStatusNote(order) }}</small>
@@ -297,7 +343,7 @@
               <tr *ngFor="let item of detail.Items">
                 <td>
                   <div class="product-item-cell">
-                    <img [src]="item.Image" [alt]="item.Product_name" />
+                    <img [src]="item.Image" [alt]="item.Product_name" (error)="onImageError($event)" />
                     <div class="product-item-details">
                       <span class="product-item-name" [title]="item.Product_name">{{ item.Product_name }}</span>
                       <span class="product-item-sub" *ngIf="item.Variant_name">{{ item.Variant_name }}</span>
@@ -320,6 +366,11 @@
           <div class="summary-row">
             <span class="label">Phương thức</span>
             <span class="value">{{ getPaymentTypeLabel(detail.Payment_type) }}</span>
+          </div>
+          <div class="summary-row">
+            <span class="label">Mã Voucher</span>
+            <span class="value font-semibold text-primary" *ngIf="detail.Voucher_code">{{ detail.Voucher_code }}</span>
+            <span class="value muted" *ngIf="!detail.Voucher_code">Không sử dụng Voucher</span>
           </div>
           <div class="summary-row">
             <span class="label">Tạm tính &middot; {{ detail.Items.length }} sản phẩm</span>
@@ -376,13 +427,6 @@
       <section class="detail-section">
         <h3 class="section-title">Lịch sử trạng thái</h3>
         <ol class="timeline">
-          <li class="done">
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <strong class="timeline-title">Chờ xác nhận</strong>
-              <small class="timeline-sub">{{ detail.Created_at | date: 'dd/MM/yyyy, HH:mm' }} &middot; Khách hàng tạo đơn</small>
-            </div>
-          </li>
           <li
             class="done"
             *ngFor="let item of historyItems"
@@ -472,8 +516,24 @@
       </ng-container>
 
       <div class="reason-field" *ngIf="modalAction === 'cancel'">
-        <span>Lý do hủy *</span>
-        <div class="reason-options" role="radiogroup" aria-label="Lý do hủy đơn">
+        <div class="reason-title-bar">
+          <span>Lý do hủy *</span>
+          <button
+            type="button"
+            class="link-button retry-btn"
+            *ngIf="cancelReasonsError"
+            (click)="loadCancelReasons()"
+          >
+            Tải lại lý do
+          </button>
+        </div>
+        <div class="reason-loading" *ngIf="isLoadingCancelReasons">
+          <small class="muted">Đang tải danh mục lý do hủy...</small>
+        </div>
+        <p class="form-error" *ngIf="cancelReasonsError && !isLoadingCancelReasons">
+          {{ cancelReasonsError }}
+        </p>
+        <div class="reason-options" role="radiogroup" aria-label="Lý do hủy đơn" *ngIf="!isLoadingCancelReasons && cancelReasons.length">
           <label class="reason-option" *ngFor="let reason of cancelReasons" [class.active]="modalReasonCode === reason.code">
             <input type="radio" name="cancelReason" [value]="reason.code" [(ngModel)]="modalReasonCode" />
             <span>{{ reason.label }}</span>

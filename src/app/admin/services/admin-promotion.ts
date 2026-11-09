@@ -104,6 +104,9 @@ export class AdminPromotionService {
     if (filters.type && filters.type !== 'all') {
       params = params.set('type', filters.type);
     }
+    if (filters.dateFilter && filters.dateFilter !== 'all') {
+      params = params.set('dateFilter', filters.dateFilter);
+    }
     if (filters.page) {
       params = params.set('page', String(filters.page));
     }

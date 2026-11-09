@@ -113,7 +113,8 @@ button {
   font-size: 12px;
 }
 
-.sidebar-section-title {
+.sidebar-section-title,
+.sidebar-group-title {
   margin: 0 12px 12px;
   color: #94a3b8;
   font-size: 10px;
@@ -126,7 +127,17 @@ button {
 .sidebar-menu {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.sidebar-nav-group {
+  display: flex;
+  flex-direction: column;
   gap: 5px;
+}
+
+.sidebar-group-title {
+  margin-bottom: 4px;
 }
 
 .menu-item {
@@ -155,6 +166,20 @@ button {
   color: #ffffff;
   background: var(--color-primary);
   font-weight: 600;
+}
+
+.manager-sidebar .sidebar-menu {
+  gap: 16px;
+}
+
+.sidebar-bottom {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+.account-section-title {
+  margin: 0 0 10px;
 }
 
 .menu-icon {
@@ -577,6 +602,7 @@ a.breadcrumb-parent {
 
   .brand-text,
   .sidebar-section-title,
+  .sidebar-group-title,
   .menu-label,
   .admin-info,
   .account-menu-chevron {
@@ -591,6 +617,10 @@ a.breadcrumb-parent {
     justify-content: center;
     gap: 0;
     padding: 0;
+  }
+
+  .sidebar-menu {
+    gap: 8px;
   }
 
   .sidebar-bottom {
@@ -639,6 +669,7 @@ a.breadcrumb-parent {
 
   .brand-text,
   .sidebar-section-title,
+  .sidebar-group-title,
   .menu-label,
   .admin-info,
   .account-menu-chevron {

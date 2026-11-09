@@ -57,7 +57,7 @@
         </span>
       </div>
       <strong class="stat-value text-gray">{{ stats.expired }}</strong>
-      <span class="stat-note">Hết hạn hoặc đã dừng</span>
+      <span class="stat-note">Hết hạn hoặc hết lượt</span>
     </article>
   </section>
 
@@ -297,6 +297,20 @@
   <!-- ======================================================== -->
   <div class="drawer-backdrop" *ngIf="isDetailOpen" (click)="closeDetail()"></div>
 
+  <aside class="detail-drawer" [class.open]="isDetailOpen" *ngIf="isDetailLoading && !selectedPromotion">
+    <div class="drawer-header">
+      <div>
+        <h3 class="drawer-title">Chi tiết chương trình</h3>
+      </div>
+      <button type="button" class="btn-close" (click)="closeDetail()" aria-label="Đóng">
+        <ng-icon name="lucideX" size="20px"></ng-icon>
+      </button>
+    </div>
+    <div class="drawer-body" role="status">
+      <div class="detail-loading">Đang tải thông tin chương trình...</div>
+    </div>
+  </aside>
+
   <aside class="detail-drawer" [class.open]="isDetailOpen" *ngIf="selectedPromotion">
     <div class="drawer-header">
       <div>
@@ -308,7 +322,11 @@
       </button>
     </div>
 
-    <div class="drawer-body">
+    <div class="drawer-body" [attr.aria-busy]="isDetailLoading">
+      <div class="detail-loading" *ngIf="isDetailLoading" role="status">
+        Đang tải thông tin mới nhất...
+      </div>
+
       <!-- Banner vai trò Staff -->
       <div class="manager-notice-banner" *ngIf="!isManager">
         <strong>Chế độ xem cho Staff:</strong> Bạn có quyền xem và tra cứu chi tiết chương trình khuyến mãi. Chỉ Quản lý (Manager) mới có thể tạo hoặc sửa đổi.
@@ -574,6 +592,7 @@
               placeholder="VD: 150000 (Để trống nếu không giới hạn)"
               min="0"
             />
+            <span class="field-error" *ngIf="formErrors['maxDiscountAmount']">{{ formErrors['maxDiscountAmount'] }}</span>
           </div>
         </div>
       </fieldset>
@@ -605,7 +624,9 @@
               name="promoUsageLimit"
               placeholder="VD: 500 (0 = không giới hạn)"
               min="0"
+              step="1"
             />
+            <span class="field-error" *ngIf="formErrors['usageLimit']">{{ formErrors['usageLimit'] }}</span>
           </div>
 
           <div class="form-group flex-1">
@@ -617,7 +638,9 @@
               name="promoUsagePerCustomer"
               placeholder="Mặc định: 1"
               min="1"
+              step="1"
             />
+            <span class="field-error" *ngIf="formErrors['usageLimitPerCustomer']">{{ formErrors['usageLimitPerCustomer'] }}</span>
           </div>
         </div>
 
@@ -795,4 +818,3 @@
     </div>
   </div>
 </section>
-

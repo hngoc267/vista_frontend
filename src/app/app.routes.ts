@@ -74,6 +74,7 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         component: AdminDashboard,
+        canActivate: [adminManagerGuard],
         data: { breadcrumb: 'Tổng quan' },
       },
       {

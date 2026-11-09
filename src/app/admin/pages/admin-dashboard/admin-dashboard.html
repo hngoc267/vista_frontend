@@ -1,300 +1,1129 @@
 <section class="dashboard">
-  <!-- Page heading -->
-  <div class="page-heading">
+  <header class="page-heading">
     <div>
       <h1>Tổng quan</h1>
-      <p>Theo dõi tình hình kinh doanh và hành vi khách hàng trên VISTA.</p>
+      <p>Theo dõi tình hình kinh doanh, đơn hàng và hiệu quả lợi nhuận.</p>
     </div>
 
     <div class="heading-actions">
-      <button class="btn btn-outline" type="button">
-        <ng-icon name="lucideCalendarDays" size="18px"></ng-icon>
-        <span>30 ngày gần nhất</span>
-        <ng-icon name="lucideChevronDown" size="15px"></ng-icon>
-      </button>
+      <div class="period-field">
+        <label for="period-select" class="period-label">Chọn kỳ báo cáo</label>
+        <div class="period-selector">
+          <ng-icon name="lucideCalendarDays" size="18px" class="calendar-icon"></ng-icon>
+          <select
+            id="period-select"
+            class="select-period-control"
+            [value]="selectedPeriod"
+            (change)="onPeriodChange($event)"
+          >
+            <option value="7days">7 ngày gần nhất</option>
+            <option value="30days">30 ngày gần nhất</option>
+            <option value="90days">90 ngày gần nhất</option>
+            <option value="12months">12 tháng gần nhất</option>
+          </select>
+          <ng-icon name="lucideChevronDown" size="15px" class="chevron-icon"></ng-icon>
+        </div>
+      </div>
 
-      <button class="btn btn-primary" type="button">
-        <ng-icon name="lucideDownload" size="18px"></ng-icon>
-        <span>Xuất báo cáo</span>
+      <button
+        class="btn btn-outline"
+        type="button"
+        (click)="onRetry()"
+        [disabled]="isLoading || isUpdating"
+        title="Tải lại số liệu mới nhất"
+      >
+        <ng-icon
+          name="lucideRefreshCw"
+          size="16px"
+          [class.spin]="isLoading || isUpdating"
+        ></ng-icon>
+        <span>{{ isUpdating ? 'Đang cập nhật...' : 'Làm mới' }}</span>
       </button>
     </div>
+  </header>
+
+  <div class="dashboard-tabs" role="tablist" aria-label="Khu vực Dashboard">
+    <button
+      type="button"
+      class="tab-btn"
+      role="tab"
+      [class.active]="activeTab === 'overview'"
+      [attr.aria-selected]="activeTab === 'overview'"
+      (click)="setTab('overview')"
+    >
+      <span>Tổng quan</span>
+    </button>
+    <button
+      type="button"
+      class="tab-btn"
+      role="tab"
+      [class.active]="activeTab === 'profit'"
+      [attr.aria-selected]="activeTab === 'profit'"
+      (click)="setTab('profit')"
+    >
+      <span>Giá vốn &amp; Lợi nhuận</span>
+    </button>
   </div>
 
-  <!-- Business KPI cards -->
-  <section class="section">
-    <h2 class="section-title">Tình hình kinh doanh</h2>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Đang tải và đối soát dữ liệu từ hệ thống...</p>
+  </div>
 
-    <div class="stats-grid">
-      <article class="stat-card">
-        <div class="stat-top">
-          <span class="stat-label">Tổng doanh thu</span>
-          <span class="stat-icon blue">
-            <ng-icon name="lucideTrendingUp" size="21px"></ng-icon>
-          </span>
-        </div>
-        <strong class="stat-value">128.500.000 ₫</strong>
-        <span class="stat-note">Chưa kết nối dữ liệu thực tế</span>
-      </article>
-
-      <article class="stat-card">
-        <div class="stat-top">
-          <span class="stat-label">Tổng đơn hàng</span>
-          <span class="stat-icon purple">
-            <ng-icon name="lucideShoppingBag" size="21px"></ng-icon>
-          </span>
-        </div>
-        <strong class="stat-value">1.248</strong>
-        <span class="stat-note">Chưa kết nối dữ liệu thực tế</span>
-      </article>
-
-      <article class="stat-card">
-        <div class="stat-top">
-          <span class="stat-label">Sản phẩm</span>
-          <span class="stat-icon orange">
-            <ng-icon name="lucidePackage" size="21px"></ng-icon>
-          </span>
-        </div>
-        <strong class="stat-value">356</strong>
-        <span class="stat-note">Chưa kết nối dữ liệu thực tế</span>
-      </article>
-
-      <article class="stat-card">
-        <div class="stat-top">
-          <span class="stat-label">Khách hàng</span>
-          <span class="stat-icon green">
-            <ng-icon name="lucideUsers" size="21px"></ng-icon>
-          </span>
-        </div>
-        <strong class="stat-value">2.845</strong>
-        <span class="stat-note">Chưa kết nối dữ liệu thực tế</span>
-      </article>
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="alert-box critical">
+    <ng-icon name="lucideAlertTriangle" size="22px"></ng-icon>
+    <div class="alert-content">
+      <strong>Không thể tải dữ liệu Dashboard</strong>
+      <p>{{ errorMessage }}</p>
     </div>
-  </section>
+    <button class="btn btn-sm btn-outline" (click)="onRetry()">Thử lại</button>
+  </div>
 
-  <!-- Charts -->
-  <section class="charts-grid">
-    <article class="panel revenue-panel">
-      <div class="panel-heading">
-        <div>
-          <h2>Doanh thu theo thời gian</h2>
-          <p>Biểu đồ minh họa, chưa kết nối dữ liệu thực tế</p>
-        </div>
+  <!-- Main Content (When Loaded) -->
+  <ng-container *ngIf="!isLoading && !errorMessage">
 
-        <span class="panel-badge">Dữ liệu demo</span>
-      </div>
+    <div *ngIf="activeTab === 'overview'" class="overview-section">
 
-      <div class="chart-toolbar">
-        <label for="revenue-period">Khoảng thời gian</label>
-
-        <select
-          id="revenue-period"
-          class="period-select"
-          [value]="selectedPeriod"
-          (change)="onPeriodChange($event)"
-        >
-          <option value="7days">7 ngày gần nhất</option>
-          <option value="30days">30 ngày gần nhất</option>
-          <option value="12months">12 tháng gần nhất</option>
-        </select>
-      </div>
-
-      <div class="chart-summary">
-        <div>
-          <span class="summary-label">Doanh thu</span>
-          <strong>Chưa có dữ liệu thật</strong>
-        </div>
-        <span class="demo-indicator">
-          <span></span>
-          Minh họa
-        </span>
-      </div>
-
-      <div class="revenue-chart">
-        <div class="chart-y-labels" aria-hidden="true">
-          <span>100%</span>
-          <span>75%</span>
-          <span>50%</span>
-          <span>25%</span>
-          <span>0%</span>
-        </div>
-
-        <div class="chart-plot">
-          <div class="chart-grid-lines" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
+      <!-- KHU VỰC CẢNH BÁO VẬN HÀNH (OPERATIONAL ALERTS) -->
+      <section *ngIf="alerts.length > 0" class="alerts-section">
+        <div class="section-heading">
+          <div>
+            <h2 class="section-title">Cảnh báo vận hành cần xử lý</h2>
+            <p class="section-description">Các vấn đề vận hành cần quản lý theo dõi và giám sát.</p>
           </div>
+          <span class="badge badge-warning">{{ alerts.length }} vấn đề tồn đọng</span>
+        </div>
 
-          <svg
-            class="revenue-svg"
-            viewBox="0 0 600 200"
-            preserveAspectRatio="none"
-            role="img"
-            [attr.aria-label]="'Biểu đồ doanh thu minh họa: ' + periodLabel"
+        <div class="alerts-grid">
+          <article
+            *ngFor="let alert of alerts"
+            class="alert-card"
+            [ngClass]="alert.level"
           >
-            <defs>
-              <linearGradient
-                id="revenue-fill"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22" />
-                <stop offset="100%" stop-color="#2563eb" stop-opacity="0.01" />
-              </linearGradient>
-            </defs>
+            <div class="alert-icon-wrap">
+              <ng-icon
+                [name]="alert.level === 'critical' ? 'lucideAlertTriangle' : (alert.level === 'warning' ? 'lucideAlertCircle' : 'lucideInfo')"
+                size="20px"
+              ></ng-icon>
+            </div>
+            <div class="alert-body">
+              <strong class="alert-title">{{ alert.title }}</strong>
+              <span class="alert-count">{{ getAlertCountText(alert) }}</span>
+              <p class="alert-message">{{ alert.message }}</p>
+              <div class="alert-action" *ngIf="alert.link">
+                <a
+                  [routerLink]="getAlertRoute(alert.link)"
+                  [queryParams]="getAlertQueryParams(alert.link)"
+                  class="btn btn-sm btn-alert"
+                >
+                  <span>{{ getAlertActionText(alert) }}</span>
+                  <ng-icon name="lucideArrowRight" size="14px"></ng-icon>
+                </a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
 
-            <path [attr.d]="revenueArea" fill="url(#revenue-fill)" />
+    <!-- KHU VỰC 4 THẺ KPI TỔNG QUAN -->
+    <section class="section business-health-section">
+      <div class="section-heading">
+        <div>
+          <h2 class="section-title">Chỉ số sức khỏe kinh doanh</h2>
+          <p class="section-description">Số liệu thực tế trong {{ periodLabel }} (đối chiếu kỳ trước: {{ previousPeriodRangeText }}).</p>
+        </div>
+      </div>
 
-            <path
-              [attr.d]="revenueLine"
-              fill="none"
-              stroke="#2563eb"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              vector-effect="non-scaling-stroke"
-            />
+      <div class="stats-grid" *ngIf="summaryCards">
+        <!-- 1. Doanh thu thuần -->
+        <article class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Doanh thu thuần (Net)</span>
+            <span class="stat-icon blue">
+              <ng-icon name="lucideTrendingUp" size="21px"></ng-icon>
+            </span>
+          </div>
+          <strong class="stat-value">{{ formatCurrency(summaryCards.netRevenue.value) }}</strong>
 
-            <circle
-              *ngFor="let point of revenuePoints"
-              [attr.cx]="point.x"
-              [attr.cy]="point.y"
-              r="4"
-              fill="#ffffff"
-              stroke="#2563eb"
-              stroke-width="2"
-              vector-effect="non-scaling-stroke"
-            />
-          </svg>
+          <div class="stat-trend" *ngIf="summaryCards.netRevenue.hasComparison">
+            <span
+              class="trend-badge"
+              [class.up]="(summaryCards.netRevenue.diff || 0) >= 0"
+              [class.down]="(summaryCards.netRevenue.diff || 0) < 0"
+            >
+              <ng-icon
+                [name]="(summaryCards.netRevenue.diff || 0) >= 0 ? 'lucideArrowUpRight' : 'lucideArrowDownRight'"
+                size="15px"
+              ></ng-icon>
+              <span>{{ (summaryCards.netRevenue.diff || 0) >= 0 ? '+' : '' }}{{ summaryCards.netRevenue.percent }}%</span>
+            </span>
+            <span class="trend-compare" [title]="'Kỳ đối chiếu: ' + previousPeriodRangeText">so với kỳ trước ({{ formatCurrency(summaryCards.netRevenue.prevValue) }})</span>
+          </div>
+          <span *ngIf="!summaryCards.netRevenue.hasComparison" class="trend-compare-none">
+            Chưa đủ dữ liệu kỳ trước để so sánh
+          </span>
 
-          <div class="chart-x-labels">
-            <span *ngFor="let label of revenueLabels">{{ label }}</span>
+          <div class="stat-note" [title]="summaryCards.netRevenue.tooltip">
+            <span class="stat-note-icon">
+              <ng-icon name="lucideHelpCircle" size="14px"></ng-icon>
+            </span>
+            <span class="stat-note-text">{{ summaryCards.netRevenue.tooltip }}</span>
+          </div>
+        </article>
+
+        <!-- 2. Đơn hoàn tất -->
+        <article class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Đơn hàng hoàn tất</span>
+            <span class="stat-icon purple">
+              <ng-icon name="lucideShoppingBag" size="21px"></ng-icon>
+            </span>
+          </div>
+          <strong class="stat-value">{{ formatNumber(summaryCards.completedOrders.value) }} đơn</strong>
+
+          <div class="stat-trend" *ngIf="summaryCards.completedOrders.hasComparison">
+            <span
+              class="trend-badge"
+              [class.up]="(summaryCards.completedOrders.diff || 0) >= 0"
+              [class.down]="(summaryCards.completedOrders.diff || 0) < 0"
+            >
+              <ng-icon
+                [name]="(summaryCards.completedOrders.diff || 0) >= 0 ? 'lucideArrowUpRight' : 'lucideArrowDownRight'"
+                size="15px"
+              ></ng-icon>
+              <span>{{ (summaryCards.completedOrders.diff || 0) >= 0 ? '+' : '' }}{{ summaryCards.completedOrders.percent }}%</span>
+            </span>
+            <span class="trend-compare" [title]="'Kỳ đối chiếu: ' + previousPeriodRangeText">so với kỳ trước ({{ summaryCards.completedOrders.prevValue }} đơn)</span>
+          </div>
+          <span *ngIf="!summaryCards.completedOrders.hasComparison" class="trend-compare-none">
+            Chưa đủ dữ liệu kỳ trước để so sánh
+          </span>
+
+          <div class="stat-note" [title]="summaryCards.completedOrders.tooltip">
+            <span class="stat-note-icon">
+              <ng-icon name="lucideHelpCircle" size="14px"></ng-icon>
+            </span>
+            <span class="stat-note-text">{{ summaryCards.completedOrders.tooltip }}</span>
+          </div>
+        </article>
+
+        <!-- 3. Giá trị trung bình đơn (AOV) -->
+        <article class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Giá trị trung bình đơn (AOV)</span>
+            <span class="stat-icon orange">
+              <ng-icon name="lucidePackage" size="21px"></ng-icon>
+            </span>
+          </div>
+          <strong class="stat-value">{{ formatCurrency(summaryCards.aov.value) }}</strong>
+
+          <div class="stat-trend" *ngIf="summaryCards.aov.hasComparison">
+            <span
+              class="trend-badge"
+              [class.up]="(summaryCards.aov.diff || 0) >= 0"
+              [class.down]="(summaryCards.aov.diff || 0) < 0"
+            >
+              <ng-icon
+                [name]="(summaryCards.aov.diff || 0) >= 0 ? 'lucideArrowUpRight' : 'lucideArrowDownRight'"
+                size="15px"
+              ></ng-icon>
+              <span>{{ (summaryCards.aov.diff || 0) >= 0 ? '+' : '' }}{{ summaryCards.aov.percent }}%</span>
+            </span>
+            <span class="trend-compare" [title]="'Kỳ đối chiếu: ' + previousPeriodRangeText">so với kỳ trước ({{ formatCurrency(summaryCards.aov.prevValue) }})</span>
+          </div>
+          <span *ngIf="!summaryCards.aov.hasComparison" class="trend-compare-none">
+            Chưa đủ dữ liệu kỳ trước để so sánh
+          </span>
+
+          <div class="stat-note" [title]="summaryCards.aov.tooltip">
+            <span class="stat-note-icon">
+              <ng-icon name="lucideHelpCircle" size="14px"></ng-icon>
+            </span>
+            <span class="stat-note-text">{{ summaryCards.aov.tooltip }}</span>
+          </div>
+        </article>
+
+        <!-- 4. Tỷ lệ giao hàng thành công -->
+        <article class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Tỷ lệ giao hàng thành công</span>
+            <span class="stat-icon green">
+              <ng-icon name="lucideTruck" size="21px"></ng-icon>
+            </span>
+          </div>
+          <strong class="stat-value">{{ summaryCards.deliverySuccessRate.value }}%</strong>
+
+          <div class="stat-breakdown-sub">
+            <span>Đạt: <strong>{{ summaryCards.deliverySuccessRate.deliveredCount }}</strong></span>
+            <span>·</span>
+            <span>Hỏng/Hủy: <strong>{{ summaryCards.deliverySuccessRate.failedCount }}</strong></span>
+          </div>
+
+          <div class="stat-note" [title]="summaryCards.deliverySuccessRate.tooltip">
+            <span class="stat-note-icon">
+              <ng-icon name="lucideHelpCircle" size="14px"></ng-icon>
+            </span>
+            <span class="stat-note-text">{{ summaryCards.deliverySuccessRate.tooltip }}</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- KHU VỰC BIỂU ĐỒ DOANH THU & PHỄU ĐƠN HÀNG -->
+    <section class="charts-grid">
+      <!-- BIỂU ĐỒ DOANH THU THỰC TẾ -->
+      <article class="panel revenue-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Xu hướng doanh thu theo thời gian</h2>
+            <p>Đối chiếu doanh thu thực thu kỳ này với kỳ trước ({{ previousPeriodRangeText }})</p>
+          </div>
+
+          <div class="chart-legend">
+            <span class="legend-item current">
+              <span class="legend-color"></span>
+              Kỳ này ({{ formatCurrency(revenueTrend?.totalNetRevenue) }})
+            </span>
+            <span class="legend-item prev">
+              <span class="legend-color dashed"></span>
+              Kỳ trước ({{ formatCurrency(revenueTrend?.prevTotalNetRevenue) }})
+            </span>
           </div>
         </div>
-      </div>
 
-      <p class="chart-footnote">
-        Đường biểu đồ chỉ minh họa cách hiển thị. Không dùng các giá trị này
-        làm số liệu báo cáo kinh doanh.
-      </p>
-    </article>
+        <!-- Khung hiển thị thông tin hover với chiều cao cố định chống giật nhảy biểu đồ -->
+        <div class="revenue-chart-container" (mouseleave)="onLeaveChart()">
+          <div class="chart-hover-slot">
+            <div class="chart-hover-info active" *ngIf="hoveredPoint">
+              <span class="hover-label">Mốc: <strong>{{ hoveredPoint.label }}</strong></span>
+              <span class="hover-val current">Kỳ này: <strong>{{ formatCurrency(hoveredPoint.value) }}</strong></span>
+              <span class="hover-val prev">Kỳ trước: <strong>{{ formatCurrency(hoveredPoint.prevValue) }}</strong></span>
+            </div>
+            <div class="chart-hover-info placeholder" *ngIf="!hoveredPoint">
+              <span class="placeholder-text">Rê chuột vào đường biểu đồ để xem chi tiết mốc ngày và đối chiếu kỳ trước.</span>
+            </div>
+          </div>
 
-    <article class="panel orders-panel">
-      <div class="panel-heading">
-        <div>
-          <h2>Trạng thái đơn hàng</h2>
-          <p>Tổng hợp tình trạng xử lý</p>
+          <div
+            *ngIf="revenueTrend?.points?.length; else emptyRevenueChart"
+            class="revenue-chart"
+          >
+          <div class="chart-y-labels" aria-hidden="true">
+            <span>{{ formatCurrency(maxRevenueValue) }}</span>
+            <span>{{ formatCurrency(maxRevenueValue * 0.75) }}</span>
+            <span>{{ formatCurrency(maxRevenueValue * 0.5) }}</span>
+            <span>{{ formatCurrency(maxRevenueValue * 0.25) }}</span>
+            <span>0 ₫</span>
+          </div>
+
+          <div class="chart-plot">
+            <div class="chart-grid-lines" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+
+            <svg
+              class="revenue-svg"
+              viewBox="0 0 600 216"
+              preserveAspectRatio="none"
+              role="img"
+              [attr.aria-label]="'Biểu đồ doanh thu thực tế: ' + periodLabel"
+            >
+              <defs>
+                <linearGradient id="revenue-fill-real" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#2563eb" stop-opacity="0.08" />
+                  <stop offset="100%" stop-color="#2563eb" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+
+              <!-- Gradient Area kỳ này -->
+              <path *ngIf="revenueAreaPath" [attr.d]="revenueAreaPath" fill="url(#revenue-fill-real)" />
+
+              <!-- Đường kỳ trước (nét đứt xám) -->
+              <path
+                *ngIf="prevRevenueLinePath"
+                [attr.d]="prevRevenueLinePath"
+                fill="none"
+                stroke="#94a3b8"
+                stroke-width="2"
+                stroke-dasharray="4 4"
+                vector-effect="non-scaling-stroke"
+              />
+
+              <!-- Đường kỳ này (xanh dương solid) -->
+              <path
+                *ngIf="revenueLinePath"
+                [attr.d]="revenueLinePath"
+                fill="none"
+                stroke="#2563eb"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"
+              />
+
+              <!-- Đường chỉ thị dọc khi hover (Guide Line) -->
+              <line
+                *ngIf="hoveredPoint"
+                [attr.x1]="hoveredPoint.x"
+                y1="12"
+                [attr.x2]="hoveredPoint.x"
+                y2="204"
+                stroke="#cbd5e1"
+                stroke-width="1"
+                stroke-dasharray="3 3"
+                vector-effect="non-scaling-stroke"
+              />
+
+              <!-- Điểm tương tác đơn lẻ khi hover (Active Marker) -->
+              <circle
+                *ngIf="hoveredPoint"
+                [attr.cx]="hoveredPoint.x"
+                [attr.cy]="hoveredPoint.y"
+                r="4.5"
+                fill="#ffffff"
+                stroke="#2563eb"
+                stroke-width="2.5"
+                vector-effect="non-scaling-stroke"
+                class="chart-active-marker"
+              />
+
+              <!-- Vùng hover vô hình mở rộng hit-box -->
+              <rect
+                *ngFor="let point of chartPoints; let idx = index"
+                [attr.x]="getHoverSliceX(idx, chartPoints.length)"
+                y="0"
+                [attr.width]="getHoverSliceWidth(chartPoints.length)"
+                height="216"
+                fill="transparent"
+                style="cursor: pointer;"
+                (mouseenter)="onHoverPoint(point)"
+              />
+            </svg>
+
+            <!-- Trục hoành ngày/tháng -->
+            <div class="chart-x-labels">
+              <span *ngFor="let label of displayLabels">{{ label }}</span>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div class="order-status-empty">
-        <ng-icon name="lucideShoppingBag" size="28px"></ng-icon>
-        <strong>Chưa có dữ liệu đơn hàng</strong>
-        <p>Số lượng sẽ hiển thị khi kết nối API thống kê.</p>
-      </div>
-
-      <div class="status-list">
-        <div class="status-row" *ngFor="let status of orderStatuses">
-          <span class="status-dot" [ngClass]="status.className"></span>
-          <span>{{ status.label }}</span>
-          <strong>—</strong>
+        <ng-template #emptyRevenueChart>
+          <div class="chart-empty-state" role="status">Chưa có dữ liệu doanh thu trong kỳ này.</div>
+        </ng-template>
         </div>
-      </div>
-    </article>
-  </section>
 
-  <!-- Customer behavior -->
-  <section class="section">
-    <div class="section-heading">
-      <div>
-        <h2 class="section-title">Hành vi khách hàng</h2>
-        <p class="section-description">
-          Các chỉ số hỗ trợ phân tích mức độ quan tâm và nhu cầu mua sắm.
+        <p class="chart-footnote">
+          * Dữ liệu ghi nhận theo ngày phát sinh đơn giao thành công trừ tiền hoàn trả. Những ngày không có giao dịch hiển thị đúng mức 0 ₫.
         </p>
+      </article>
+
+      <!-- PHỄU TRẠNG THÁI ĐƠN HÀNG (ORDER PIPELINE) -->
+      <article class="panel orders-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Phễu trạng thái đơn hàng</h2>
+            <p>Tiến trình xử lý đơn hàng thực tế ({{ orderPipeline?.total || 0 }} đơn)</p>
+          </div>
+          <a routerLink="/admin/orders" class="text-link">Xem chi tiết</a>
+        </div>
+
+        <div class="pipeline-list" *ngIf="orderPipeline">
+          <div class="pipeline-item" *ngFor="let item of orderPipeline.pipeline">
+            <div class="pipeline-info">
+              <div class="pipeline-label-wrap">
+                <span class="status-dot" [style.background-color]="item.color"></span>
+                <span class="pipeline-label">{{ item.label }}</span>
+              </div>
+              <div class="pipeline-numbers">
+                <strong class="pipeline-count">{{ item.count }} đơn</strong>
+                <span class="pipeline-percent">({{ item.percentage }}%)</span>
+              </div>
+            </div>
+            <div class="pipeline-bar-bg">
+              <div
+                class="pipeline-bar-fill"
+                [style.width.%]="item.percentage"
+                [style.background-color]="item.color"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- KHU VỰC THEO DÕI THANH TOÁN & VẬN CHUYỂN -->
+    <section class="details-grid">
+      <!-- THEO DÕI THANH TOÁN (PAYMENT TRACKING) -->
+      <article class="panel payment-panel" *ngIf="paymentBreakdown">
+        <div class="panel-heading">
+          <div>
+            <h2>Theo dõi thanh toán</h2>
+            <p>Tỷ lệ thanh toán thành công và cơ cấu phương thức ({{ paymentBreakdown.totalPayments }} giao dịch)</p>
+          </div>
+          <span class="badge badge-success">Thành công: {{ paymentBreakdown.overallSuccessRate }}%</span>
+        </div>
+
+        <!-- Trạng thái thanh toán tóm tắt -->
+        <div class="payment-status-cards">
+          <div class="p-status-chip" *ngFor="let s of paymentBreakdown.byStatus">
+            <span class="chip-color" [style.background-color]="s.color"></span>
+            <div class="chip-meta">
+              <span class="chip-label">{{ s.label }}</span>
+              <strong class="chip-count">{{ s.count }} ({{ s.percentage }}%)</strong>
+              <small class="chip-amt">{{ formatCurrency(s.amount) }}</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bảng phương thức thanh toán -->
+        <div class="table-responsive">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>Phương thức</th>
+                <th>Tổng đơn</th>
+                <th>Đã thanh toán</th>
+                <th>Chờ xử lý</th>
+                <th>Thất bại</th>
+                <th>Tiền thu được</th>
+                <th>Tỷ lệ đạt</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let m of paymentBreakdown.byMethod">
+                <td>
+                  <strong>{{ m.method }}</strong>
+                </td>
+                <td>{{ m.total }}</td>
+                <td><span class="tag tag-success">{{ m.paid }}</span></td>
+                <td><span class="tag tag-warning">{{ m.pending }}</span></td>
+                <td><span class="tag tag-danger">{{ m.failed }}</span></td>
+                <td><strong>{{ formatCurrency(m.paidAmount) }}</strong></td>
+                <td>
+                  <div class="rate-pill" [class.high]="m.successRate >= 80" [class.med]="m.successRate < 80">
+                    {{ m.successRate }}%
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- HIỆU QUẢ ĐỐI TÁC VẬN CHUYỂN (CARRIER PERFORMANCE) -->
+      <article class="panel carrier-panel" *ngIf="carrierPerformance">
+        <div class="panel-heading">
+          <div>
+            <h2>Hiệu quả đối tác vận chuyển</h2>
+            <p>Giám sát chất lượng giao vận Viettel Post và GHN ({{ carrierPerformance.totalDeliveries }} vận đơn)</p>
+          </div>
+          <span class="badge badge-primary">Tỷ lệ chung: {{ carrierPerformance.overallRate }}%</span>
+        </div>
+
+        <div class="carrier-cards-list" tabindex="0" aria-label="Danh sách hiệu quả đối tác vận chuyển">
+          <div class="carrier-card" *ngFor="let c of carrierPerformance.partners">
+            <div class="carrier-top">
+              <div>
+                <h3 class="carrier-name">{{ c.partner }}</h3>
+                <span class="carrier-total">Tổng {{ c.total }} đơn giao</span>
+              </div>
+              <div class="carrier-rate-box">
+                <span class="rate-label">Tỷ lệ phát đạt</span>
+                <strong class="rate-val">{{ c.successRate }}%</strong>
+              </div>
+            </div>
+
+            <div class="carrier-metrics-row">
+              <div class="c-metric">
+                <span>Thành công</span>
+                <strong class="text-success">{{ c.delivered }}</strong>
+              </div>
+              <div class="c-metric">
+                <span>Thất bại</span>
+                <strong class="text-danger">{{ c.failed }}</strong>
+              </div>
+              <div class="c-metric">
+                <span>Đang xử lý / giao</span>
+                <strong class="text-muted">{{ c.pending }}</strong>
+              </div>
+            </div>
+
+            <div class="carrier-progress">
+              <div class="c-bar-fill" [style.width.%]="c.successRate"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="carrier-note">
+          <ng-icon name="lucideInfo" size="14px"></ng-icon>
+          <span>Mẫu số tính tỷ lệ thành công chỉ tính trên các đơn đã có kết quả giao hàng cuối cùng (Thành công + Thất bại).</span>
+        </div>
+      </article>
+    </section>
+
+    </div> <!-- /activeTab === overview -->
+
+    <div *ngIf="activeTab === 'profit'" class="profit-section">
+
+      <!-- Cảnh báo độ bao phủ giá vốn -->
+      <div *ngIf="profitSummary?.costCoverage?.warning" class="alert-box warning">
+        <ng-icon name="lucideAlertTriangle" size="22px"></ng-icon>
+        <div class="alert-content">
+          <strong>Lưu ý về tính hoàn thiện của dữ liệu giá vốn:</strong>
+          <p>{{ profitSummary?.costCoverage?.warning }}</p>
+        </div>
+        <span class="badge badge-warning">Bao phủ {{ profitSummary?.costCoverage?.ratio }}%</span>
       </div>
-      <span class="panel-badge">Chờ tích hợp dữ liệu</span>
-    </div>
 
-    <div class="stats-grid behavior-grid">
-      <article class="stat-card">
-        <div class="stat-top">
-          <span class="stat-label">Lượt xem sản phẩm</span>
-          <span class="stat-icon blue">
-            <ng-icon name="lucideEye" size="21px"></ng-icon>
-          </span>
+      <!-- 4 THẺ KPI GIÁ VỐN VÀ LỢI NHUẬN -->
+      <section class="section">
+        <div class="section-heading">
+          <div>
+            <h2 class="section-title">Chỉ số hiệu quả giá vốn & lợi nhuận</h2>
+            <p class="section-description">Số liệu quản trị thực tế trong {{ periodLabel }} (đối chiếu kỳ trước: {{ previousPeriodRangeText }}).</p>
+          </div>
         </div>
-        <strong class="stat-value">—</strong>
-        <span class="stat-note">Cần ghi nhận sự kiện xem sản phẩm</span>
+
+        <div class="stats-grid profit-stats-grid">
+          <!-- 1. Doanh thu thuần (Net Revenue) -->
+          <article class="stat-card">
+            <div class="stat-top">
+              <span class="stat-label">Doanh thu thuần</span>
+              <div class="stat-icon-wrap" title="{{ profitSummary?.netRevenue?.tooltip }}">
+                <ng-icon name="lucideCreditCard" size="18px"></ng-icon>
+              </div>
+            </div>
+            <div class="stat-value">{{ formatCurrency(profitSummary?.netRevenue?.value) }}</div>
+            <div class="stat-footer">
+              <span
+                *ngIf="profitSummary?.netRevenue?.hasComparison"
+                class="delta-badge"
+                [class.positive]="(profitSummary?.netRevenue?.diff || 0) >= 0"
+                [class.negative]="(profitSummary?.netRevenue?.diff || 0) < 0"
+              >
+                <ng-icon [name]="(profitSummary?.netRevenue?.diff || 0) >= 0 ? 'lucideArrowUpRight' : 'lucideArrowDownRight'"></ng-icon>
+                <span>{{ profitSummary?.netRevenue?.percent }}%</span>
+              </span>
+              <span class="stat-comparison" [title]="'Kỳ đối chiếu: ' + previousPeriodRangeText">
+                so với kỳ trước ({{ formatCurrency(profitSummary?.netRevenue?.prevValue) }})
+              </span>
+            </div>
+
+            <div class="stat-note" [title]="profitSummary?.netRevenue?.tooltip">
+              <span class="stat-note-icon">
+                <ng-icon name="lucideHelpCircle" size="14px"></ng-icon>
+              </span>
+              <span class="stat-note-text">{{ profitSummary?.netRevenue?.tooltip }}</span>
+            </div>
+          </article>
+
+          <!-- 2. Giá vốn hàng bán (COGS) -->
+          <article class="stat-card">
+            <div class="stat-top">
+              <span class="stat-label">Giá vốn hàng bán (COGS)</span>
+              <div class="stat-icon-wrap stat-icon-amber" title="{{ profitSummary?.cogs?.tooltip }}">
+                <ng-icon name="lucidePackage" size="18px"></ng-icon>
+              </div>
+            </div>
+            <div class="stat-value">{{ formatCurrency(profitSummary?.cogs?.value) }}</div>
+            <div class="stat-footer">
+              <span
+                *ngIf="profitSummary?.cogs?.status === 'unrecorded'"
+                class="badge badge-warning"
+              >
+                Chưa ghi nhận giá vốn
+              </span>
+              <ng-container *ngIf="profitSummary?.cogs?.status !== 'unrecorded'">
+                <span
+                  *ngIf="profitSummary?.cogs?.hasComparison"
+                  class="delta-badge"
+                  [class.neutral]="true"
+                >
+                  <span>{{ profitSummary?.cogs?.percent }}%</span>
+                </span>
+                <span class="stat-comparison" [title]="'Kỳ đối chiếu: ' + previousPeriodRangeText">
+                  so với kỳ trước ({{ formatCurrency(profitSummary?.cogs?.prevValue) }})
+                </span>
+              </ng-container>
+            </div>
+
+            <div class="stat-note" [title]="profitSummary?.cogs?.tooltip">
+              <span class="stat-note-icon">
+                <ng-icon name="lucideHelpCircle" size="14px"></ng-icon>
+              </span>
+              <span class="stat-note-text">{{ profitSummary?.cogs?.tooltip }}</span>
+            </div>
+          </article>
+
+          <!-- 3. Lợi nhuận gộp (Gross Profit) -->
+          <article class="stat-card" [class.stat-highlight-green]="profitSummary?.grossProfit?.value !== null && (profitSummary?.grossProfit?.value || 0) >= 0">
+            <div class="stat-top">
+              <span class="stat-label">Lợi nhuận gộp</span>
+              <div class="stat-icon-wrap" [class.stat-icon-green]="profitSummary?.grossProfit?.value !== null" title="{{ profitSummary?.grossProfit?.tooltip }}">
+                <ng-icon name="lucideTrendingUp" size="18px"></ng-icon>
+              </div>
+            </div>
+            <div *ngIf="profitSummary?.grossProfit?.value !== null" class="stat-value value-green">
+              {{ formatCurrency(profitSummary?.grossProfit?.value) }}
+            </div>
+            <div *ngIf="profitSummary?.grossProfit?.value === null" class="stat-value text-muted text-lg">
+              Chưa đủ dữ liệu
+            </div>
+            <div class="stat-footer">
+              <ng-container *ngIf="profitSummary?.grossProfit?.hasComparison">
+                <span
+                  class="delta-badge"
+                  [class.positive]="(profitSummary?.grossProfit?.diff || 0) >= 0"
+                  [class.negative]="(profitSummary?.grossProfit?.diff || 0) < 0"
+                >
+                  <ng-icon [name]="(profitSummary?.grossProfit?.diff || 0) >= 0 ? 'lucideArrowUpRight' : 'lucideArrowDownRight'"></ng-icon>
+                  <span>{{ profitSummary?.grossProfit?.percent }}%</span>
+                </span>
+                <span class="stat-comparison" [title]="'Kỳ đối chiếu: ' + previousPeriodRangeText">
+                  so với kỳ trước ({{ formatCurrency(profitSummary?.grossProfit?.prevValue) }})
+                </span>
+              </ng-container>
+              <ng-container *ngIf="!profitSummary?.grossProfit?.hasComparison && profitSummary?.grossProfit?.coverageStatus === 'partial' && profitSummary?.grossProfit?.trackedValue !== null">
+                <span class="badge badge-warning">Một phần</span>
+                <span class="stat-comparison">
+                  Phần có giá vốn: <strong>{{ formatCurrency(profitSummary?.grossProfit?.trackedValue) }}</strong>
+                </span>
+              </ng-container>
+              <ng-container *ngIf="profitSummary?.grossProfit?.coverageStatus === 'zero'">
+                <span class="stat-comparison text-muted">
+                  Chưa ghi nhận giá vốn
+                </span>
+              </ng-container>
+            </div>
+
+            <div class="stat-note" [title]="profitSummary?.grossProfit?.tooltip">
+              <span class="stat-note-icon">
+                <ng-icon name="lucideHelpCircle" size="14px"></ng-icon>
+              </span>
+              <span class="stat-note-text">{{ profitSummary?.grossProfit?.tooltip }}</span>
+            </div>
+          </article>
+
+          <!-- 4. Biên lợi nhuận gộp (Gross Margin %) -->
+          <article class="stat-card">
+            <div class="stat-top">
+              <span class="stat-label">Biên lợi nhuận gộp</span>
+              <div class="stat-icon-wrap" title="{{ profitSummary?.grossMargin?.tooltip }}">
+                <ng-icon name="lucideTrendingUp" size="18px"></ng-icon>
+              </div>
+            </div>
+            <div *ngIf="profitSummary?.grossMargin?.value !== null" class="stat-value">
+              {{ profitSummary?.grossMargin?.value | number:'1.2-2' }}%
+            </div>
+            <div *ngIf="profitSummary?.grossMargin?.value === null" class="stat-value text-muted text-lg">
+              Chưa đủ dữ liệu
+            </div>
+            <div class="stat-footer">
+              <ng-container *ngIf="profitSummary?.grossMargin?.hasComparison">
+                <span
+                  class="delta-badge"
+                  [class.positive]="(profitSummary?.grossMargin?.diff || 0) >= 0"
+                  [class.negative]="(profitSummary?.grossMargin?.diff || 0) < 0"
+                >
+                  <span>{{ (profitSummary?.grossMargin?.diff || 0) > 0 ? '+' : '' }}{{ profitSummary?.grossMargin?.diff | number:'1.2-2' }}%</span>
+                </span>
+                <span class="stat-comparison" [title]="'Kỳ đối chiếu: ' + previousPeriodRangeText">
+                  so với kỳ trước ({{ profitSummary?.grossMargin?.prevValue | number:'1.2-2' }}%)
+                </span>
+              </ng-container>
+              <ng-container *ngIf="!profitSummary?.grossMargin?.hasComparison && profitSummary?.grossMargin?.coverageStatus === 'partial' && profitSummary?.grossMargin?.trackedValue !== null">
+                <span class="badge badge-warning">Một phần</span>
+                <span class="stat-comparison">
+                  Phần có giá vốn: <strong>{{ profitSummary?.grossMargin?.trackedValue | number:'1.2-2' }}%</strong>
+                </span>
+              </ng-container>
+              <ng-container *ngIf="profitSummary?.grossMargin?.coverageStatus === 'zero'">
+                <span class="stat-comparison text-muted">
+                  Độ bao phủ: 0%
+                </span>
+              </ng-container>
+            </div>
+
+            <div class="stat-note" [title]="profitSummary?.grossMargin?.tooltip">
+              <span class="stat-note-icon">
+                <ng-icon name="lucideHelpCircle" size="14px"></ng-icon>
+              </span>
+              <span class="stat-note-text">{{ profitSummary?.grossMargin?.tooltip }}</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- KHU VỰC BIỂU ĐỒ LỢI NHUẬN VÀ CƠ CẤU GIÁ VỐN THEO NHÓM HÀNG -->
+      <section class="charts-grid profit-charts-grid">
+        <!-- BIỂU ĐỒ XU HƯỚNG DOANH THU VS LỢI NHUẬN GỘP -->
+        <article class="panel revenue-panel">
+        <div class="panel-heading">
+          <div>
+            <h3 class="panel-title">Xu hướng doanh thu thuần và lợi nhuận gộp</h3>
+            <p class="panel-subtitle">Theo dõi tương quan giữa doanh thu và lợi nhuận thực tế theo chuỗi thời gian.</p>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <span class="legend-line line-revenue"></span>
+              <span>Doanh thu thuần</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-line line-profit"></span>
+              <span>Lợi nhuận gộp</span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          *ngIf="profitTrend?.points?.length; else emptyProfitChart"
+          class="revenue-chart"
+          (mouseleave)="onLeaveProfitChart()"
+        >
+          <!-- Trục Y -->
+          <div class="chart-y-axis">
+            <span>{{ formatCurrency(maxProfitChartValue) }}</span>
+            <span>{{ formatCurrency(maxProfitChartValue * 0.75) }}</span>
+            <span>{{ formatCurrency(maxProfitChartValue * 0.5) }}</span>
+            <span>{{ formatCurrency(maxProfitChartValue * 0.25) }}</span>
+            <span>0 ₫</span>
+          </div>
+
+          <div class="chart-plot">
+            <!-- Grid lines -->
+            <div class="grid-line" style="top: 0%"></div>
+            <div class="grid-line" style="top: 25%"></div>
+            <div class="grid-line" style="top: 50%"></div>
+            <div class="grid-line" style="top: 75%"></div>
+            <div class="grid-line" style="top: 100%"></div>
+
+            <!-- SVG Vector Lines -->
+            <svg
+              viewBox="0 0 600 216"
+              preserveAspectRatio="none"
+              class="chart-svg"
+              role="img"
+              [attr.aria-label]="'Xu hướng doanh thu thuần và lợi nhuận gộp: ' + periodLabel"
+            >
+              <defs>
+                <linearGradient id="profitRevAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#2563eb" stop-opacity="0.08" />
+                  <stop offset="100%" stop-color="#2563eb" stop-opacity="0" />
+                </linearGradient>
+                <linearGradient id="grossProfitAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#10b981" stop-opacity="0.08" />
+                  <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+
+              <!-- Vùng đổ màu Doanh thu -->
+              <path
+                *ngIf="profitRevAreaPath"
+                [attr.d]="profitRevAreaPath"
+                fill="url(#profitRevAreaGrad)"
+              ></path>
+
+              <!-- Vùng đổ màu Lợi nhuận gộp -->
+              <path
+                *ngIf="grossProfitAreaPath"
+                [attr.d]="grossProfitAreaPath"
+                fill="url(#grossProfitAreaGrad)"
+              ></path>
+
+              <!-- Đường Doanh thu thuần (Xanh lam) -->
+              <path
+                *ngIf="profitRevLinePath"
+                [attr.d]="profitRevLinePath"
+                fill="none"
+                stroke="#2563eb"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"
+              ></path>
+
+              <!-- Đường Lợi nhuận gộp (Xanh lá) -->
+              <path
+                *ngIf="grossProfitLinePath"
+                [attr.d]="grossProfitLinePath"
+                fill="none"
+                stroke="#10b981"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"
+              ></path>
+
+              <!-- Đường chỉ thị dọc khi hover (Guide Line) -->
+              <line
+                *ngIf="hoveredProfitPoint"
+                [attr.x1]="hoveredProfitPoint.x"
+                y1="12"
+                [attr.x2]="hoveredProfitPoint.x"
+                y2="204"
+                stroke="#cbd5e1"
+                stroke-width="1"
+                stroke-dasharray="3 3"
+                vector-effect="non-scaling-stroke"
+              />
+
+              <!-- Điểm tương tác đơn lẻ khi hover Doanh thu thuần -->
+              <circle
+                *ngIf="hoveredProfitPoint"
+                [attr.cx]="hoveredProfitPoint.x"
+                [attr.cy]="hoveredProfitPoint.yRev"
+                r="4.5"
+                fill="#ffffff"
+                stroke="#2563eb"
+                stroke-width="2.5"
+                vector-effect="non-scaling-stroke"
+                class="chart-active-marker"
+              />
+
+              <!-- Điểm tương tác đơn lẻ khi hover Lợi nhuận gộp -->
+              <circle
+                *ngIf="hoveredProfitPoint && hoveredProfitPoint.yProfit !== null"
+                [attr.cx]="hoveredProfitPoint.x"
+                [attr.cy]="hoveredProfitPoint.yProfit"
+                r="4.5"
+                fill="#ffffff"
+                stroke="#10b981"
+                stroke-width="2.5"
+                vector-effect="non-scaling-stroke"
+                class="chart-active-marker"
+              />
+
+              <!-- Vùng hover vô hình mở rộng hit-box -->
+              <rect
+                *ngFor="let pt of profitChartPoints; let idx = index"
+                [attr.x]="getHoverSliceX(idx, profitChartPoints.length)"
+                y="0"
+                [attr.width]="getHoverSliceWidth(profitChartPoints.length)"
+                height="216"
+                fill="transparent"
+                style="cursor: pointer;"
+                (mouseenter)="onHoverProfitPoint(pt)"
+              />
+            </svg>
+
+            <!-- Tooltip nổi khi hover điểm -->
+            <div
+              *ngIf="hoveredProfitPoint"
+              class="chart-tooltip"
+              [style.left.%]="getProfitTooltipLeft(hoveredProfitPoint.x)"
+              [style.top.px]="getProfitTooltipTop(hoveredProfitPoint)"
+            >
+              <div class="tooltip-date">{{ hoveredProfitPoint.label }} ({{ hoveredProfitPoint.key }})</div>
+              <div class="tooltip-row">
+                <span class="dot dot-revenue"></span>
+                <span>Doanh thu thuần:</span>
+                <strong>{{ formatCurrency(hoveredProfitPoint.netRevenue) }}</strong>
+              </div>
+              <div class="tooltip-row">
+                <span class="dot dot-amber"></span>
+                <span>Giá vốn (COGS):</span>
+                <strong>{{ formatCurrency(hoveredProfitPoint.cogs) }}</strong>
+              </div>
+              <div class="tooltip-row">
+                <span class="dot dot-profit"></span>
+                <span>Lợi nhuận gộp:</span>
+                <strong>{{ hoveredProfitPoint.grossProfit !== null ? formatCurrency(hoveredProfitPoint.grossProfit) : 'Chưa đủ dữ liệu' }}</strong>
+              </div>
+              <div class="tooltip-row">
+                <span>Biên lợi nhuận:</span>
+                <strong>{{ hoveredProfitPoint.grossMargin !== null ? hoveredProfitPoint.grossMargin + '%' : 'Chưa đủ dữ liệu' }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #emptyProfitChart>
+          <div class="chart-empty-state" role="status">Chưa có dữ liệu lợi nhuận trong kỳ này.</div>
+        </ng-template>
+
+        <!-- Trục X -->
+        <div class="chart-x-axis">
+          <span *ngFor="let lbl of profitDisplayLabels">{{ lbl }}</span>
+        </div>
+
+        <!-- Tóm tắt số liệu tổng hợp cuối kỳ -->
+        <div class="chart-summary-bar">
+          <div class="summary-metric">
+            <span class="metric-label">Tổng Doanh thu thuần</span>
+            <span class="metric-val">{{ formatCurrency(profitTrend?.totalNetRevenue) }}</span>
+          </div>
+          <div class="summary-metric">
+            <span class="metric-label">Tổng Giá vốn (COGS)</span>
+            <span class="metric-val text-amber">{{ formatCurrency(profitTrend?.totalCogs) }}</span>
+          </div>
+          <div class="summary-metric">
+            <span class="metric-label">Tổng Lợi nhuận gộp</span>
+            <span class="metric-val text-green" *ngIf="profitTrend?.totalGrossProfit !== null">{{ formatCurrency(profitTrend?.totalGrossProfit) }}</span>
+            <span class="metric-val text-muted" *ngIf="profitTrend?.totalGrossProfit === null">Chưa đủ dữ liệu</span>
+          </div>
+          <div class="summary-metric">
+            <span class="metric-label">Biên lãi gộp trung bình</span>
+            <span class="metric-val" *ngIf="profitTrend?.overallGrossMargin !== null">{{ profitTrend?.overallGrossMargin }}%</span>
+            <span class="metric-val text-muted" *ngIf="profitTrend?.overallGrossMargin === null">Chưa đủ dữ liệu</span>
+          </div>
+        </div>
       </article>
 
-      <article class="stat-card">
-        <div class="stat-top">
-          <span class="stat-label">Lượt tìm kiếm</span>
-          <span class="stat-icon purple">
-            <ng-icon name="lucideSearch" size="21px"></ng-icon>
-          </span>
+      <!-- 2. BẢNG CƠ CẤU GIÁ VỐN THEO NHÓM HÀNG -->
+      <article class="panel cost-category-panel">
+        <div class="panel-heading">
+          <div>
+            <h3 class="panel-title">Cơ cấu giá vốn theo nhóm hàng</h3>
+            <p class="panel-subtitle">Phân bổ chi phí theo danh mục sản phẩm trong kỳ</p>
+          </div>
         </div>
-        <strong class="stat-value">—</strong>
-        <span class="stat-note">Cần tích hợp dữ liệu tìm kiếm</span>
-      </article>
 
-      <article class="stat-card">
-        <div class="stat-top">
-          <span class="stat-label">Lượt nhấp gợi ý</span>
-          <span class="stat-icon orange">
-            <ng-icon name="lucideMousePointerClick" size="21px"></ng-icon>
-          </span>
+        <div class="category-cost-content">
+          <div *ngIf="activeCategories.length; else emptyCategoryCost" class="category-cost-list">
+            <div *ngFor="let cat of activeCategories" class="category-cost-row">
+              <div class="cat-row-main">
+                <div class="cat-name-group">
+                  <span class="cat-dot"></span>
+                  <span class="cat-name">{{ cat.categoryName }}</span>
+                  <span class="cat-share-pill">{{ cat.costShare }}%</span>
+                </div>
+              </div>
+
+              <div class="cat-row-bottom">
+                <div class="cat-bar-wrap">
+                  <div class="cat-bar-fill" [style.width.%]="cat.costShare"></div>
+                </div>
+                <strong class="cat-cogs-val">{{ formatCurrency(cat.cogs) }}</strong>
+              </div>
+
+              <div class="cat-row-sub">
+                <span class="cat-prev-text text-muted" [title]="'Kỳ đối chiếu: ' + previousPeriodRangeText">
+                  Kỳ trước: {{ formatCurrency(cat.prevCogs) }}
+                </span>
+                <span
+                  *ngIf="cat.diffPercent !== null"
+                  class="delta-badge small"
+                  [class.positive]="(cat.diffPercent || 0) <= 0"
+                  [class.negative]="(cat.diffPercent || 0) > 0"
+                >
+                  <ng-icon [name]="(cat.diffPercent || 0) <= 0 ? 'lucideArrowDownRight' : 'lucideArrowUpRight'"></ng-icon>
+                  <span>{{ (cat.diffPercent || 0) > 0 ? '+' : '' }}{{ cat.diffPercent }}%</span>
+                </span>
+                <span *ngIf="cat.diffPercent === null" class="badge-new-item">Mới trong kỳ</span>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #emptyCategoryCost>
+            <div class="chart-empty-state">Chưa có phát sinh giá vốn theo danh mục trong kỳ.</div>
+          </ng-template>
         </div>
-        <strong class="stat-value">—</strong>
-        <span class="stat-note">Cần ghi nhận tương tác với gợi ý</span>
-      </article>
 
-      <article class="stat-card">
-        <div class="stat-top">
-          <span class="stat-label">Lượt thêm giỏ hàng</span>
-          <span class="stat-icon green">
-            <ng-icon name="lucideShoppingCart" size="21px"></ng-icon>
-          </span>
+        <div class="category-cost-footer">
+          <span class="footer-label">Tổng giá vốn danh mục:</span>
+          <strong class="footer-val text-amber">{{ formatCurrency(profitSummary?.cogs?.value) }}</strong>
         </div>
-        <strong class="stat-value">—</strong>
-        <span class="stat-note">Cần tích hợp sự kiện giỏ hàng</span>
       </article>
-    </div>
-  </section>
+    </section>
 
-  <!-- Recent orders -->
-  <section class="panel recent-orders">
-    <div class="panel-heading">
-      <div>
-        <h2>Đơn hàng gần đây</h2>
-        <p>Theo dõi những đơn hàng mới phát sinh</p>
-      </div>
-      <a class="text-link" routerLink="/admin/orders">Xem tất cả</a>
+      <!-- BẢNG CHI TIẾT SỐ LIỆU THEO THỜI GIAN -->
+      <section class="section" *ngIf="profitTrend?.points?.length">
+        <div class="section-heading">
+          <div>
+            <h3 class="section-title">Bảng đối soát giá vốn và lợi nhuận chi tiết</h3>
+            <p class="section-description">Phân bổ giá vốn và biên lãi gộp theo từng mốc thời gian trong {{ periodLabel }}.</p>
+          </div>
+        </div>
+
+        <div class="profit-reconciliation-card">
+          <div class="table-responsive profit-reconciliation-wrap">
+            <table class="data-table profit-reconciliation-table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th class="text-right revenue-column">Doanh thu thuần</th>
+                  <th class="text-right cogs-column">Giá vốn (COGS)</th>
+                  <th class="text-right profit-column">Lợi nhuận gộp</th>
+                  <th class="text-right">Biên lãi gộp</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let pt of paginatedProfitPoints">
+                  <td>
+                    <div class="period-cell">
+                      <strong>{{ pt.label }}</strong>
+                      <span class="period-key">{{ pt.key }}</span>
+                    </div>
+                  </td>
+                  <td class="text-right revenue-column">{{ formatCurrency(pt.netRevenue) }}</td>
+                  <td class="text-right cogs-column">{{ formatCurrency(pt.cogs) }}</td>
+                  <td
+                    class="text-right profit-column"
+                    [class.negative-profit]="pt.grossProfit !== null && pt.grossProfit < 0"
+                  >
+                    {{ pt.grossProfit !== null ? formatCurrency(pt.grossProfit) : 'Chưa đủ dữ liệu' }}
+                  </td>
+                  <td class="text-right">
+                    <span
+                      *ngIf="pt.grossMargin !== null"
+                      class="margin-badge"
+                      [class.margin-high]="pt.grossMargin >= 30"
+                      [class.margin-medium]="pt.grossMargin < 30 && pt.grossMargin >= 10"
+                      [class.margin-low]="pt.grossMargin < 10"
+                    >
+                      {{ pt.grossMargin }}%
+                    </span>
+                    <span *ngIf="pt.grossMargin === null" class="margin-badge margin-unavailable">
+                      Chưa đủ dữ liệu
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <footer class="profit-table-footer" *ngIf="(profitTrend?.points?.length ?? 0) > 0">
+          <div class="profit-pagination-summary">
+            Hiển thị
+            <strong>{{ profitRangeStart }}</strong>–<strong>{{ profitRangeEnd }}</strong>
+            trong tổng số <strong>{{ profitTrend?.points?.length }}</strong> bản ghi
+          </div>
+
+          <div class="profit-pagination-controls">
+            <label class="profit-page-size">
+              <span>Số dòng:</span>
+              <select
+                [value]="profitPageSize"
+                (change)="onProfitPageSizeChange($event)"
+                aria-label="Số dòng mỗi trang"
+              >
+                <option *ngFor="let size of profitPageSizeOptions" [value]="size">{{ size }}</option>
+              </select>
+            </label>
+
+            <button
+              type="button"
+              class="profit-page-button"
+              [disabled]="profitPage <= 1"
+              (click)="goToProfitPage(profitPage - 1)"
+              aria-label="Trang trước"
+            >‹</button>
+            <span class="profit-current-page">{{ profitPage }} / {{ profitTotalPages }}</span>
+            <button
+              type="button"
+              class="profit-page-button"
+              [disabled]="profitPage >= profitTotalPages"
+              (click)="goToProfitPage(profitPage + 1)"
+              aria-label="Trang sau"
+            >›</button>
+          </div>
+        </footer>
+      </section>
     </div>
 
-    <div class="empty-state">
-      <ng-icon name="lucideShoppingBag" size="30px"></ng-icon>
-      <strong>Chưa có dữ liệu đơn hàng</strong>
-      <p>Bảng sẽ hiển thị khi được kết nối với API.</p>
-    </div>
-  </section>
-
-  <!-- Recent activity -->
-  <section class="panel recent-activity">
-    <div class="panel-heading">
-      <div>
-        <h2>Hoạt động gần đây</h2>
-        <p>Các cập nhật liên quan đến đơn hàng</p>
-      </div>
-    </div>
-
-    <div class="activity-placeholder">
-      <ng-icon name="lucideClock" size="20px"></ng-icon>
-      <span>Chưa có dữ liệu hoạt động để hiển thị.</span>
-    </div>
-  </section>
+  </ng-container>
 </section>

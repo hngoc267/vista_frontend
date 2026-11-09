@@ -35,6 +35,7 @@ import {
 type ModalAction = Exclude<OrderAction, 'print_label'>;
 
 const STATUS_LABELS: Record<OrderDisplayStatus, string> = {
+  pending_payment: 'Chờ thanh toán',
   pending_confirmation: 'Chờ xác nhận',
   processing: 'Đang xử lý',
   shipping: 'Đang giao',
@@ -44,6 +45,7 @@ const STATUS_LABELS: Record<OrderDisplayStatus, string> = {
 };
 
 const EVENT_LABELS: Record<string, string> = {
+  order_created: 'Khách hàng đặt đơn',
   confirmed: 'Xác nhận đơn hàng',
   cancelled: 'Hủy đơn hàng',
   shipment_created: 'Tạo mã vận đơn',
@@ -88,6 +90,13 @@ const PAYMENT_TYPE_LABELS: Record<string, string> = {
 export class AdminOrders implements OnInit, OnDestroy {
   readonly canEdit = getAdminRole() === 'Staff';
   readonly statusOptions = Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label }));
+  readonly paymentTypeOptions = [
+    { value: '', label: 'Tất cả phương thức' },
+    { value: 'COD', label: 'COD (Tiền mặt)' },
+    { value: 'MoMo', label: 'Ví MoMo' },
+    { value: 'VNPay', label: 'VNPay' },
+    { value: 'BankTransfer', label: 'Chuyển khoản' },
+  ];
   // Tab trạng thái: "" = tất cả, "overdue" = quá hạn xử lý
   readonly tabs: { value: string; label: string; countKey: string }[] = [
     { value: '', label: 'Tất cả', countKey: 'all' },
@@ -99,6 +108,7 @@ export class AdminOrders implements OnInit, OnDestroy {
   // Bộ lọc danh sách
   keyword = '';
   statusFilter = '';
+  paymentTypeFilter = '';
   fromDate = '';
   toDate = '';
   page = 1;
@@ -114,12 +124,18 @@ export class AdminOrders implements OnInit, OnDestroy {
   bulkAction: BulkAction | null = null;
   isBulkSubmitting = false;
   isPrintingLabels = false;
+  isRefreshing = false;
 
   // Danh mục lý do hủy (Staff)
   cancelReasons: CancelReason[] = [];
+  isLoadingCancelReasons = false;
+  cancelReasonsError = '';
   modalReasonCode = '';
   isLoading = false;
   loadError = '';
+
+  readonly fallbackProductImage =
+    'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="%23f1f5f9"><rect width="60" height="60" rx="6"/><path d="M30 18l12 7v14l-12 7-12-7V25l12-7z" fill="none" stroke="%2394a3b8" stroke-width="2"/><path d="M18 25l12 7 12-7M30 32v14" fill="none" stroke="%2394a3b8" stroke-width="2"/></svg>';
 
   // Drawer chi tiết
   isDetailOpen = false;
@@ -152,11 +168,7 @@ export class AdminOrders implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (this.canEdit) {
-      this.orderService.getCancelReasons().subscribe({
-        next: (response) => {
-          this.cancelReasons = response.data ?? [];
-        },
-      });
+      this.loadCancelReasons();
     }
 
     // Đồng hồ 1 phút: cập nhật thời gian còn lại / quá hạn, đơn vừa quá hạn thì tải lại để đưa lên đầu
@@ -173,6 +185,7 @@ export class AdminOrders implements OnInit, OnDestroy {
     }, 60 * 1000);
 
     // Mở từ thông báo: /admin/orders?orderId=... → mở chi tiết đơn đó
+    // Mở từ thông báo hoặc dashboard: /admin/orders?orderId=... hoặc ?status=... / ?paymentType=...
     this.queryParamsSubscription = this.route.queryParamMap.subscribe((params) => {
       const orderId = params.get('orderId')?.trim();
       if (orderId) {
@@ -182,6 +195,15 @@ export class AdminOrders implements OnInit, OnDestroy {
         // Điều hướng này phát lại queryParamMap (không còn orderId) → danh sách tự tải ở nhánh dưới
         this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
         return;
+      }
+
+      const statusParam = params.get('status')?.trim();
+      if (statusParam !== undefined && statusParam !== null) {
+        this.statusFilter = statusParam;
+      }
+      const paymentTypeParam = params.get('paymentType')?.trim();
+      if (paymentTypeParam !== undefined && paymentTypeParam !== null) {
+        this.paymentTypeFilter = paymentTypeParam;
       }
 
       this.loadOrders();
@@ -198,6 +220,27 @@ export class AdminOrders implements OnInit, OnDestroy {
       });
   }
 
+  loadCancelReasons(callback?: () => void): void {
+    if (this.isLoadingCancelReasons) return;
+    this.isLoadingCancelReasons = true;
+    this.cancelReasonsError = '';
+
+    this.orderService.getCancelReasons().pipe(
+      finalize(() => {
+        this.isLoadingCancelReasons = false;
+        this.changeDetectorRef.detectChanges();
+      })
+    ).subscribe({
+      next: (response) => {
+        this.cancelReasons = response.data ?? [];
+        callback?.();
+      },
+      error: () => {
+        this.cancelReasonsError = 'Không tải được danh mục lý do hủy. Vui lòng bấm Thử lại.';
+      }
+    });
+  }
+
   ngOnDestroy(): void {
     clearTimeout(this.searchTimer);
     clearTimeout(this.toastTimer);
@@ -208,7 +251,7 @@ export class AdminOrders implements OnInit, OnDestroy {
 
   // ===== Danh sách =====
 
-  loadOrders(silent = false): void {
+  loadOrders(silent = false, onComplete?: () => void): void {
     if (!silent) {
       this.isLoading = true;
       this.loadError = '';
@@ -218,6 +261,7 @@ export class AdminOrders implements OnInit, OnDestroy {
       .getOrders({
         keyword: this.keyword.trim(),
         status: this.statusFilter,
+        paymentType: this.paymentTypeFilter,
         fromDate: this.fromDate,
         toDate: this.toDate,
         page: this.page,
@@ -226,6 +270,7 @@ export class AdminOrders implements OnInit, OnDestroy {
       .pipe(
         finalize(() => {
           this.isLoading = false;
+          onComplete?.();
           this.changeDetectorRef.detectChanges();
         }),
       )
@@ -248,6 +293,15 @@ export class AdminOrders implements OnInit, OnDestroy {
           this.loadError = 'Không tải được danh sách đơn hàng. Vui lòng thử lại.';
         },
       });
+  }
+
+  refreshData(): void {
+    if (this.isLoading || this.isRefreshing) return;
+    this.isRefreshing = true;
+    this.loadOrders(false, () => {
+      this.isRefreshing = false;
+      this.showToast('Đã làm mới danh sách đơn hàng', 'success');
+    });
   }
 
   onKeywordChange(): void {
@@ -274,6 +328,7 @@ export class AdminOrders implements OnInit, OnDestroy {
   clearFilters(): void {
     this.keyword = '';
     this.statusFilter = '';
+    this.paymentTypeFilter = '';
     this.fromDate = '';
     this.toDate = '';
     this.applyFilters();
@@ -379,7 +434,26 @@ export class AdminOrders implements OnInit, OnDestroy {
   }
 
   get historyItems(): OrderStatusHistoryItem[] {
-    return this.detail?.Status_history ?? [];
+    const rawHistory = this.detail?.Status_history ?? [];
+    if (!rawHistory.length) {
+      return [
+        {
+          From_status: '',
+          To_status: this.detail?.Status ?? '',
+          Event: 'order_created',
+          Actor_id: '',
+          Actor_name: this.detail?.Receiver_name || 'Khách hàng',
+          Note: 'Đơn hàng được ghi nhận vào hệ thống',
+          Created_at: this.detail?.Created_at ?? null,
+        },
+      ];
+    }
+
+    return [...rawHistory].sort((a, b) => {
+      const timeA = a.Created_at ? new Date(a.Created_at).getTime() : 0;
+      const timeB = b.Created_at ? new Date(b.Created_at).getTime() : 0;
+      return timeA - timeB;
+    });
   }
 
   // Các mốc chưa tới, hiển thị mờ ở cuối dòng thời gian
@@ -407,6 +481,10 @@ export class AdminOrders implements OnInit, OnDestroy {
     this.modalNote = '';
     this.modalReasonCode = '';
     this.modalError = '';
+
+    if (action === 'cancel' && (!this.cancelReasons || !this.cancelReasons.length)) {
+      this.loadCancelReasons();
+    }
   }
 
   closeModal(): void {
@@ -789,6 +867,44 @@ export class AdminOrders implements OnInit, OnDestroy {
 
   getPaymentLabel(paymentStatus: string | undefined): string {
     return paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán';
+  }
+
+  getPaymentStatusLabel(status: string | undefined): string {
+    switch (status) {
+      case 'paid':
+        return 'Đã thanh toán';
+      case 'pending':
+        return 'Chưa thanh toán';
+      case 'refunded':
+        return 'Đã hoàn tiền';
+      case 'failed':
+        return 'Thất bại';
+      default:
+        return status ? status : 'Chưa thanh toán';
+    }
+  }
+
+  getDeliveryStatusLabel(status: string | undefined, orderDisplayStatus?: string): string {
+    switch (status) {
+      case 'delivered':
+        return 'Đã giao';
+      case 'shipping':
+        return 'Đang giao';
+      case 'failed':
+        return 'Giao thất bại';
+      case 'pending':
+        return orderDisplayStatus === 'pending_confirmation' ? 'Chưa bàn giao' : 'Chờ lấy hàng';
+      default:
+        return 'Chờ bàn giao';
+    }
+  }
+
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+      target.onerror = null;
+      target.src = this.fallbackProductImage;
+    }
   }
 
   getPaymentTypeLabel(paymentType: string | undefined): string {

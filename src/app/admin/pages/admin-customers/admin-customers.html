@@ -139,12 +139,12 @@
             <td>
               <button
                 type="button"
-                class="view-link-badge"
+                class="view-link-badge font-medium"
                 (click)="openDetail(item); selectTab('orders')"
-                title="Bấm để xem thống kê đơn hàng"
+                title="Bấm để xem lịch sử đơn hàng"
               >
                 <ng-icon name="lucideShoppingBag" size="13px"></ng-icon>
-                <span>Xem chi tiết</span>
+                <span>{{ (item.order_count || 0) }} đơn</span>
               </button>
             </td>
 
@@ -152,12 +152,12 @@
             <td>
               <button
                 type="button"
-                class="view-link-badge"
+                class="view-link-badge font-semibold text-primary"
                 (click)="openDetail(item); selectTab('orders')"
-                title="Bấm để xem tổng chi tiêu"
+                title="Bấm để xem chi tiết chi tiêu"
               >
                 <ng-icon name="lucideDollarSign" size="13px"></ng-icon>
-                <span>Xem chi tiết</span>
+                <span>{{ formatCurrency(item.total_spent) }}</span>
               </button>
             </td>
 
@@ -346,41 +346,53 @@
         type="button"
         role="tab"
         class="drawer-tab"
+        id="customer-tab-info"
+        aria-controls="customer-panel-info"
         [class.active]="activeTab === 'info'"
         [attr.aria-selected]="activeTab === 'info'"
         (click)="selectTab('info')"
       >
-        Hồ sơ &amp; Địa chỉ
+        <span>Hồ sơ &amp; Địa chỉ</span>
+        <span class="tab-badge" *ngIf="selectedAddresses.length">{{ selectedAddresses.length }}</span>
       </button>
       <button
         type="button"
         role="tab"
         class="drawer-tab"
+        id="customer-tab-orders"
+        aria-controls="customer-panel-orders"
         [class.active]="activeTab === 'orders'"
         [attr.aria-selected]="activeTab === 'orders'"
         (click)="selectTab('orders')"
       >
-        Lịch sử đơn hàng
+        <span>Lịch sử đơn hàng</span>
+        <span class="tab-badge" *ngIf="selectedOrders.length">{{ selectedOrders.length }}</span>
       </button>
       <button
         type="button"
         role="tab"
         class="drawer-tab"
+        id="customer-tab-reviews"
+        aria-controls="customer-panel-reviews"
         [class.active]="activeTab === 'reviews'"
         [attr.aria-selected]="activeTab === 'reviews'"
         (click)="selectTab('reviews')"
       >
-        Lịch sử đánh giá
+        <span>Lịch sử đánh giá</span>
+        <span class="tab-badge" *ngIf="selectedReviews.length">{{ selectedReviews.length }}</span>
       </button>
       <button
         type="button"
         role="tab"
         class="drawer-tab"
+        id="customer-tab-returns"
+        aria-controls="customer-panel-returns"
         [class.active]="activeTab === 'returns'"
         [attr.aria-selected]="activeTab === 'returns'"
         (click)="selectTab('returns')"
       >
-        Lịch sử đổi trả
+        <span>Lịch sử đổi trả</span>
+        <span class="tab-badge" *ngIf="selectedReturns.length">{{ selectedReturns.length }}</span>
       </button>
     </nav>
 
@@ -399,7 +411,7 @@
 
       <ng-container *ngIf="!isDetailLoading">
         <!-- TAB 1: THÔNG TIN CÁ NHÂN & ĐỊA CHỈ -->
-        <section class="tab-content" *ngIf="activeTab === 'info'">
+        <section class="tab-content" id="customer-panel-info" role="tabpanel" aria-labelledby="customer-tab-info" *ngIf="activeTab === 'info'">
           <div class="info-section">
             <h3 class="section-title">Thông tin tài khoản (Chỉ xem)</h3>
             <div class="info-grid">
@@ -475,7 +487,7 @@
         </section>
 
         <!-- TAB 2: LỊCH SỬ ĐƠN HÀNG -->
-        <section class="tab-content" *ngIf="activeTab === 'orders'">
+        <section class="tab-content" id="customer-panel-orders" role="tabpanel" aria-labelledby="customer-tab-orders" *ngIf="activeTab === 'orders'">
           <div class="stats-overview-box" *ngIf="selectedOrderStats">
             <h3 class="section-title">Thống kê hoạt động đơn hàng</h3>
             
@@ -510,34 +522,208 @@
             </div>
           </div>
 
-          <div class="unsupported-banner">
-            <ng-icon name="lucideInfo" size="20px"></ng-icon>
-            <div>
-              <strong>Lưu ý về danh sách đơn hàng</strong>
-              <p>Hiện hệ thống hỗ trợ thống kê đơn hàng của khách hàng. Danh sách chi tiết đơn hàng chưa được hỗ trợ.</p>
+          <div class="orders-section">
+            <div class="section-header-flex">
+              <h3 class="section-title">Danh sách đơn hàng</h3>
+              <span class="badge-counter">{{ selectedOrders.length }} đơn hàng</span>
+            </div>
+
+            <div class="drawer-order-list" *ngIf="selectedOrders.length > 0">
+              <div class="drawer-order-card" *ngFor="let ord of selectedOrders">
+                <div class="drawer-order-card-header">
+                  <div class="order-id-group">
+                    <button
+                      type="button"
+                      class="link-button font-mono font-bold"
+                      (click)="navigateToOrder(ord.Order_id)"
+                      title="Mở chi tiết đơn hàng trong tab Quản lý đơn"
+                    >
+                      {{ ord.Order_id }}
+                      <ng-icon name="lucideExternalLink" size="13px"></ng-icon>
+                    </button>
+                    <span class="order-date text-muted text-xs">
+                      {{ ord.Created_at | date: 'dd/MM/yyyy HH:mm' }}
+                    </span>
+                  </div>
+                  <span class="badge" [ngClass]="getOrderStatusClass(ord.Status)">
+                    {{ getOrderStatusLabel(ord.Status) }}
+                  </span>
+                </div>
+
+                <div class="drawer-order-card-body">
+                  <div class="order-meta-item">
+                    <span class="text-muted text-xs">Số sản phẩm</span>
+                    <span class="text-sm font-medium">{{ ord.item_count }} món</span>
+                  </div>
+                  <div class="order-meta-item">
+                    <span class="text-muted text-xs">Phương thức</span>
+                    <span class="text-sm font-mono">{{ ord.Payment_type || 'COD' }}</span>
+                  </div>
+                  <div class="order-meta-item text-right">
+                    <span class="text-muted text-xs">Tổng tiền</span>
+                    <strong class="order-amount text-primary font-semibold">{{ formatCurrency(ord.Total_amount) }}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="empty-box" *ngIf="selectedOrders.length === 0">
+              <ng-icon name="lucideShoppingBag" size="24px"></ng-icon>
+              <span>Khách hàng chưa có đơn hàng nào.</span>
             </div>
           </div>
         </section>
 
         <!-- TAB 3: LỊCH SỬ ĐÁNH GIÁ -->
-        <section class="tab-content" *ngIf="activeTab === 'reviews'">
-          <div class="unsupported-banner notice">
-            <ng-icon name="lucideInfo" size="20px"></ng-icon>
-            <div>
-              <strong>Thông báo hệ thống</strong>
-              <p>Chức năng xem lịch sử đánh giá theo khách hàng hiện chưa được hỗ trợ.</p>
+        <section class="tab-content" id="customer-panel-reviews" role="tabpanel" aria-labelledby="customer-tab-reviews" *ngIf="activeTab === 'reviews'">
+          <div class="section-header-flex">
+            <h3 class="section-title">Đánh giá sản phẩm đã mua</h3>
+            <span class="badge-counter">{{ selectedReviews.length }} đánh giá</span>
+          </div>
+
+          <div class="drawer-review-list" *ngIf="selectedReviews.length > 0">
+            <div class="drawer-review-card" *ngFor="let rev of selectedReviews">
+              <div class="drawer-review-header">
+                <div class="review-product-meta">
+                  <img
+                    *ngIf="rev.Product_image"
+                    [src]="rev.Product_image"
+                    alt=""
+                    class="review-thumb"
+                  />
+                  <div class="review-product-info">
+                    <strong class="review-product-name">{{ rev.Product_name }}</strong>
+                    <span class="review-variant-name text-muted text-xs font-mono" *ngIf="rev.Variant_name">
+                      Phân loại: {{ rev.Variant_name }}
+                    </span>
+                  </div>
+                </div>
+                <span
+                  class="badge text-xs"
+                  [class.badge-success]="rev.Moderation_status === 'approved'"
+                  [class.badge-warning]="rev.Moderation_status === 'pending'"
+                  [class.badge-danger]="rev.Moderation_status === 'rejected'"
+                >
+                  {{ getReviewStatusLabel(rev.Moderation_status) }}
+                </span>
+              </div>
+
+              <div class="drawer-review-rating">
+                <div class="star-rating">
+                  <ng-icon
+                    name="lucideStar"
+                    size="14px"
+                    class="star-filled"
+                    *ngFor="let star of getStarArray(rev.Rating)"
+                  ></ng-icon>
+                  <ng-icon
+                    name="lucideStar"
+                    size="14px"
+                    class="star-empty"
+                    *ngFor="let star of getEmptyStarArray(rev.Rating)"
+                  ></ng-icon>
+                </div>
+                <span class="review-rating-num font-semibold">{{ rev.Rating }}/5</span>
+                <span class="review-date text-muted text-xs">
+                  {{ rev.Created_at | date: 'dd/MM/yyyy HH:mm' }}
+                </span>
+              </div>
+
+              <p class="drawer-review-comment" *ngIf="rev.Comment">
+                {{ rev.Comment }}
+              </p>
+              <p class="drawer-review-comment text-muted italic" *ngIf="!rev.Comment">
+                (Khách hàng không để lại nhận xét chữ)
+              </p>
+
+              <!-- Phản hồi từ shop nếu có -->
+              <div class="drawer-review-reply" *ngIf="rev.Reply_content">
+                <div class="reply-badge">
+                  <ng-icon name="lucideMessageSquare" size="13px"></ng-icon>
+                  <strong>Phản hồi từ VISTA:</strong>
+                </div>
+                <p class="reply-text">{{ rev.Reply_content }}</p>
+              </div>
             </div>
+          </div>
+
+          <div class="empty-box" *ngIf="selectedReviews.length === 0">
+            <ng-icon name="lucideMessageSquare" size="24px"></ng-icon>
+            <span>Khách hàng chưa có đánh giá nào.</span>
           </div>
         </section>
 
         <!-- TAB 4: LỊCH SỬ ĐỔI TRẢ -->
-        <section class="tab-content" *ngIf="activeTab === 'returns'">
-          <div class="unsupported-banner notice">
-            <ng-icon name="lucideInfo" size="20px"></ng-icon>
-            <div>
-              <strong>Thông báo hệ thống</strong>
-              <p>Chức năng xem lịch sử đổi trả theo khách hàng hiện chưa được hỗ trợ.</p>
+        <section class="tab-content" id="customer-panel-returns" role="tabpanel" aria-labelledby="customer-tab-returns" *ngIf="activeTab === 'returns'">
+          <div class="section-header-flex">
+            <h3 class="section-title">Yêu cầu đổi trả & hoàn tiền</h3>
+            <span class="badge-counter">{{ selectedReturns.length }} yêu cầu</span>
+          </div>
+
+          <div class="drawer-return-list" *ngIf="selectedReturns.length > 0">
+            <div class="drawer-return-card" *ngFor="let ret of selectedReturns">
+              <div class="drawer-return-header">
+                <div class="return-id-group">
+                  <span class="return-id font-mono font-bold">{{ ret.Return_order_id }}</span>
+                  <button
+                    type="button"
+                    class="link-button font-mono text-xs"
+                    (click)="navigateToOrder(ret.Order_id)"
+                    title="Mở đơn hàng gốc trong tab Quản lý đơn"
+                  >
+                    Đơn: {{ ret.Order_id }}
+                    <ng-icon name="lucideExternalLink" size="11px"></ng-icon>
+                  </button>
+                </div>
+                <span
+                  class="badge text-xs"
+                  [class.badge-success]="['completed', 'refunded'].includes(ret.Status)"
+                  [class.badge-warning]="['pending', 'approved'].includes(ret.Status)"
+                  [class.badge-danger]="ret.Status === 'rejected'"
+                >
+                  {{ getReturnStatusLabel(ret.Status) }}
+                </span>
+              </div>
+
+              <div class="return-product-box">
+                <img
+                  *ngIf="ret.Product_image"
+                  [src]="ret.Product_image"
+                  alt=""
+                  class="return-thumb"
+                />
+                <div class="return-product-meta">
+                  <strong class="return-product-name">{{ ret.Product_name }}</strong>
+                  <span class="return-product-sub text-muted text-xs">
+                    Phân loại: {{ ret.Variant_name || 'Mặc định' }} | Số lượng: {{ ret.Return_quantity }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="return-details-grid">
+                <div class="return-detail-item">
+                  <span class="text-muted text-xs">Lý do đổi trả</span>
+                  <span class="font-medium text-sm">{{ ret.Reason_type }}</span>
+                </div>
+                <div class="return-detail-item">
+                  <span class="text-muted text-xs">Số tiền hoàn</span>
+                  <strong class="text-danger font-semibold">{{ formatCurrency(ret.Refund_amount) }}</strong>
+                </div>
+                <div class="return-detail-item">
+                  <span class="text-muted text-xs">Ngày yêu cầu</span>
+                  <span class="text-xs text-muted">{{ ret.Created_at | date: 'dd/MM/yyyy HH:mm' }}</span>
+                </div>
+              </div>
+
+              <p class="return-desc text-xs text-muted" *ngIf="ret.Description">
+                Ghi chú: {{ ret.Description }}
+              </p>
             </div>
+          </div>
+
+          <div class="empty-box" *ngIf="selectedReturns.length === 0">
+            <ng-icon name="lucideRotateCcw" size="24px"></ng-icon>
+            <span>Khách hàng chưa có yêu cầu đổi trả nào.</span>
           </div>
         </section>
       </ng-container>

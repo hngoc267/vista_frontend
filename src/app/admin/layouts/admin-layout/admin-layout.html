@@ -1,6 +1,7 @@
 <div
   class="admin-layout"
   [class.sidebar-collapsed]="isSidebarCollapsed"
+  [class.manager-sidebar]="isManager"
 >
   <aside class="admin-sidebar">
     <a class="sidebar-brand" routerLink="/admin/dashboard">
@@ -12,31 +13,57 @@
       </span>
     </a>
 
-    <div class="sidebar-section-title">
-      QUẢN TRỊ HỆ THỐNG
-    </div>
-
     <nav class="sidebar-menu" aria-label="Menu quản trị">
-      <a
-        *ngFor="let item of menuItems"
-        class="menu-item"
-        [routerLink]="item.route"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        [title]="item.label"
-      >
-        <ng-icon
-          class="menu-icon"
-          [name]="item.icon"
-          [size]="'20px'"
-          strokeWidth="1.8"
-        ></ng-icon>
+      <ng-container *ngIf="isManager; else staffMenu">
+        <section *ngFor="let group of menuGroups" class="sidebar-nav-group">
+          <div class="sidebar-group-title">{{ group.label }}</div>
+          <a
+            *ngFor="let item of group.items"
+            class="menu-item"
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            [title]="item.label"
+          >
+            <ng-icon
+              class="menu-icon"
+              [name]="item.icon"
+              [size]="'20px'"
+              strokeWidth="1.8"
+            ></ng-icon>
 
-        <span class="menu-label">{{ item.label }}</span>
-      </a>
+            <span class="menu-label">{{ item.label }}</span>
+          </a>
+        </section>
+      </ng-container>
+      <ng-template #staffMenu>
+        <section *ngFor="let group of staffMenuGroups" class="sidebar-nav-group">
+          <div class="sidebar-group-title">{{ group.label }}</div>
+          <a
+            *ngFor="let item of group.items"
+            class="menu-item"
+            [routerLink]="item.route"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            [title]="item.label"
+          >
+            <ng-icon
+              class="menu-icon"
+              [name]="item.icon"
+              [size]="'20px'"
+              strokeWidth="1.8"
+            ></ng-icon>
+
+            <span class="menu-label">{{ item.label }}</span>
+          </a>
+        </section>
+      </ng-template>
     </nav>
 
     <div class="sidebar-bottom" #sidebarAccount>
+      <div class="sidebar-group-title account-section-title">
+        TÀI KHOẢN
+      </div>
       <button
         #sidebarAccountMenuTrigger
         class="sidebar-account-trigger"
