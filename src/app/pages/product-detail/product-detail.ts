@@ -7,6 +7,7 @@ import { CartStateService } from '../../services/cart-state.service';
 import { GuestCartService } from '../../services/guest-cart.service';
 import { ReviewService } from '../../services/review';
 import { CompareService, CompareItem } from '../../services/compare';
+import { WishlistService } from '../../services/wishlist';
 import { NotificationService } from '../../components/notification/notification.service';
 import { Subscription } from 'rxjs'
 import Swal from 'sweetalert2';
@@ -60,6 +61,7 @@ export class ProductDetail implements OnInit {
     private router: Router,
     private cdr: ChangeDetectorRef,
     private compareService: CompareService,
+    private wishlistService: WishlistService,
     private notificationService: NotificationService
   ) {}
 
@@ -282,6 +284,14 @@ export class ProductDetail implements OnInit {
     this.router.navigate(['/order']);
   }
 
+isWishlisted(): boolean {
+  return !!this.product && this.wishlistService.isInWishlist(this.product.Product_id);
+}
+
+toggleWishlist(): void {
+  if (!this.product) return;
+  this.wishlistService.toggle(this.product.Product_id);
+}
 
 isInCompare(): boolean {
   if (!this.selectedVariant) return false;

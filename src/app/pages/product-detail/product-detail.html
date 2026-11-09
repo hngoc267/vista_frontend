@@ -53,6 +53,11 @@
   </span>
         
         <h1 class="product-name">{{ product.Product_name }}</h1>
+        <button type="button" class="btn-wishlist" [class.active]="isWishlisted()" (click)="toggleWishlist()">
+          <i class="ph-fill ph-heart" *ngIf="isWishlisted()"></i>
+          <i class="ph ph-heart" *ngIf="!isWishlisted()"></i>
+          {{ isWishlisted() ? 'Đã yêu thích' : 'Thêm vào yêu thích' }}
+        </button>
 
         <div class="rating-row">
           <div class="stars">

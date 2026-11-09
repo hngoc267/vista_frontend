@@ -12,6 +12,7 @@ import { ResetPassword } from './pages/reset-password/reset-password';
 import { AuthGuard } from './guards/auth-guard';
 
 import { Cart } from './pages/cart/cart';
+import { Wishlist } from './pages/wishlist/wishlist';
 import { Voucher } from './pages/voucher/voucher';
 import { Order } from './pages/order/order';
 import { OrderHistory } from './pages/order-history/order-history';
@@ -134,6 +135,7 @@ export const routes: Routes = [
 
   { path: 'profile', component: Profile, canActivate: [AuthGuard] },
   { path: 'cart', component: Cart },
+  { path: 'wishlist', component: Wishlist },
   { path: 'voucher', component: Voucher },
   { path: 'order', component: Order },
   { path: 'order-history', component: OrderHistory, canActivate: [AuthGuard] },
