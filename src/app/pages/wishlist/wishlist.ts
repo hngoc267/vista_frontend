@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { AuthService } from '../../services/auth';
 import { CartService } from '../../services/cart';
 import { CartStateService } from '../../services/cart-state.service';
+import { GuestCartService } from '../../services/guest-cart.service';
 import { WishlistService, WishlistProductCard, WishlistVariant } from '../../services/wishlist';
 
 interface WishlistCard extends WishlistProductCard {
@@ -34,7 +35,7 @@ export class Wishlist implements OnInit, OnDestroy {
     private cartService: CartService,
     private cartState: CartStateService,
     private authService: AuthService,
-    private router: Router,
+    private guestCart: GuestCartService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -46,7 +47,6 @@ export class Wishlist implements OnInit, OnDestroy {
       })
     );
 
-    // Danh sách đổi (ví dụ vừa đồng bộ xong sau đăng nhập) thì tải lại thông tin hiển thị
     this.subscriptions.add(
       this.wishlistService.items$.subscribe((entries) => {
         const ids = entries.map((entry) => entry.productId);
@@ -93,7 +93,6 @@ export class Wishlist implements OnInit, OnDestroy {
         this.loading = false;
         this.cdr.detectChanges();
 
-        // Sản phẩm đã bị xóa khỏi hệ thống thì gỡ luôn khỏi danh sách yêu thích
         const foundIds = new Set(products.map((product) => product.Product_id));
         ids.filter((id) => !foundIds.has(id)).forEach((id) => this.wishlistService.remove(id, true));
       },
@@ -172,20 +171,22 @@ export class Wishlist implements OnInit, OnDestroy {
 
     const userId = this.cartService.getCurrentUserId();
     if (!userId) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Vui lòng đăng nhập',
-        text: 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.',
-        showCancelButton: true,
-        confirmButtonColor: '#2563B0',
-        cancelButtonColor: '#94A3B8',
-        confirmButtonText: 'Đăng nhập',
-        cancelButtonText: 'Để sau',
-      }).then((result) => {
-        if (result.isConfirmed) {
-          this.router.navigate(['/login']);
-        }
-      });
+      const result = this.guestCart.addProduct(
+        {
+          Product_id: card.Product_id,
+          Product_name: card.Product_name,
+          Images: card.Image ? [card.Image] : [],
+          Discount: card.Discount,
+          Status: card.Status,
+        },
+        card.addVariant,
+        card.Variants,
+        1
+      );
+      if (result.success) {
+        this.cartState.setCount(this.guestCart.getTotalQuantity());
+      }
+      this.guestCart.showAddResult(result);
       return;
     }
 
