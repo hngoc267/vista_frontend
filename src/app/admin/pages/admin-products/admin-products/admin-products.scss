@@ -325,12 +325,47 @@ table {
   min-width: 0;
 }
 
+.product-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .product-name {
   color: #1e293b;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+.badge-tag-ai {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.badge-tag-flash {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .product-id {
@@ -2207,6 +2242,60 @@ table {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.product-toggles-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.toggle-checkbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+  }
+
+  input[type="checkbox"] {
+    margin-top: 3px;
+    width: 16px;
+    height: 16px;
+    accent-color: #3b82f6;
+    cursor: pointer;
+  }
+
+  .toggle-text-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .toggle-main-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .toggle-sub-desc {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+  }
 }
 
 .simple-label {

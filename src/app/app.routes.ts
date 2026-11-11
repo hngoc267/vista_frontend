@@ -111,7 +111,7 @@ export const routes: Routes = [
       {
         path: 'promotions',
         component: AdminPromotionsComponent,
-        data: { breadcrumb: 'Quản lý khuyến mãi' },
+        data: { breadcrumb: 'Quản lý voucher' },
       },
       {
         path: 'customers',

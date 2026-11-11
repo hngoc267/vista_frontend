@@ -102,21 +102,7 @@
           (ngModelChange)="onFiltersChanged()"
         >
           <option value="">Tất cả</option>
-          <option value="true">Có</option>
-          <option value="false">Không</option>
-        </select>
-      </label>
-
-      <label class="filter-field">
-        <span class="field-label">AI</span>
-
-        <select
-          name="ai"
-          [(ngModel)]="aiFilter"
-          (ngModelChange)="onFiltersChanged()"
-        >
-          <option value="">Tất cả</option>
-          <option value="true">Có</option>
+          <option value="true">Đang Flash Sale</option>
           <option value="false">Không</option>
         </select>
       </label>
@@ -178,9 +164,11 @@
                 </div>
 
                 <div class="product-info">
-                  <span class="product-name">
-                    {{ product.Product_name }}
-                  </span>
+                  <div class="product-title-wrap">
+                    <span class="product-name">
+                      {{ product.Product_name }}
+                    </span>
+                  </div>
 
                   <span class="product-id">
                     {{ product.Product_id }}
@@ -434,25 +422,15 @@
             <div>
               <dt>Flash Sale</dt>
               <dd>
-                {{
-                  productDetail.Is_Flash_Sale === undefined
-                    ? 'Chưa có dữ liệu'
-                    : productDetail.Is_Flash_Sale
-                      ? 'Có'
-                      : 'Không'
-                }}
+                <span *ngIf="productDetail.Is_Flash_Sale" class="badge-tag-flash">Đang áp dụng</span>
+                <span *ngIf="!productDetail.Is_Flash_Sale">Không</span>
               </dd>
             </div>
             <div>
-              <dt>AI</dt>
+              <dt>AI Gợi ý</dt>
               <dd>
-                {{
-                  productDetail.Is_AI === undefined
-                    ? 'Chưa có dữ liệu'
-                    : productDetail.Is_AI
-                      ? 'Có'
-                      : 'Không'
-                }}
+                <span *ngIf="productDetail.Is_AI" class="badge-tag-ai">Được AI gợi ý</span>
+                <span *ngIf="!productDetail.Is_AI">Không</span>
               </dd>
             </div>
           </dl>
@@ -747,6 +725,48 @@
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </span>
+          </div>
+        </div>
+
+        <!-- 5b. Cấu hình nhãn hiển thị: AI Gợi ý & Flash Sale -->
+        <div class="simple-form-group" *ngIf="isEditMode">
+          <label class="simple-label">Nhãn hiển thị nổi bật</label>
+          <div class="product-toggles-container">
+            <label class="toggle-checkbox-item">
+              <input
+                type="checkbox"
+                [(ngModel)]="createForm.Is_AI"
+                name="productIsAI"
+                (ngModelChange)="onFieldChange()"
+              />
+              <span class="toggle-text-wrap">
+                <span class="toggle-main-title">
+                  <span class="badge-tag-ai">AI Gợi ý</span>
+                  Gợi ý bởi AI
+                </span>
+                <span class="toggle-sub-desc">
+                  Hiển thị nhãn AI Gợi ý và ưu tiên xuất hiện trong mục "VISTA AI gợi ý cho bạn" ở trang chủ.
+                </span>
+              </span>
+            </label>
+
+            <label class="toggle-checkbox-item">
+              <input
+                type="checkbox"
+                [(ngModel)]="createForm.Is_Flash_Sale"
+                name="productIsFlashSale"
+                (ngModelChange)="onFieldChange()"
+              />
+              <span class="toggle-text-wrap">
+                <span class="toggle-main-title">
+                  <span class="badge-tag-flash">Flash Sale</span>
+                  Chạy Flash Sale
+                </span>
+                <span class="toggle-sub-desc">
+                  Hiển thị nhãn Flash Sale và đưa sản phẩm vào danh mục bán chạy giảm giá sốc.
+                </span>
+              </span>
+            </label>
           </div>
         </div>
 

@@ -81,7 +81,6 @@ export class AdminProducts implements OnInit, OnDestroy {
   selectedCategory = '';
   selectedStatus: '' | AdminProductStatus = '';
   flashSaleFilter: '' | 'true' | 'false' = '';
-  aiFilter: '' | 'true' | 'false' = '';
 
   page = 1;
   limit = 10;
@@ -272,10 +271,6 @@ export class AdminProducts implements OnInit, OnDestroy {
       params.isFlashSale = this.flashSaleFilter === 'true';
     }
 
-    if (this.aiFilter !== '') {
-      params.isAI = this.aiFilter === 'true';
-    }
-
     const request = this.productService
       .getProducts(params)
       .pipe(
@@ -359,8 +354,7 @@ export class AdminProducts implements OnInit, OnDestroy {
       this.keyword.trim() ||
         this.selectedCategory ||
         this.selectedStatus ||
-        this.flashSaleFilter ||
-        this.aiFilter,
+        this.flashSaleFilter,
     );
   }
 
@@ -374,7 +368,6 @@ export class AdminProducts implements OnInit, OnDestroy {
     this.selectedCategory = '';
     this.selectedStatus = '';
     this.flashSaleFilter = '';
-    this.aiFilter = '';
     this.page = 1;
 
     this.loadProducts();

@@ -59,7 +59,7 @@ describe('AdminLayout', () => {
               {
                 path: 'promotions',
                 component: AdminRouteStub,
-                data: { breadcrumb: 'Quản lý khuyến mãi' },
+                data: { breadcrumb: 'Quản lý voucher' },
               },
               {
                 path: 'returns',
@@ -225,14 +225,14 @@ describe('AdminLayout', () => {
   it('updates the breadcrumb after Angular Router navigation', async () => {
     createComponent('Manager');
 
-    await router.navigateByUrl('/admin/orders');
+    await router.navigateByUrl('/admin/promotions');
     fixture.detectChanges();
 
     const breadcrumb = fixture.nativeElement.querySelector('.header-breadcrumb');
     expect(breadcrumb.textContent).toContain('Quản trị');
-    expect(breadcrumb.textContent).toContain('Xử lý đơn hàng');
+    expect(breadcrumb.textContent).toContain('Quản lý voucher');
     expect(breadcrumb.querySelector('.breadcrumb-current').textContent.trim())
-      .toBe('Xử lý đơn hàng');
+      .toBe('Quản lý voucher');
     expect(breadcrumb.querySelector('a.breadcrumb-parent').getAttribute('href'))
       .toBe('/admin/dashboard');
   });
