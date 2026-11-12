@@ -34,13 +34,54 @@
           class="panel-item"
           type="button"
           [class.panel-item--unread]="!item.isRead"
+          [class.panel-item--urgent]="item.priority === 'urgent'"
           (click)="open(item)"
         >
           <span class="item-dot" aria-hidden="true"></span>
           <span class="item-body">
+            <span class="item-header-meta" *ngIf="(item.priority && item.priority !== 'normal') || item.status">
+              <span
+                class="badge badge--priority"
+                [class.badge--urgent]="item.priority === 'urgent'"
+                [class.badge--important]="item.priority === 'important'"
+                *ngIf="item.priority && item.priority !== 'normal'"
+              >
+                {{ getPriorityLabel(item.priority) }}
+              </span>
+              <span
+                class="badge badge--status"
+                [class.badge--acknowledged]="item.status === 'acknowledged'"
+                [class.badge--sent]="item.status === 'sent'"
+                *ngIf="item.status"
+              >
+                {{ getStatusLabel(item.status) }}
+              </span>
+            </span>
+
             <span class="item-title">{{ item.title }}</span>
             <span class="item-message">{{ item.message }}</span>
-            <span class="item-time">{{ timeAgo(item.createdAt) }}</span>
+
+            <span class="item-footer">
+              <span class="item-sender" *ngIf="item.senderName">Gửi bởi: {{ item.senderName }}</span>
+              <span class="item-time">{{ timeAgo(item.createdAt) }}</span>
+            </span>
+
+            <span class="item-action-row" *ngIf="item.status === 'sent'">
+              <span
+                class="btn-ack"
+                role="button"
+                tabindex="0"
+                (click)="acknowledge($event, item)"
+                (keydown.enter)="acknowledge($event, item)"
+                (keydown.space)="acknowledge($event, item)"
+                title="Xác nhận bạn đã tiếp nhận thông báo vận hành này"
+              >
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Xác nhận tiếp nhận</span>
+              </span>
+            </span>
           </span>
         </button>
       </li>
@@ -52,8 +93,26 @@
   </div>
 </div>
 
-<div class="toast" *ngIf="toast" role="status" aria-live="polite">
+<div
+  class="toast"
+  *ngIf="toast"
+  [class.toast--urgent]="toast.priority === 'urgent'"
+  [class.toast--important]="toast.priority === 'important'"
+  role="status"
+  aria-live="polite"
+>
   <button class="toast-body" type="button" (click)="open(toast)">
+    <div class="toast-meta" *ngIf="(toast.priority && toast.priority !== 'normal') || toast.senderName">
+      <span
+        class="badge badge--priority"
+        [class.badge--urgent]="toast.priority === 'urgent'"
+        [class.badge--important]="toast.priority === 'important'"
+        *ngIf="toast.priority && toast.priority !== 'normal'"
+      >
+        {{ getPriorityLabel(toast.priority) }}
+      </span>
+      <span class="toast-sender" *ngIf="toast.senderName">từ {{ toast.senderName }}</span>
+    </div>
     <span class="toast-title">{{ toast.title }}</span>
     <span class="toast-message">{{ toast.message }}</span>
   </button>

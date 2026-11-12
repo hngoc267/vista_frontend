@@ -32,6 +32,8 @@ import {
   OrderStatusHistoryItem,
 } from '../../services/admin-order';
 
+import { ResizableDrawerDirective } from '../../directives/resizable-drawer.directive';
+
 type ModalAction = Exclude<OrderAction, 'print_label'>;
 
 const STATUS_LABELS: Record<OrderDisplayStatus, string> = {
@@ -68,7 +70,7 @@ const PAYMENT_TYPE_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-admin-orders',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [CommonModule, FormsModule, NgIcon, ResizableDrawerDirective],
   providers: [
     provideIcons({
       lucideSearch,

@@ -13,7 +13,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { AppNotification, NotificationCenterService } from '../../services/notification-center.service';
+import {
+  AppNotification,
+  NotificationCenterService,
+  NotificationPriority,
+  NotificationStatus,
+} from '../../services/notification-center.service';
 
 const TOAST_DURATION_MS = 5000;
 
@@ -90,6 +95,11 @@ export class NotificationBellComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  acknowledge(event: Event, notification: AppNotification): void {
+    event.stopPropagation();
+    this.center.acknowledge(notification);
+  }
+
   markAllAsRead(): void {
     this.center.markAllAsRead();
   }
@@ -98,6 +108,30 @@ export class NotificationBellComponent implements OnInit, OnChanges, OnDestroy {
     clearTimeout(this.toastTimer);
     this.toast = null;
     this.cdr.markForCheck();
+  }
+
+  getPriorityLabel(priority?: NotificationPriority): string {
+    switch (priority) {
+      case 'urgent':
+        return 'Khẩn cấp';
+      case 'important':
+        return 'Quan trọng';
+      case 'normal':
+        return 'Bình thường';
+      default:
+        return '';
+    }
+  }
+
+  getStatusLabel(status?: NotificationStatus): string {
+    switch (status) {
+      case 'acknowledged':
+        return 'Đã tiếp nhận';
+      case 'sent':
+        return 'Chưa tiếp nhận';
+      default:
+        return '';
+    }
   }
 
   timeAgo(value: string): string {

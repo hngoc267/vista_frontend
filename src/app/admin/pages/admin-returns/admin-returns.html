@@ -408,7 +408,15 @@
 
   <div class="drawer-backdrop" *ngIf="isDrawerOpen" (click)="closeDrawer()"></div>
 
-  <aside class="detail-drawer" [class.open]="isDrawerOpen" aria-label="Chi tiết đổi trả">
+  <aside
+    class="detail-drawer"
+    [class.open]="isDrawerOpen"
+    aria-label="Chi tiết đổi trả"
+    appResizableDrawer
+    [defaultWidth]="580"
+    [minWidth]="420"
+    [storageKey]="'vista-returns-drawer-width'"
+  >
 
     <!-- Header Drawer -->
 
@@ -426,11 +434,11 @@
 
       </div>
 
-      <button type="button" class="btn-close" (click)="closeDrawer()" aria-label="Đóng">
-
-        <ng-icon name="lucideX" size="20px"></ng-icon>
-
-      </button>
+      <div class="drawer-header-actions">
+        <button type="button" class="btn-close" (click)="closeDrawer()" aria-label="Đóng">
+          <ng-icon name="lucideX" size="20px"></ng-icon>
+        </button>
+      </div>
 
     </div>
 

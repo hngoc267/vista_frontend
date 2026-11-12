@@ -1,0 +1,249 @@
+<div class="drawer-backdrop" *ngIf="isOpen" (click)="onClose()" aria-hidden="true"></div>
+
+<aside
+  class="tracking-drawer"
+  [class.open]="isOpen"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="tracking-drawer-title"
+  appResizableDrawer
+  [defaultWidth]="480"
+  [minWidth]="420"
+  [storageKey]="'vista-tracking-drawer-width'"
+>
+  <header class="drawer-header">
+    <div class="drawer-header-text">
+      <h2 id="tracking-drawer-title">Lịch sử gửi thông báo</h2>
+      <p class="drawer-subtitle">Theo dõi các thông báo vận hành và trạng thái tiếp nhận của nhân viên.</p>
+    </div>
+
+    <div class="drawer-header-actions">
+      <button
+        type="button"
+        class="icon-button"
+        (click)="refresh()"
+        [disabled]="isLoading || isRefreshing"
+        title="Làm mới dữ liệu"
+        aria-label="Làm mới dữ liệu"
+      >
+        <ng-icon
+          name="lucideRefreshCw"
+          size="16px"
+          [class.spinning]="isRefreshing"
+        ></ng-icon>
+      </button>
+
+      <button
+        type="button"
+        class="icon-button"
+        (click)="onClose()"
+        title="Đóng bảng theo dõi"
+        aria-label="Đóng"
+      >
+        <ng-icon name="lucideX" size="18px"></ng-icon>
+      </button>
+    </div>
+  </header>
+
+  <!-- Thanh Bộ lọc & Sắp xếp -->
+  <div class="drawer-filters" *ngIf="!isLoading && items.length > 0">
+    <div class="filters-row">
+      <div class="filter-item">
+        <label for="priority-filter">
+          <ng-icon name="lucideFilter" size="13px"></ng-icon>
+          <span>Ưu tiên:</span>
+        </label>
+        <select
+          id="priority-filter"
+          class="filter-select"
+          [value]="selectedPriorityFilter"
+          (change)="onPriorityFilterChange($event)"
+        >
+          <option value="all">Tất cả mức độ</option>
+          <option value="urgent">Khẩn cấp</option>
+          <option value="important">Quan trọng</option>
+          <option value="normal">Bình thường</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label for="sort-order">
+          <ng-icon name="lucideArrowUpDown" size="13px"></ng-icon>
+          <span>Sắp xếp:</span>
+        </label>
+        <select
+          id="sort-order"
+          class="filter-select"
+          [value]="sortOrder"
+          (change)="onSortOrderChange($event)"
+        >
+          <option value="newest">Gần nhất (Mới nhất)</option>
+          <option value="oldest">Cũ nhất</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Hàng trạng thái tiếp nhận & reset -->
+    <div class="filter-pills-row">
+      <div class="filter-pills">
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="selectedStatusFilter === 'all'"
+          (click)="setStatusFilter('all')"
+        >
+          Tất cả ({{ items.length }})
+        </button>
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="selectedStatusFilter === 'fully_acknowledged'"
+          (click)="setStatusFilter('fully_acknowledged')"
+        >
+          Đã xác nhận đủ
+        </button>
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="selectedStatusFilter === 'pending_acknowledgment'"
+          (click)="setStatusFilter('pending_acknowledgment')"
+        >
+          Chờ xác nhận
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="btn-reset-filter"
+        *ngIf="selectedPriorityFilter !== 'all' || selectedStatusFilter !== 'all' || sortOrder !== 'newest'"
+        (click)="resetFilters()"
+        title="Đặt lại bộ lọc về mặc định"
+      >
+        <ng-icon name="lucideRotateCcw" size="12px"></ng-icon>
+        <span>Đặt lại</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="drawer-content">
+    <!-- Trạng thái Loading -->
+    <div class="drawer-state loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <span>Đang tải lịch sử thông báo...</span>
+    </div>
+
+    <!-- Trạng thái Lỗi -->
+    <div class="drawer-state error-state" *ngIf="errorMessage && !isLoading">
+      <div class="error-icon-wrap">
+        <ng-icon name="lucideAlertCircle" size="24px"></ng-icon>
+      </div>
+      <strong class="error-title">Không thể tải lịch sử thông báo</strong>
+      <p class="error-desc">{{ errorMessage }}</p>
+      <button type="button" class="btn btn-retry" (click)="loadData()">
+        <ng-icon name="lucideRefreshCw" size="13px"></ng-icon>
+        <span>Thử lại</span>
+      </button>
+    </div>
+
+    <!-- Trạng thái Trống (Empty từ Server) -->
+    <div class="drawer-state empty-state" *ngIf="!isLoading && !errorMessage && items.length === 0">
+      <div class="empty-icon-wrap">
+        <ng-icon name="lucideUsers" size="26px"></ng-icon>
+      </div>
+      <strong class="empty-title">Chưa có thông báo nào</strong>
+      <p class="empty-desc">Bạn chưa gửi thông báo vận hành nào đến nhân viên.</p>
+    </div>
+
+    <!-- Trạng thái Không khớp Bộ lọc -->
+    <div class="drawer-state empty-filter-state" *ngIf="!isLoading && !errorMessage && items.length > 0 && filteredAndSortedItems.length === 0">
+      <div class="empty-icon-wrap">
+        <ng-icon name="lucideFilter" size="26px"></ng-icon>
+      </div>
+      <strong class="empty-title">Không tìm thấy thông báo</strong>
+      <p class="empty-desc">Không có thông báo nào phù hợp với bộ lọc hiện tại.</p>
+      <button type="button" class="btn btn-clear-filters" (click)="resetFilters()">
+        <ng-icon name="lucideRotateCcw" size="13px"></ng-icon>
+        <span>Xóa bộ lọc</span>
+      </button>
+    </div>
+
+    <!-- Danh sách thông báo đã gửi -->
+    <div class="sent-list" *ngIf="!isLoading && !errorMessage && filteredAndSortedItems.length > 0">
+      <article
+        *ngFor="let item of filteredAndSortedItems"
+        class="sent-card"
+        [class.expanded]="expandedNotificationId === item.id"
+      >
+        <div class="sent-card-header" (click)="toggleExpand(item.id)">
+          <div class="sent-card-meta">
+            <span class="badge badge--priority badge--{{ item.priority }}">
+              {{ getPriorityLabel(item.priority) }}
+            </span>
+            <span class="meta-time">{{ item.createdAt | date:'HH:mm dd/MM/yyyy' }}</span>
+            <span class="meta-sender" *ngIf="item.senderName">bởi {{ item.senderName }}</span>
+          </div>
+
+          <h3 class="sent-card-title">{{ item.title }}</h3>
+          <p class="sent-card-message">{{ item.message }}</p>
+
+          <div class="sent-card-summary">
+            <div class="progress-pill">
+              <ng-icon name="lucideUsers" size="14px"></ng-icon>
+              <span>{{ getTotalRecipientCount(item) }} nhân viên</span>
+            </div>
+            <div class="progress-pill pill--read">
+              <ng-icon name="lucideEye" size="14px"></ng-icon>
+              <span>{{ getReadCount(item) }}/{{ getTotalRecipientCount(item) }} đã đọc</span>
+            </div>
+            <div class="progress-pill pill--ack">
+              <ng-icon name="lucideCircleCheck" size="14px"></ng-icon>
+              <span>{{ getAcknowledgedCount(item) }}/{{ getTotalRecipientCount(item) }} đã xác nhận</span>
+            </div>
+
+            <button type="button" class="expand-btn" aria-label="Xem chi tiết người nhận">
+              <ng-icon
+                [name]="expandedNotificationId === item.id ? 'lucideChevronUp' : 'lucideChevronDown'"
+                size="16px"
+              ></ng-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chi tiết trạng thái từng Staff nhận -->
+        <div class="recipients-detail" *ngIf="expandedNotificationId === item.id">
+          <div class="detail-heading">
+            <h4>Chi tiết tiếp nhận theo nhân viên:</h4>
+          </div>
+
+          <div class="recipients-table" *ngIf="item.recipients && item.recipients.length > 0; else noRecipients">
+            <div
+              *ngFor="let r of item.recipients"
+              class="recipient-row"
+            >
+              <div class="recipient-info">
+                <span class="staff-name">{{ getStaffName(r.userId) }}</span>
+                <span class="staff-email" *ngIf="getStaffEmail(r.userId)">{{ getStaffEmail(r.userId) }}</span>
+              </div>
+
+              <div class="recipient-status">
+                <span class="badge" [ngClass]="getStaffStatusBadge(r).cssClass">
+                  {{ getStaffStatusBadge(r).label }}
+                </span>
+                <span class="status-time" *ngIf="r.status === 'acknowledged' && r.acknowledgedAt">
+                  lúc {{ r.acknowledgedAt | date:'HH:mm dd/MM' }}
+                </span>
+                <span class="status-time" *ngIf="r.status !== 'acknowledged' && r.readAt">
+                  lúc {{ r.readAt | date:'HH:mm dd/MM' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noRecipients>
+            <p class="empty-recipients">Không có dữ liệu người nhận cho thông báo này.</p>
+          </ng-template>
+        </div>
+      </article>
+    </div>
+  </div>
+</aside>

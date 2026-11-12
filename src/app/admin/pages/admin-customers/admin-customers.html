@@ -313,6 +313,10 @@
     class="drawer"
     [class.drawer-open]="isDrawerOpen"
     aria-label="Chi tiết khách hàng"
+    appResizableDrawer
+    [defaultWidth]="680"
+    [minWidth]="420"
+    [storageKey]="'vista-customers-drawer-width'"
   >
     <!-- DRAWER HEADER -->
     <header class="drawer-header" *ngIf="selectedCustomer">
@@ -330,14 +334,16 @@
         </span>
       </div>
 
-      <button
-        type="button"
-        class="btn-close-drawer"
-        (click)="closeDrawer()"
-        aria-label="Đóng bảng chi tiết"
-      >
-        <ng-icon name="lucideX" size="20px"></ng-icon>
-      </button>
+      <div class="drawer-header-actions">
+        <button
+          type="button"
+          class="btn-close-drawer"
+          (click)="closeDrawer()"
+          aria-label="Đóng bảng chi tiết"
+        >
+          <ng-icon name="lucideX" size="20px"></ng-icon>
+        </button>
+      </div>
     </header>
 
     <!-- DRAWER TABS -->

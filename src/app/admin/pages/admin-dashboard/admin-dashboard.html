@@ -88,12 +88,28 @@
 
       <!-- KHU VỰC CẢNH BÁO VẬN HÀNH (OPERATIONAL ALERTS) -->
       <section *ngIf="alerts.length > 0" class="alerts-section">
-        <div class="section-heading">
-          <div>
+        <div class="section-heading alerts-heading">
+          <div class="section-heading-main">
             <h2 class="section-title">Cảnh báo vận hành cần xử lý</h2>
             <p class="section-description">Các vấn đề vận hành cần quản lý theo dõi và giám sát.</p>
           </div>
-          <span class="badge badge-warning">{{ alerts.length }} vấn đề tồn đọng</span>
+          <div class="section-heading-actions">
+            <span class="badge alerts-status-badge">
+              <ng-icon name="lucideAlertTriangle" size="13px"></ng-icon>
+              <span>{{ alerts.length }} vấn đề tồn đọng</span>
+            </span>
+            <!-- Nút Lịch sử gửi & Tiếp nhận: Chỉ Manager nhìn thấy -->
+            <button
+              type="button"
+              class="btn btn-sm btn-tracking"
+              *ngIf="isManager"
+              (click)="openTrackingDrawer()"
+              title="Theo dõi lịch sử các thông báo vận hành đã phát và trạng thái tiếp nhận của nhân viên"
+            >
+              <ng-icon name="lucideHistory" size="15px"></ng-icon>
+              <span>Lịch sử gửi & Tiếp nhận</span>
+            </button>
+          </div>
         </div>
 
         <div class="alerts-grid">
@@ -112,8 +128,19 @@
               <strong class="alert-title">{{ alert.title }}</strong>
               <span class="alert-count">{{ getAlertCountText(alert) }}</span>
               <p class="alert-message">{{ alert.message }}</p>
-              <div class="alert-action" *ngIf="alert.link">
+              <div class="alert-action">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-dispatch"
+                  *ngIf="isManager"
+                  (click)="openDispatchModal(alert)"
+                  title="Phát thông báo vận hành tới nhân viên"
+                >
+                  <ng-icon name="lucideSend" size="14px"></ng-icon>
+                  <span>Gửi thông báo</span>
+                </button>
                 <a
+                  *ngIf="alert.link"
                   [routerLink]="getAlertRoute(alert.link)"
                   [queryParams]="getAlertQueryParams(alert.link)"
                   class="btn btn-sm btn-alert"
@@ -1127,3 +1154,212 @@
 
   </ng-container>
 </section>
+
+<!-- MODAL SOẠN & PHÁT THÔNG BÁO VẬN HÀNH (MỨC 3 - STAGE 3.1) -->
+<div class="modal-backdrop" *ngIf="isDispatchModalOpen" (click)="closeDispatchModal()">
+  <div
+    class="modal modal-dispatch"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="dispatch-modal-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal-header">
+      <div class="modal-header-text">
+        <h2 id="dispatch-modal-title">Gửi thông báo vận hành đến nhân viên</h2>
+        <p *ngIf="selectedAlertForDispatch" class="modal-subtitle">
+          Ngữ cảnh: <strong>{{ selectedAlertForDispatch.title }}</strong>
+        </p>
+      </div>
+      <button
+        type="button"
+        class="icon-button"
+        (click)="closeDispatchModal()"
+        [disabled]="isDispatching"
+        aria-label="Đóng"
+      >
+        <ng-icon name="lucideX" size="18px"></ng-icon>
+      </button>
+    </header>
+
+    <form class="modal-form" (ngSubmit)="submitDispatch()" novalidate>
+      <div class="modal-body">
+        <!-- Banner thông báo thành công -->
+        <div class="alert-banner alert-banner--success" *ngIf="dispatchSuccessMessage">
+          <ng-icon name="lucideCircleCheck" size="18px"></ng-icon>
+          <span>{{ dispatchSuccessMessage }}</span>
+        </div>
+
+        <!-- Banner cảnh báo lỗi hoặc 409 duplicate -->
+        <div class="alert-banner alert-banner--error" *ngIf="dispatchError">
+          <ng-icon name="lucideAlertCircle" size="18px"></ng-icon>
+          <div class="alert-banner-text">
+            <span>{{ dispatchError }}</span>
+            <div *ngIf="isDuplicateRecentWarning" class="confirm-resend-wrap">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="dispatchConfirmResend"
+                  name="confirmResend"
+                />
+                <span>Xác nhận vẫn muốn phát tiếp thông báo này</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 1. Tiêu đề thông báo -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="dispatch-title">Tiêu đề thông báo <span class="required">*</span></label>
+            <span class="char-count" [class.char-limit]="dispatchTitle.length > 200">{{ dispatchTitle.length }}/200</span>
+          </div>
+          <input
+            id="dispatch-title"
+            name="title"
+            type="text"
+            class="form-control"
+            maxlength="200"
+            [(ngModel)]="dispatchTitle"
+            placeholder="Nhập tiêu đề cảnh báo vận hành..."
+            [disabled]="isDispatching"
+            required
+          />
+        </div>
+
+        <!-- 2. Mức độ ưu tiên -->
+        <div class="form-group">
+          <label>Mức độ ưu tiên</label>
+          <div class="priority-selector">
+            <label class="priority-option priority--urgent" [class.active]="dispatchPriority === 'urgent'">
+              <input
+                type="radio"
+                name="priority"
+                value="urgent"
+                [(ngModel)]="dispatchPriority"
+                [disabled]="isDispatching"
+              />
+              <span>Khẩn cấp</span>
+            </label>
+            <label class="priority-option priority--important" [class.active]="dispatchPriority === 'important'">
+              <input
+                type="radio"
+                name="priority"
+                value="important"
+                [(ngModel)]="dispatchPriority"
+                [disabled]="isDispatching"
+              />
+              <span>Quan trọng</span>
+            </label>
+            <label class="priority-option priority--normal" [class.active]="dispatchPriority === 'normal'">
+              <input
+                type="radio"
+                name="priority"
+                value="normal"
+                [(ngModel)]="dispatchPriority"
+                [disabled]="isDispatching"
+              />
+              <span>Bình thường</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. Người nhận -->
+        <div class="form-group">
+          <label>Người nhận thông báo <span class="required">*</span></label>
+          <div class="recipient-mode-selector">
+            <label class="radio-label">
+              <input
+                type="radio"
+                name="recipientMode"
+                value="all_staff"
+                [checked]="dispatchRecipientMode === 'all_staff'"
+                (change)="onRecipientModeChange('all_staff')"
+                [disabled]="isDispatching"
+              />
+              <span>Toàn bộ nhân viên Staff</span>
+            </label>
+            <label class="radio-label">
+              <input
+                type="radio"
+                name="recipientMode"
+                value="specific_staff"
+                [checked]="dispatchRecipientMode === 'specific_staff'"
+                (change)="onRecipientModeChange('specific_staff')"
+                [disabled]="isDispatching"
+              />
+              <span>Chọn nhân viên cụ thể</span>
+            </label>
+          </div>
+
+          <!-- Dropdown chọn Staff khi specific_staff -->
+          <div class="staff-select-container" *ngIf="dispatchRecipientMode === 'specific_staff'">
+            <div *ngIf="isLoadingStaffList" class="staff-loading">Đang tải danh sách nhân viên...</div>
+            <div *ngIf="staffListError" class="staff-error">{{ staffListError }}</div>
+            <div *ngIf="!isLoadingStaffList && !staffListError" class="select-wrap">
+              <select
+                class="form-control"
+                name="recipientStaffId"
+                [(ngModel)]="dispatchRecipientId"
+                [disabled]="isDispatching"
+                required
+              >
+                <option value="" disabled selected>-- Chọn nhân viên tiếp nhận --</option>
+                <option *ngFor="let staff of activeStaffList" [value]="staff.User_id">
+                  {{ staff.Full_name || staff.Username }} ({{ staff.Email }})
+                </option>
+              </select>
+            </div>
+            <small *ngIf="!isLoadingStaffList && activeStaffList.length === 0" class="field-hint text-warning">
+              Không có nhân viên Staff nào đang hoạt động.
+            </small>
+          </div>
+        </div>
+
+        <!-- 4. Nội dung thông báo -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="dispatch-message">Nội dung thông báo <span class="required">*</span></label>
+            <span class="char-count" [class.char-limit]="dispatchMessage.length > 1000">{{ dispatchMessage.length }}/1000</span>
+          </div>
+          <textarea
+            id="dispatch-message"
+            name="message"
+            class="form-control textarea"
+            rows="4"
+            maxlength="1000"
+            [(ngModel)]="dispatchMessage"
+            placeholder="Nhập hướng dẫn hoặc chỉ đạo cho nhân viên..."
+            [disabled]="isDispatching"
+            required
+          ></textarea>
+        </div>
+      </div>
+
+      <footer class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-outline"
+          (click)="closeDispatchModal()"
+          [disabled]="isDispatching"
+        >
+          Hủy
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="isDispatching || !dispatchTitle.trim() || !dispatchMessage.trim() || (dispatchRecipientMode === 'specific_staff' && !dispatchRecipientId)"
+        >
+          <ng-icon *ngIf="!isDispatching" name="lucideSend" size="16px"></ng-icon>
+          <span>{{ isDispatching ? 'Đang phát thông báo...' : 'Phát thông báo' }}</span>
+        </button>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<!-- DRAWER THEO DÕI THÔNG BÁO ĐÃ GỬI (MỨC 3 - STAGE 3.2) -->
+<app-admin-notification-tracking-drawer
+  [isOpen]="isTrackingDrawerOpen"
+  (closeDrawer)="closeTrackingDrawer()"
+></app-admin-notification-tracking-drawer>

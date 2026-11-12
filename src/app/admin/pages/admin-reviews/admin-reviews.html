@@ -234,15 +234,21 @@
   role="dialog"
   aria-modal="true"
   aria-label="Chi tiết đánh giá"
+  appResizableDrawer
+  [defaultWidth]="580"
+  [minWidth]="420"
+  [storageKey]="'vista-reviews-drawer-width'"
 >
   <header class="drawer-header">
     <div>
       <h2 class="drawer-title">{{ canEdit ? 'Chi tiết đánh giá' : 'Chi tiết & theo dõi phản hồi' }}</h2>
       <p class="drawer-meta" *ngIf="detail">{{ detail.Review_id }} · {{ detail.Created_at | date: 'dd/MM/yyyy, HH:mm' }}</p>
     </div>
-    <button type="button" class="drawer-close" (click)="closeDetail()" aria-label="Đóng">
-      <ng-icon name="lucideX" size="20px"></ng-icon>
-    </button>
+    <div class="drawer-header-actions">
+      <button type="button" class="drawer-close" (click)="closeDetail()" aria-label="Đóng">
+        <ng-icon name="lucideX" size="20px"></ng-icon>
+      </button>
+    </div>
   </header>
 
   <div class="drawer-loading" *ngIf="isDetailOpen && isDetailLoading && !detail">

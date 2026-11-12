@@ -259,15 +259,27 @@
 
 <!-- Drawer chi tiết đơn hàng -->
 <div class="drawer-backdrop" *ngIf="isDetailOpen" (click)="closeDetail()"></div>
-<aside class="drawer" *ngIf="isDetailOpen" role="dialog" aria-modal="true" aria-label="Chi tiết đơn hàng">
+<aside
+  class="drawer"
+  *ngIf="isDetailOpen"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Chi tiết đơn hàng"
+  appResizableDrawer
+  [defaultWidth]="580"
+  [minWidth]="420"
+  [storageKey]="'vista-orders-drawer-width'"
+>
   <header class="drawer-header">
     <div>
       <h2 class="drawer-title">Chi tiết đơn hàng</h2>
       <p class="drawer-meta" *ngIf="detail">{{ detail.Order_id }} &middot; {{ detail.Created_at | date: 'dd/MM/yyyy, HH:mm' }}</p>
     </div>
-    <button type="button" class="btn-close" (click)="closeDetail()" aria-label="Đóng">
-      <ng-icon name="lucideX" size="20px"></ng-icon>
-    </button>
+    <div class="drawer-header-actions">
+      <button type="button" class="btn-close" (click)="closeDetail()" aria-label="Đóng">
+        <ng-icon name="lucideX" size="20px"></ng-icon>
+      </button>
+    </div>
   </header>
 
   <div class="drawer-body">

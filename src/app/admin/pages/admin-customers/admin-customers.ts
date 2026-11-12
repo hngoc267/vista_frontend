@@ -44,6 +44,7 @@ import {
   AdminCustomerReturnItem
 } from '../../services/admin-customer';
 import { getAdminRole, AdminRole } from '../../../guards/admin-guard';
+import { ResizableDrawerDirective } from '../../directives/resizable-drawer.directive';
 import Swal from 'sweetalert2';
 
 export type CustomerDetailTab = 'info' | 'orders' | 'reviews' | 'returns';
@@ -51,7 +52,7 @@ export type CustomerDetailTab = 'info' | 'orders' | 'reviews' | 'returns';
 @Component({
   selector: 'app-admin-customers',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [CommonModule, FormsModule, NgIcon, ResizableDrawerDirective],
   providers: [
     provideIcons({
       lucideUsers,

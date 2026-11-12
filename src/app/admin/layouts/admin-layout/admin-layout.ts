@@ -12,6 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
 import { clearAdminSession, getAdminRole } from '../../../guards/admin-guard';
 import { NotificationBellComponent } from '../../../components/notification-bell/notification-bell';
+import { AdminAssistantComponent } from '../../components/admin-assistant/admin-assistant';
 
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -55,7 +56,8 @@ interface AdminMenuGroup {
     RouterLinkActive,
     RouterOutlet,
     NgIcon,
-    NotificationBellComponent
+    NotificationBellComponent,
+    AdminAssistantComponent
   ],
   providers: [
     provideIcons({

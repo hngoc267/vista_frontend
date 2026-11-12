@@ -32,12 +32,13 @@ import {
   ReturnStatus
 } from '../../services/admin-return';
 import { getAdminRole } from '../../../guards/admin-guard';
+import { ResizableDrawerDirective } from '../../directives/resizable-drawer.directive';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-admin-returns',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [CommonModule, FormsModule, NgIcon, ResizableDrawerDirective],
   providers: [
     provideIcons({
       lucideSearch,

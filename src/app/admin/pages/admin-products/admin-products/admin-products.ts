@@ -15,6 +15,7 @@ import {
   AdminProductSellingStatus,
   AdminProductStatus,
 } from '../../../services/admin-product';
+import { ResizableDrawerDirective } from '../../../directives/resizable-drawer.directive';
 import { getAdminProductDisplayStatus } from './admin-product-status';
 
 export interface KeyValuePair {
@@ -64,7 +65,7 @@ export interface ProductFormState {
 @Component({
   selector: 'app-admin-products',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ResizableDrawerDirective],
   templateUrl: './admin-products.html',
   styleUrl: './admin-products.scss',
 })

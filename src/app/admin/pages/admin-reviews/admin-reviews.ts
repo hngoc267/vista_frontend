@@ -15,6 +15,7 @@ import {
   lucideSparkles,
 } from '@ng-icons/lucide';
 import { getAdminRole } from '../../../guards/admin-guard';
+import { ResizableDrawerDirective } from '../../directives/resizable-drawer.directive';
 import {
   AdminReviewDetail,
   AdminReviewService,
@@ -36,7 +37,7 @@ const REPLY_MIN_LENGTH = 10;
 @Component({
   selector: 'app-admin-reviews',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [CommonModule, FormsModule, NgIcon, ResizableDrawerDirective],
   providers: [
     provideIcons({
       lucideSearch,

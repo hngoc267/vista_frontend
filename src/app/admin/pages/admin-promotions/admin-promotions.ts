@@ -41,6 +41,7 @@ import {
   PromotionStats
 } from '../../services/admin-promotion';
 import { getAdminRole, clearAdminSession } from '../../../guards/admin-guard';
+import { ResizableDrawerDirective } from '../../directives/resizable-drawer.directive';
 import Swal from 'sweetalert2';
 
 interface PromotionFormData {
@@ -64,7 +65,7 @@ interface PromotionFormData {
 @Component({
   selector: 'app-admin-promotions',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgIcon],
+  imports: [CommonModule, FormsModule, NgIcon, ResizableDrawerDirective],
   providers: [
     provideIcons({
       lucideSearch,

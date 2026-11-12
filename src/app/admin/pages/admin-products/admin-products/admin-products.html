@@ -327,6 +327,10 @@
       detail ? 'Chi tiết sản phẩm ' + detail.Product_name : 'Chi tiết sản phẩm'
     "
     (click)="$event.stopPropagation()"
+    appResizableDrawer
+    [defaultWidth]="600"
+    [minWidth]="420"
+    [storageKey]="'vista-products-drawer-width'"
   >
     <header class="product-drawer-header">
       <div>
@@ -334,14 +338,16 @@
         <p>{{ detail?.Product_id || detailProductId }}</p>
       </div>
 
-      <button
-        type="button"
-        class="drawer-close-button"
-        (click)="closeProductDetail()"
-        aria-label="Đóng chi tiết sản phẩm"
-      >
-        ×
-      </button>
+      <div class="drawer-header-actions">
+        <button
+          type="button"
+          class="drawer-close-button"
+          (click)="closeProductDetail()"
+          aria-label="Đóng chi tiết sản phẩm"
+        >
+          ×
+        </button>
+      </div>
     </header>
 
     <div class="product-drawer-body">

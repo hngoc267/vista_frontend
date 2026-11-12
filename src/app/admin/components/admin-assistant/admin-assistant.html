@@ -1,0 +1,291 @@
+<!-- Floating Action Button (Hỗ trợ kéo di chuyển chuột tự do) -->
+<button
+  type="button"
+  class="assistant-floating-btn"
+  [class.is-open]="isOpen"
+  [class.is-dragging]="isDraggingButton"
+  [style.left.px]="buttonPosition ? buttonPosition.x : null"
+  [style.top.px]="buttonPosition ? buttonPosition.y : null"
+  [style.right]="buttonPosition ? 'auto' : null"
+  [style.bottom]="buttonPosition ? 'auto' : null"
+  (mousedown)="onButtonMouseDown($event)"
+  (click)="onButtonClick($event)"
+  title="VISTA AI Assistant (Nhấn để mở / Giữ chuột để kéo di chuyển)"
+  aria-label="VISTA AI Assistant - Mở trợ lý quản lý công việc"
+  [attr.aria-expanded]="isOpen"
+>
+  <span class="btn-icon-wrapper">
+    <ng-icon
+      *ngIf="!isOpen"
+      name="lucideSparkles"
+      [size]="'22px'"
+      strokeWidth="2"
+      aria-hidden="true"
+    ></ng-icon>
+    <ng-icon
+      *ngIf="isOpen"
+      name="lucideX"
+      [size]="'22px'"
+      strokeWidth="2"
+      aria-hidden="true"
+    ></ng-icon>
+  </span>
+  <span class="btn-text" *ngIf="!isOpen">AI Trợ lý</span>
+  <span class="pulse-ring" *ngIf="!isOpen && !buttonPosition" aria-hidden="true"></span>
+</button>
+
+<!-- Backdrop for mobile/tablet -->
+<div
+  *ngIf="isOpen"
+  class="assistant-backdrop"
+  (click)="closeDrawer()"
+  aria-hidden="true"
+></div>
+
+<!-- Chat Drawer (Hỗ trợ kéo mép trái để thu phóng kích thước) -->
+<section
+  class="assistant-drawer"
+  [class.open]="isOpen"
+  [class.is-resizing]="isResizingDrawer"
+  [style.width.px]="drawerWidth"
+  aria-label="Cửa sổ VISTA AI Management Assistant"
+  role="region"
+>
+  <!-- Resize Handle ở viền trái drawer -->
+  <div
+    class="drawer-resize-handle"
+    (mousedown)="onResizeStart($event)"
+    (dblclick)="resetDrawerWidth()"
+    title="Kéo sang trái/phải để thay đổi độ rộng (Nhấp đúp để đặt lại mặc định)"
+  >
+    <div class="resize-grip"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="drawer-header">
+    <div class="header-main">
+      <div class="ai-avatar-badge" aria-hidden="true">
+        <ng-icon name="lucideBot" [size]="'22px'" strokeWidth="2"></ng-icon>
+      </div>
+      <div class="header-info">
+        <div class="title-row">
+          <h2 class="drawer-title">VISTA AI Assistant</h2>
+          <span
+            class="role-pill"
+            [class.role-manager]="role === 'Manager'"
+            [class.role-staff]="role === 'Staff'"
+            [title]="'Vai trò hiện tại: ' + roleDisplayName"
+          >
+            {{ role === 'Manager' ? 'Manager' : (role === 'Staff' ? 'Staff' : 'Admin') }}
+          </span>
+        </div>
+        <p class="drawer-subtitle">Trợ lý hỗ trợ quản lý & vận hành VISTA</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Nút mở rộng / thu nhỏ kích thước nhanh -->
+      <button
+        type="button"
+        class="icon-action-btn"
+        (click)="toggleMaximizeDrawer()"
+        [title]="isMaximized ? 'Thu nhỏ kích thước' : 'Mở rộng kích thước'"
+        [attr.aria-label]="isMaximized ? 'Thu nhỏ kích thước' : 'Mở rộng kích thước'"
+      >
+        <ng-icon
+          [name]="isMaximized ? 'lucideMinimize2' : 'lucideMaximize2'"
+          [size]="'17px'"
+          strokeWidth="1.8"
+        ></ng-icon>
+      </button>
+
+      <button
+        *ngIf="messages.length > 0"
+        type="button"
+        class="icon-action-btn"
+        (click)="clearChat()"
+        title="Làm mới cuộc trò chuyện"
+        aria-label="Làm mới cuộc trò chuyện"
+      >
+        <ng-icon name="lucideTrash2" [size]="'18px'" strokeWidth="1.8"></ng-icon>
+      </button>
+
+      <button
+        type="button"
+        class="icon-action-btn close-btn"
+        (click)="closeDrawer()"
+        title="Đóng trợ lý"
+        aria-label="Đóng trợ lý"
+      >
+        <ng-icon name="lucideX" [size]="'20px'" strokeWidth="2"></ng-icon>
+      </button>
+    </div>
+  </header>
+
+  <!-- Messages Scroll Area -->
+  <div #messagesContainer class="messages-container" tabindex="0" aria-live="polite">
+    <!-- Empty State -->
+    <div *ngIf="messages.length === 0" class="empty-state">
+      <div class="empty-icon-box" aria-hidden="true">
+        <ng-icon name="lucideSparkles" [size]="'32px'" strokeWidth="1.8"></ng-icon>
+      </div>
+      <h3 class="empty-greeting">Xin chào! Tôi có thể giúp gì cho bạn?</h3>
+      <p class="empty-desc">
+        Tôi là Trợ lý AI hỗ trợ quản trị VISTA. Bạn có thể tra cứu đơn hàng, cảnh báo SLA,
+        đổi trả, đánh giá khách hàng
+        <span *ngIf="role === 'Manager'">cũng như tổng hợp doanh thu và lợi nhuận</span>.
+      </p>
+
+      <!-- Prompt Pills (Filtered strictly by Role) -->
+      <div class="prompt-pills-section">
+        <span class="pills-title">Câu hỏi gợi ý nhanh:</span>
+        <div class="pills-list">
+          <button
+            *ngFor="let prompt of currentPrompts"
+            type="button"
+            class="prompt-pill"
+            [disabled]="isLoading"
+            (click)="selectPrompt(prompt)"
+          >
+            {{ prompt }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message List -->
+    <div *ngIf="messages.length > 0" class="messages-list">
+      <div
+        *ngFor="let msg of messages"
+        class="message-row"
+        [class.is-user]="msg.role === 'user'"
+        [class.is-assistant]="msg.role === 'assistant'"
+        [class.is-error]="msg.isError"
+        [class.is-role-denied]="msg.status === 'role_denied'"
+      >
+        <!-- Message Avatar -->
+        <div class="msg-avatar" aria-hidden="true">
+          <ng-icon
+            *ngIf="msg.role === 'assistant' && !msg.isError"
+            name="lucideBot"
+            [size]="'18px'"
+            strokeWidth="1.8"
+          ></ng-icon>
+          <ng-icon
+            *ngIf="msg.role === 'assistant' && msg.isError"
+            name="lucideAlertCircle"
+            [size]="'18px'"
+            strokeWidth="1.8"
+          ></ng-icon>
+          <ng-icon
+            *ngIf="msg.role === 'user'"
+            name="lucideUser"
+            [size]="'18px'"
+            strokeWidth="1.8"
+          ></ng-icon>
+        </div>
+
+        <!-- Message Body -->
+        <div class="msg-content-wrapper">
+          <div class="msg-meta">
+            <span class="msg-sender">
+              {{ msg.role === 'user' ? 'Bạn' : 'Trợ lý VISTA' }}
+            </span>
+            <span
+              *ngIf="msg.status === 'role_denied'"
+              class="badge-denied"
+            >
+              Phân quyền giới hạn
+            </span>
+            <span
+              *ngIf="msg.status === 'unsupported'"
+              class="badge-unsupported"
+            >
+              Ngoài phạm vi
+            </span>
+            <time class="msg-time">{{ msg.time }}</time>
+          </div>
+
+          <div class="msg-bubble">
+            <div class="msg-text" [innerHTML]="formatMessage(msg.content)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading Typing Indicator -->
+      <div *ngIf="isLoading" class="message-row is-assistant is-loading">
+        <div class="msg-avatar" aria-hidden="true">
+          <ng-icon name="lucideBot" [size]="'18px'" strokeWidth="1.8"></ng-icon>
+        </div>
+        <div class="msg-content-wrapper">
+          <div class="msg-meta">
+            <span class="msg-sender">Trợ lý VISTA</span>
+          </div>
+          <div class="msg-bubble typing-bubble">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-label">Đang phân tích dữ liệu...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Prompts bar (when conversation already has messages) -->
+  <div *ngIf="messages.length > 0 && !isLoading" class="inline-pills-bar">
+    <button
+      *ngFor="let prompt of currentPrompts.slice(0, 3)"
+      type="button"
+      class="inline-pill"
+      (click)="selectPrompt(prompt)"
+    >
+      {{ prompt }}
+    </button>
+  </div>
+
+  <!-- Input Area -->
+  <footer class="drawer-footer">
+    <!-- Error Strip if any -->
+    <div *ngIf="errorMessage" class="error-strip" role="alert">
+      <ng-icon name="lucideAlertCircle" [size]="'16px'" strokeWidth="1.8"></ng-icon>
+      <span class="error-strip-text">{{ errorMessage }}</span>
+    </div>
+
+    <form class="input-form" (submit)="$event.preventDefault(); sendMessage()">
+      <div class="input-wrapper">
+        <textarea
+          #chatInput
+          class="chat-textarea"
+          [(ngModel)]="inputMessage"
+          name="assistantInput"
+          rows="1"
+          maxlength="1000"
+          placeholder="Hỏi về đơn hàng, đổi trả, SLA, doanh thu..."
+          (keydown)="onKeyDown($event)"
+          [disabled]="isLoading"
+        ></textarea>
+
+        <div class="input-actions">
+          <span class="char-count" [class.limit-near]="inputMessage.length > 900">
+            {{ inputMessage.length }}/1000
+          </span>
+
+          <button
+            type="submit"
+            class="send-btn"
+            [disabled]="!inputMessage.trim() || isLoading"
+            title="Gửi câu hỏi (Enter)"
+            aria-label="Gửi câu hỏi"
+          >
+            <ng-icon name="lucideSend" [size]="'16px'" strokeWidth="2"></ng-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="input-hint">
+        <span>Nhấn <strong>Enter</strong> để gửi, <strong>Shift + Enter</strong> để xuống dòng</span>
+      </div>
+    </form>
+  </footer>
+</section>

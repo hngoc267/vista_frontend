@@ -5,6 +5,16 @@ import { io, Socket } from 'socket.io-client';
 import { environment } from '../../environments/environment';
 import { OrderRealtimeService, OrderUpdatedEvent } from './order-realtime.service';
 
+export type NotificationPriority = 'normal' | 'important' | 'urgent';
+export type NotificationStatus = 'sent' | 'acknowledged';
+
+export interface NotificationTargetEntity {
+  Entity_type?: string;
+  entity_type?: string;
+  Entity_id?: string;
+  entity_id?: string;
+}
+
 export interface AppNotification {
   id: string;
   type: string;
@@ -14,6 +24,16 @@ export interface AppNotification {
   link: string;
   createdAt: string;
   isRead: boolean;
+
+  // Mở rộng cho thông báo vận hành (Operational Notification)
+  audience?: 'admin' | 'customer' | 'staff_operational' | string;
+  priority?: NotificationPriority;
+  senderId?: string;
+  senderName?: string;
+  status?: NotificationStatus;
+  acknowledgedAt?: string | null;
+  readAt?: string | null;
+  targetEntity?: NotificationTargetEntity;
 }
 
 interface NotificationListResponse {
@@ -22,11 +42,8 @@ interface NotificationListResponse {
 }
 
 const LIST_LIMIT = 20;
-
 const FALLBACK_POLL_MS = 30000;
 
-// Ưu tiên environment.socketUrl. Không có thì: apiUrl tuyệt đối (http://localhost:5000/api)
-// → dùng origin đó; apiUrl tương đối (/api) → cùng origin, đi qua proxy /socket.io
 function getSocketOrigin(): string | undefined {
   const socketUrl = (environment as { socketUrl?: string }).socketUrl;
   if (socketUrl) return socketUrl;
@@ -123,7 +140,25 @@ export class NotificationCenterService implements OnDestroy {
       })
       .subscribe({
         next: (response) => {
-          this.items$.next(response.data?.items ?? []);
+          const fetchedItems = response.data?.items ?? [];
+          const currentItems = this.items$.value;
+
+          // Hợp nhất dữ liệu: chống duplicate và bảo toàn các thông báo mới từ socket khi request REST đang chạy
+          const map = new Map<string, AppNotification>();
+          for (const item of fetchedItems) {
+            if (item && item.id) map.set(item.id, item);
+          }
+          for (const item of currentItems) {
+            if (item && item.id && !map.has(item.id)) {
+              map.set(item.id, item);
+            }
+          }
+
+          const merged = Array.from(map.values())
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, LIST_LIMIT);
+
+          this.items$.next(merged);
           this.unreadCount$.next(response.data?.unreadCount ?? 0);
         },
         error: () => {
@@ -142,6 +177,35 @@ export class NotificationCenterService implements OnDestroy {
 
     this.http
       .patch(`${this.apiUrl}/${encodeURIComponent(notification.id)}/read`, {}, { headers: this.headers() })
+      .subscribe({ error: () => this.load() });
+  }
+
+  /**
+   * Staff xác nhận đã tiếp nhận thông báo vận hành (Acknowledge)
+   */
+  acknowledge(notification: AppNotification): void {
+    if (!this.token || notification.status === 'acknowledged') return;
+
+    const now = new Date().toISOString();
+    this.items$.next(
+      this.items$.value.map((item) =>
+        item.id === notification.id
+          ? {
+              ...item,
+              status: 'acknowledged',
+              acknowledgedAt: now,
+              isRead: true
+            }
+          : item
+      )
+    );
+    if (!notification.isRead) {
+      this.unreadCount$.next(Math.max(0, this.unreadCount$.value - 1));
+    }
+
+    const adminApiUrl = `${environment.apiUrl}/admin/notifications/${encodeURIComponent(notification.id)}/acknowledge`;
+    this.http
+      .patch(adminApiUrl, {}, { headers: this.headers() })
       .subscribe({ error: () => this.load() });
   }
 
@@ -173,6 +237,7 @@ export class NotificationCenterService implements OnDestroy {
   }
 
   private receive(notification: AppNotification): void {
+    if (!notification || !notification.id) return;
     if (this.items$.value.some((item) => item.id === notification.id)) return;
 
     this.items$.next([notification, ...this.items$.value].slice(0, LIST_LIMIT));

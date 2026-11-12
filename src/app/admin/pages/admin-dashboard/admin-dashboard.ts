@@ -1,5 +1,6 @@
 import { ApplicationRef, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
@@ -25,7 +26,10 @@ import {
   lucideAlertCircle,
   lucideInfo,
   lucideArrowRight,
-  lucideHelpCircle
+  lucideHelpCircle,
+  lucideSend,
+  lucideX,
+  lucideHistory
 } from '@ng-icons/lucide';
 import {
   AdminDashboardService,
@@ -41,6 +45,17 @@ import {
   ProfitTrendData,
   ProfitTrendPoint
 } from '../../services/admin-dashboard';
+import {
+  AdminNotificationManagementService,
+  DispatchAlertPayload,
+  OperationalNotificationPriority,
+  OperationalRecipientMode,
+  OperationalEntityType,
+  OperationalTargetEntity
+} from '../../services/admin-notification-management';
+import { AdminStaffService, AdminStaffMember } from '../../services/admin-staff';
+import { AdminNotificationTrackingDrawerComponent } from '../../components/admin-notification-tracking-drawer/admin-notification-tracking-drawer';
+import { getAdminRole } from '../../../guards/admin-guard';
 import { Subscription, finalize, forkJoin } from 'rxjs';
 
 export type RevenuePeriod = '7days' | '30days' | '90days' | '12months';
@@ -69,7 +84,7 @@ export interface SvgProfitChartPoint {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, NgIcon],
+  imports: [CommonModule, RouterLink, NgIcon, FormsModule, AdminNotificationTrackingDrawerComponent],
   providers: [
     provideIcons({
       lucideCalendarDays,
@@ -94,7 +109,10 @@ export interface SvgProfitChartPoint {
       lucideAlertCircle,
       lucideInfo,
       lucideArrowRight,
-      lucideHelpCircle
+      lucideHelpCircle,
+      lucideSend,
+      lucideX,
+      lucideHistory
     })
   ],
   templateUrl: './admin-dashboard.html',
@@ -102,6 +120,8 @@ export interface SvgProfitChartPoint {
 })
 export class AdminDashboard implements OnInit, OnDestroy {
   private readonly dashboardService = inject(AdminDashboardService);
+  private readonly notificationManagement = inject(AdminNotificationManagementService);
+  private readonly staffService = inject(AdminStaffService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
@@ -118,6 +138,30 @@ export class AdminDashboard implements OnInit, OnDestroy {
   paymentBreakdown: PaymentBreakdownData | null = null;
   carrierPerformance: CarrierPerformanceData | null = null;
   alerts: OperationalAlert[] = [];
+
+  // Quản lý Drawer Theo dõi thông báo đã gửi (Mức 3 - Stage 3.2)
+  isTrackingDrawerOpen = false;
+
+  // Quản lý Modal Phát thông báo vận hành (Mức 3 - Stage 3.1)
+  isDispatchModalOpen = false;
+  selectedAlertForDispatch: OperationalAlert | null = null;
+  dispatchTitle = '';
+  dispatchMessage = '';
+  dispatchPriority: OperationalNotificationPriority = 'normal';
+  dispatchRecipientMode: OperationalRecipientMode = 'all_staff';
+  dispatchRecipientId = '';
+  dispatchTargetEntity: OperationalTargetEntity = { entity_type: 'system', entity_id: '' };
+  dispatchLink = '';
+  dispatchConfirmResend = false;
+
+  isDispatching = false;
+  dispatchError: string | null = null;
+  dispatchSuccessMessage: string | null = null;
+  isDuplicateRecentWarning = false;
+
+  activeStaffList: AdminStaffMember[] = [];
+  isLoadingStaffList = false;
+  staffListError: string | null = null;
 
   // Tab điều hướng: Tổng quan kinh doanh (Phase 1) vs Quản trị Giá vốn & Lợi nhuận (Phase 2)
   activeTab: 'overview' | 'profit' = 'overview';
@@ -624,5 +668,183 @@ export class AdminDashboard implements OnInit, OnDestroy {
   formatNumber(value?: number | null): string {
     if (value === undefined || value === null) return '0';
     return new Intl.NumberFormat('vi-VN').format(value);
+  }
+
+  // --- MỨC 3: OPERATIONAL NOTIFICATION DISPATCH METHODS ---
+
+  get isManager(): boolean {
+    return getAdminRole() === 'Manager';
+  }
+
+  openTrackingDrawer(): void {
+    this.isTrackingDrawerOpen = true;
+    this.cdr?.markForCheck();
+  }
+
+  closeTrackingDrawer(): void {
+    this.isTrackingDrawerOpen = false;
+    this.cdr?.markForCheck();
+  }
+
+  get dispatchTitleCharsLeft(): number {
+    return 200 - (this.dispatchTitle?.length || 0);
+  }
+
+  get dispatchMessageChars(): number {
+    return this.dispatchMessage?.length || 0;
+  }
+
+  openDispatchModal(alert: OperationalAlert): void {
+    this.selectedAlertForDispatch = alert;
+
+    // 1. Ánh xạ priority từ alert.level
+    switch (alert.level) {
+      case 'critical':
+        this.dispatchPriority = 'urgent';
+        break;
+      case 'warning':
+        this.dispatchPriority = 'important';
+        break;
+      case 'info':
+      default:
+        this.dispatchPriority = 'normal';
+        break;
+    }
+
+    // 2. Ánh xạ target entity
+    let entityType: OperationalEntityType = 'system';
+    if (alert.id === 'sla_overdue_orders' || alert.id === 'pending_bank_orders') {
+      entityType = 'order';
+    } else if (alert.id === 'pending_returns') {
+      entityType = 'return';
+    }
+
+    const entityId = Array.isArray(alert.sampleIds) && alert.sampleIds.length > 0 ? alert.sampleIds[0] : '';
+    this.dispatchTargetEntity = {
+      entity_type: entityType,
+      entity_id: entityId,
+    };
+
+    // 3. Điền trước tiêu đề và nội dung
+    this.dispatchTitle = alert.title || '';
+    this.dispatchMessage = alert.message || '';
+    this.dispatchLink = alert.link || '';
+    this.dispatchRecipientMode = 'all_staff';
+    this.dispatchRecipientId = '';
+    this.dispatchConfirmResend = false;
+    this.dispatchError = null;
+    this.dispatchSuccessMessage = null;
+    this.isDuplicateRecentWarning = false;
+    this.isDispatching = false;
+
+    this.isDispatchModalOpen = true;
+
+    // 4. Tải danh sách Staff active
+    this.loadActiveStaff();
+    this.cdr?.markForCheck();
+  }
+
+  closeDispatchModal(): void {
+    if (this.isDispatching) return;
+    this.isDispatchModalOpen = false;
+    this.selectedAlertForDispatch = null;
+    this.dispatchError = null;
+    this.dispatchSuccessMessage = null;
+    this.isDuplicateRecentWarning = false;
+    this.cdr?.markForCheck();
+  }
+
+  loadActiveStaff(): void {
+    if (this.activeStaffList.length > 0) return;
+    this.isLoadingStaffList = true;
+    this.staffListError = null;
+
+    this.staffService.getStaffList({ role: 'Staff', status: 'active', limit: 100 }).subscribe({
+      next: (res) => {
+        this.activeStaffList = (res.data?.items || []).filter(
+          (s) => s.Role === 'Staff' && s.Status === 'active'
+        );
+        this.isLoadingStaffList = false;
+        this.cdr?.markForCheck();
+      },
+      error: () => {
+        this.staffListError = 'Không thể tải danh sách nhân viên. Vui lòng thử lại.';
+        this.isLoadingStaffList = false;
+        this.cdr?.markForCheck();
+      },
+    });
+  }
+
+  onRecipientModeChange(mode: OperationalRecipientMode): void {
+    this.dispatchRecipientMode = mode;
+    if (mode === 'specific_staff' && this.activeStaffList.length === 0) {
+      this.loadActiveStaff();
+    }
+  }
+
+  submitDispatch(): void {
+    if (this.isDispatching) return;
+
+    const trimmedTitle = (this.dispatchTitle || '').trim();
+    const trimmedMessage = (this.dispatchMessage || '').trim();
+
+    if (!trimmedTitle) {
+      this.dispatchError = 'Vui lòng nhập tiêu đề thông báo.';
+      return;
+    }
+    if (trimmedTitle.length > 200) {
+      this.dispatchError = 'Tiêu đề không được vượt quá 200 ký tự.';
+      return;
+    }
+    if (!trimmedMessage) {
+      this.dispatchError = 'Vui lòng nhập nội dung thông báo.';
+      return;
+    }
+    if (trimmedMessage.length > 1000) {
+      this.dispatchError = 'Nội dung không được vượt quá 1000 ký tự.';
+      return;
+    }
+    if (this.dispatchRecipientMode === 'specific_staff' && !this.dispatchRecipientId) {
+      this.dispatchError = 'Vui lòng chọn một nhân viên Staff nhận thông báo.';
+      return;
+    }
+
+    this.isDispatching = true;
+    this.dispatchError = null;
+    this.dispatchSuccessMessage = null;
+
+    const payload: DispatchAlertPayload = {
+      title: trimmedTitle,
+      message: trimmedMessage,
+      priority: this.dispatchPriority,
+      recipient_mode: this.dispatchRecipientMode,
+      recipient_ids: this.dispatchRecipientMode === 'specific_staff' ? [this.dispatchRecipientId] : undefined,
+      target_entity: this.dispatchTargetEntity.entity_id ? this.dispatchTargetEntity : undefined,
+      link: this.dispatchLink,
+      confirm_resend: this.dispatchConfirmResend,
+    };
+
+    this.notificationManagement.dispatchAlert(payload).subscribe({
+      next: (res) => {
+        this.isDispatching = false;
+        this.dispatchSuccessMessage = res.message || 'Đã phát thông báo vận hành thành công!';
+        this.cdr?.markForCheck();
+
+        setTimeout(() => {
+          this.closeDispatchModal();
+        }, 1200);
+      },
+      error: (err) => {
+        this.isDispatching = false;
+        const errBody = err.error;
+        if (err.status === 409 && (errBody?.code === 'DUPLICATE_RECENT_ALERT' || errBody?.message?.includes('cách đây chưa đầy 1 phút'))) {
+          this.isDuplicateRecentWarning = true;
+          this.dispatchError = errBody?.message || 'Thông báo có cùng tiêu đề vừa được gửi cách đây chưa đầy 1 phút.';
+        } else {
+          this.dispatchError = errBody?.message || 'Lỗi gửi thông báo. Vui lòng kiểm tra lại.';
+        }
+        this.cdr?.markForCheck();
+      },
+    });
   }
 }

@@ -297,29 +297,49 @@
   <!-- ======================================================== -->
   <div class="drawer-backdrop" *ngIf="isDetailOpen" (click)="closeDetail()"></div>
 
-  <aside class="detail-drawer" [class.open]="isDetailOpen" *ngIf="isDetailLoading && !selectedPromotion">
+  <aside
+    class="detail-drawer"
+    [class.open]="isDetailOpen"
+    *ngIf="isDetailLoading && !selectedPromotion"
+    appResizableDrawer
+    [defaultWidth]="580"
+    [minWidth]="420"
+    [storageKey]="'vista-promotions-drawer-width'"
+  >
     <div class="drawer-header">
       <div>
         <h3 class="drawer-title">Chi tiết chương trình</h3>
       </div>
-      <button type="button" class="btn-close" (click)="closeDetail()" aria-label="Đóng">
-        <ng-icon name="lucideX" size="20px"></ng-icon>
-      </button>
+      <div class="drawer-header-actions">
+        <button type="button" class="btn-close" (click)="closeDetail()" aria-label="Đóng">
+          <ng-icon name="lucideX" size="20px"></ng-icon>
+        </button>
+      </div>
     </div>
     <div class="drawer-body" role="status">
       <div class="detail-loading">Đang tải thông tin chương trình...</div>
     </div>
   </aside>
 
-  <aside class="detail-drawer" [class.open]="isDetailOpen" *ngIf="selectedPromotion">
+  <aside
+    class="detail-drawer"
+    [class.open]="isDetailOpen"
+    *ngIf="selectedPromotion"
+    appResizableDrawer
+    [defaultWidth]="580"
+    [minWidth]="420"
+    [storageKey]="'vista-promotions-drawer-width'"
+  >
     <div class="drawer-header">
       <div>
         <h3 class="drawer-title">{{ selectedPromotion.title }}</h3>
         <p class="drawer-meta">Mã ưu đãi: <strong>{{ selectedPromotion.code }}</strong></p>
       </div>
-      <button type="button" class="btn-close" (click)="closeDetail()" aria-label="Đóng">
-        <ng-icon name="lucideX" size="20px"></ng-icon>
-      </button>
+      <div class="drawer-header-actions">
+        <button type="button" class="btn-close" (click)="closeDetail()" aria-label="Đóng">
+          <ng-icon name="lucideX" size="20px"></ng-icon>
+        </button>
+      </div>
     </div>
 
     <div class="drawer-body" [attr.aria-busy]="isDetailLoading">
